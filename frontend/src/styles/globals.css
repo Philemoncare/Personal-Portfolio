@@ -1,0 +1,267 @@
+@import "tailwindcss";
+@import "@fontsource-variable/instrument-sans";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* -------------------------------------------------------------------------
+   Design tokens
+   Change the semantic values below to re-skin the whole product. The ink/
+   paper/signal names are retained as aliases so existing components keep
+   working while new work uses the semantic names.
+   ------------------------------------------------------------------------- */
+@theme {
+  /* Foundation */
+  --color-background: #0a0b0d;
+  --color-surface: #101215;
+  --color-surface-raised: #171a1e;
+  --color-border: rgba(233, 229, 220, 0.13);
+  --color-border-strong: rgba(233, 229, 220, 0.26);
+
+  /* Type */
+  --color-foreground: #e9e5dc;
+  --color-foreground-secondary: #c4c0b7;
+  --color-foreground-muted: #8b8a84;
+  --color-foreground-faint: #6a6964;
+
+  /* One accent, used intentionally */
+  --color-accent: #ff4e1f;
+  --color-accent-hover: #ff7a52;
+
+  /* States */
+  --color-success: #5ea77a;
+  --color-warning: #d9a441;
+  --color-error: #e2564a;
+
+  /* Legacy aliases */
+  --color-ink-950: #070809;
+  --color-ink-900: var(--color-background);
+  --color-ink-800: var(--color-surface);
+  --color-ink-700: var(--color-surface-raised);
+  --color-ink-600: #20242a;
+  --color-paper: var(--color-foreground);
+  --color-paper-dim: var(--color-foreground-secondary);
+  --color-muted: var(--color-foreground-muted);
+  --color-faint: var(--color-foreground-faint);
+  --color-signal: var(--color-accent);
+  --color-signal-soft: var(--color-accent-hover);
+  --color-line: var(--color-border);
+  --color-line-strong: var(--color-border-strong);
+
+  /* Typography scale */
+  --text-display: clamp(3.4rem, 9.5vw, 8.5rem);
+  --text-display--line-height: 0.88;
+  --text-display--letter-spacing: -0.055em;
+  --text-heading: clamp(2rem, 4.2vw, 3.75rem);
+  --text-heading--line-height: 0.98;
+  --text-heading--letter-spacing: -0.035em;
+  --text-subheading: clamp(1.35rem, 2.2vw, 1.85rem);
+  --text-subheading--line-height: 1.15;
+  --text-body: 1rem;
+  --text-body--line-height: 1.7;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.5;
+  --text-meta: 0.625rem;
+  --text-meta--line-height: 1.4;
+  --text-meta--letter-spacing: 0.16em;
+
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --header-height: 4.5rem;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background-color: var(--color-ink-900);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(233, 229, 220, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(233, 229, 220, 0.045) 1px, transparent 1px);
+  background-size: 6rem 6rem;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 62%);
+}
+
+::selection {
+  background: var(--color-signal);
+  color: var(--color-ink-950);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 3px;
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-150%);
+  background: var(--color-paper);
+  color: var(--color-ink-950);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition: transform 150ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+.hairline-top {
+  border-top: 1px solid var(--color-line);
+}
+
+.display-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.02em;
+}
+
+/* Typography hierarchy helpers */
+.type-display {
+  font-size: var(--text-display);
+  line-height: var(--text-display--line-height);
+  letter-spacing: var(--text-display--letter-spacing);
+}
+
+.type-heading {
+  font-size: var(--text-heading);
+  line-height: var(--text-heading--line-height);
+  letter-spacing: var(--text-heading--letter-spacing);
+}
+
+.type-subheading {
+  font-size: var(--text-subheading);
+  line-height: var(--text-subheading--line-height);
+  letter-spacing: -0.02em;
+}
+
+.type-meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta--line-height);
+  letter-spacing: var(--text-meta--letter-spacing);
+  text-transform: uppercase;
+}
+
+/* Technical surfaces used by project plates and data panels */
+.technical-grid {
+  background-image:
+    linear-gradient(to right, rgba(233, 229, 220, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(233, 229, 220, 0.07) 1px, transparent 1px);
+  background-size: 2.5rem 2.5rem;
+}
+
+.technical-grid-fine {
+  background-image:
+    linear-gradient(to right, rgba(233, 229, 220, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(233, 229, 220, 0.055) 1px, transparent 1px);
+  background-size: 1rem 1rem;
+}
+
+.hairline-x {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border-strong) 18%,
+    var(--color-border-strong) 82%,
+    transparent
+  );
+}
+
+.prose-copy p {
+  margin-bottom: 1.15rem;
+  color: var(--color-paper-dim);
+  line-height: 1.75;
+  max-width: 68ch;
+}
+
+.prose-copy p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-copy h2,
+.prose-copy h3 {
+  color: var(--color-paper);
+  font-weight: 500;
+  margin: 2rem 0 0.75rem;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
