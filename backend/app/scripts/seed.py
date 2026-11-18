@@ -8,7 +8,7 @@ can label it honestly instead of presenting invented details.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -28,6 +28,7 @@ from app.models import (
     NowItem,
     Project,
     ProjectCategory,
+    SiteProfile,
     SiteSettings,
     Technology,
     TimelineEntry,
@@ -141,37 +142,77 @@ NOW_ITEMS = [
         "label": "Active build",
         "title": "SchooMA",
         "description": "School management platform, in active development.",
+        "category": "building",
+        "priority": 10,
         "order": 10,
+        "project_slug": "schooma",
         "placeholder": False,
     },
     {
         "label": "Final-year project",
         "title": "Signly",
         "description": "Bidirectional sign-language system.",
+        "category": "building",
+        "priority": 8,
         "order": 20,
+        "project_slug": "signly",
         "placeholder": False,
     },
     {
         "label": "Learning",
         "title": "AWS / Cloud",
         "description": "Cloud learning and project work.",
+        "category": "learning",
+        "priority": 5,
         "order": 30,
+        "project_slug": None,
         "placeholder": False,
     },
     {
         "label": "Current goals",
         "title": "Add your current goals",
         "description": "Placeholder. Add this update from the admin panel.",
+        "category": "other",
+        "priority": 0,
         "order": 40,
+        "project_slug": None,
         "placeholder": True,
     },
 ]
 
 TIMELINE_ITEMS = [
-    {"kind": "development", "title": "Full-stack projects", "order": 10},
-    {"kind": "cloud", "title": "AWS / Cloud", "order": 20},
-    {"kind": "project", "title": "Data & Analytics", "order": 30},
-    {"kind": "leadership", "title": "Technology leadership", "order": 40},
+    {
+        "kind": "technical",
+        "slug": "full-stack-projects",
+        "title": "Full-stack projects",
+        "summary": None,
+        "featured": False,
+        "order": 10,
+    },
+    {
+        "kind": "technical",
+        "slug": "aws-cloud",
+        "title": "AWS / Cloud",
+        "summary": None,
+        "featured": False,
+        "order": 20,
+    },
+    {
+        "kind": "project",
+        "slug": "data-analytics",
+        "title": "Data & Analytics",
+        "summary": None,
+        "featured": False,
+        "order": 30,
+    },
+    {
+        "kind": "leadership",
+        "slug": "technology-leadership",
+        "title": "Technology leadership",
+        "summary": None,
+        "featured": False,
+        "order": 40,
+    },
 ]
 
 # Synthetic values used only to exercise the Data Lab interface. Every public
@@ -665,6 +706,11 @@ def seed_data_lab(db: Session) -> None:
 def seed_now(db: Session) -> None:
     now = datetime.now(UTC)
     for item in NOW_ITEMS:
+        project = None
+        if item["project_slug"]:
+            project = db.scalar(
+                select(Project).where(Project.slug == item["project_slug"])
+            )
         existing = db.scalar(select(NowItem).where(NowItem.sort_order == item["order"]))
         if existing is None:
             db.add(
@@ -672,6 +718,11 @@ def seed_now(db: Session) -> None:
                     label=item["label"],
                     title=item["title"],
                     description=item["description"],
+                    category=item["category"],
+                    item_status="active",
+                    active=True,
+                    priority=item["priority"],
+                    related_project_id=project.id if project else None,
                     status="published",
                     published_at=now,
                     is_placeholder=item["placeholder"],
@@ -682,7 +733,16 @@ def seed_now(db: Session) -> None:
             existing.label = item["label"]
             existing.title = item["title"]
             existing.description = item["description"]
+            existing.category = item["category"]
+            existing.priority = item["priority"]
             existing.is_placeholder = item["placeholder"]
+            if existing.related_project_id is None and project is not None:
+                existing.related_project_id = project.id
+        else:
+            # Never overwrite an entry the owner has edited. Only fill the
+            # relationship that the seed can supply unambiguously.
+            if existing.related_project_id is None and project is not None:
+                existing.related_project_id = project.id
 
 
 def seed_timeline(db: Session) -> None:
@@ -700,40 +760,78 @@ def seed_timeline(db: Session) -> None:
                 TimelineEntry(
                     year=year,
                     month=None,
+                    start_date=date(year, 1, 1),
+                    slug=item["slug"],
                     kind=item["kind"],
                     title=item["title"],
+                    summary=item["summary"],
                     description=None,
+                    featured=item["featured"],
                     status="published",
                     published_at=now,
                     is_placeholder=True,
-                    sort_order=item["order"],
+                    display_order=item["order"],
                 )
             )
+        elif existing.is_placeholder:
+            existing.kind = item["kind"]
+            existing.slug = existing.slug or item["slug"]
+            existing.summary = existing.summary or item["summary"]
+            existing.display_order = item["order"]
+            existing.start_date = existing.start_date or date(year, 1, 1)
 
 
-def seed_settings(db: Session) -> None:
+def seed_profile(db: Session) -> SiteProfile:
+    profile = db.get(SiteProfile, 1)
+    if profile is None:
+        profile = SiteProfile(
+            id=1,
+            name="Phill",
+            display_name="Phill",
+            is_placeholder=True,
+        )
+        db.add(profile)
+    if profile.is_placeholder:
+        profile.professional_title = profile.professional_title or ROLE_TITLE
+        profile.short_bio = profile.short_bio or HERO_INTRO
+        profile.long_bio = profile.long_bio or BIO
+        profile.location = profile.location or LOCATION
+        profile.availability = profile.availability or AVAILABILITY
+    db.flush()
+    return profile
+
+
+def seed_settings(db: Session, profile: SiteProfile) -> None:
     existing = db.get(SiteSettings, 1)
     if existing is None:
         db.add(
             SiteSettings(
                 id=1,
-                display_name="Phill",
-                role_title=ROLE_TITLE,
-                hero_intro=HERO_INTRO,
-                bio=BIO,
-                location=LOCATION,
-                availability=AVAILABILITY,
+                site_name=profile.display_name,
+                site_description=BIO,
+                wordmark=profile.display_name,
+                accent="signal",
+                display_name=profile.display_name,
+                role_title=profile.professional_title or ROLE_TITLE,
+                hero_intro=profile.short_bio or HERO_INTRO,
+                bio=profile.long_bio or BIO,
+                location=profile.location or LOCATION,
+                availability=profile.availability or AVAILABILITY,
                 seo_title="Phill - Full-Stack Developer",
                 seo_description=HERO_INTRO,
                 is_placeholder=True,
             )
         )
     elif existing.is_placeholder:
-        existing.role_title = ROLE_TITLE
-        existing.hero_intro = HERO_INTRO
-        existing.bio = BIO
-        existing.location = LOCATION
-        existing.availability = AVAILABILITY
+        existing.site_name = existing.site_name or profile.display_name
+        existing.site_description = existing.site_description or BIO
+        existing.wordmark = existing.wordmark or profile.display_name
+        existing.display_name = profile.display_name
+        existing.role_title = profile.professional_title or ROLE_TITLE
+        existing.hero_intro = profile.short_bio or HERO_INTRO
+        existing.bio = profile.long_bio or BIO
+        existing.location = profile.location or LOCATION
+        existing.availability = profile.availability or AVAILABILITY
         existing.seo_title = existing.seo_title or "Phill - Full-Stack Developer"
         existing.seo_description = existing.seo_description or HERO_INTRO
 
@@ -761,7 +859,8 @@ def seed_admin(db: Session) -> None:
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     with SessionLocal() as db:
-        seed_settings(db)
+        profile = seed_profile(db)
+        seed_settings(db, profile)
         categories = seed_categories(db)
         technologies = seed_technologies(db)
         seed_projects(db, categories, technologies)

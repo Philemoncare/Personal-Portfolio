@@ -80,6 +80,12 @@ export const adminProjectsService = {
     return apiRequest<void>(`/api/v1/admin/projects/${id}`, { method: "DELETE" });
   },
 
+  refreshGitHub(id: string): Promise<AdminProject> {
+    return apiRequest<AdminProject>(`/api/v1/admin/projects/${id}/github`, {
+      method: "POST",
+    });
+  },
+
   duplicateProject(id: string): Promise<AdminProject> {
     return apiRequest<AdminProject>(`/api/v1/admin/projects/${id}/duplicate`, {
       method: "POST",

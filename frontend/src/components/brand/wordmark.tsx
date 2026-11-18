@@ -51,7 +51,6 @@ export function Wordmark({
     <Link
       to="/"
       className={cn("group inline-flex items-center gap-3", className)}
-      aria-label="Phill — home"
     >
       <IdentityMark
         size={compact ? "sm" : "md"}

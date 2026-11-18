@@ -1,113 +1,184 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { Reveal } from "@/components/ui/reveal";
 import { EmptyState } from "@/components/ui/states";
-import type { TimelineEntry, TimelineKind } from "@/types/api";
+import type { ContentLink, TimelineEntry, TimelineKind } from "@/types/api";
 import { cn } from "@/utils/cn";
-import { formatMonthYear } from "@/utils/format";
+import { TIMELINE_KIND_LABELS, timelineDateLabel } from "@/utils/identity";
 
-const KIND_LABELS: Record<TimelineKind, string> = {
-  education: "Education",
-  project: "Projects",
-  leadership: "Leadership",
-  cloud: "AWS",
-  development: "Development",
-  milestone: "Milestones",
-};
+function RelatedLink({ link }: { link: ContentLink }) {
+  return (
+    <Link
+      to={link.href}
+      className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-signal-soft underline decoration-line underline-offset-4 hover:text-paper"
+    >
+      {link.label ?? link.title}
+      <span aria-hidden="true">→</span>
+    </Link>
+  );
+}
 
-const FILTERS: Array<{ value: "all" | TimelineKind; label: string }> = [
-  { value: "all", label: "Everything" },
-  { value: "education", label: "Education" },
-  { value: "project", label: "Projects" },
-  { value: "leadership", label: "Leadership" },
-  { value: "cloud", label: "AWS" },
-  { value: "development", label: "Development" },
-  { value: "milestone", label: "Milestones" },
-];
-
-export function Timeline({ entries }: { entries: TimelineEntry[] }) {
+export function Timeline({
+  entries,
+  showFilters = true,
+  emptyTitle = "No milestones published yet",
+  emptyDescription = "Timeline entries appear here once they are added and published from the admin panel.",
+}: {
+  entries: TimelineEntry[];
+  showFilters?: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
+}) {
   const [filter, setFilter] = useState<"all" | TimelineKind>("all");
 
   if (entries.length === 0) {
-    return (
-      <EmptyState
-        title="Timeline entries are not published yet"
-        description="Education, projects, and leadership milestones will be added from the admin panel. The timeline stays empty until those records are confirmed."
-      />
-    );
+    return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
 
-  const availableKinds = Array.from(new Set(entries.map((entry) => entry.kind)));
-  const visibleFilters = FILTERS.filter(
-    (item) => item.value === "all" || availableKinds.includes(item.value),
+  const presentKinds = Array.from(
+    new Set(entries.map((entry) => entry.kind)),
+  ).sort(
+    (a, b) =>
+      Object.keys(TIMELINE_KIND_LABELS).indexOf(a) -
+      Object.keys(TIMELINE_KIND_LABELS).indexOf(b),
   );
-  const visible = entries.filter((entry) => filter === "all" || entry.kind === filter);
 
-  const grouped = visible.reduce<Record<number, TimelineEntry[]>>((groups, entry) => {
-    groups[entry.year] = groups[entry.year] ?? [];
-    groups[entry.year].push(entry);
-    return groups;
+  const visible =
+    filter === "all" ? entries : entries.filter((entry) => entry.kind === filter);
+
+  const groups = visible.reduce<Record<number, TimelineEntry[]>>((result, entry) => {
+    const year = entry.start_date
+      ? new Date(`${entry.start_date}T00:00:00Z`).getUTCFullYear()
+      : entry.year;
+    result[year] = result[year] ?? [];
+    result[year].push(entry);
+    return result;
   }, {});
-  const years = Object.keys(grouped)
+  const years = Object.keys(groups)
     .map(Number)
     .sort((a, b) => b - a);
 
   return (
     <div>
-      <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
-        {visibleFilters.map((item) => (
+      {showFilters && presentKinds.length > 1 ? (
+        <div
+          className="mb-10 flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filter timeline by type"
+        >
           <button
-            key={item.value}
             type="button"
-            onClick={() => setFilter(item.value)}
-            aria-pressed={filter === item.value}
+            onClick={() => setFilter("all")}
+            aria-pressed={filter === "all"}
             className={cn(
-              "shrink-0 border px-3 py-2 font-mono text-[0.6rem] uppercase tracking-[0.14em] transition-colors",
-              filter === item.value
+              "border px-3 py-2 font-mono text-[0.58rem] uppercase tracking-[0.14em] transition-colors",
+              filter === "all"
                 ? "border-paper bg-paper text-ink-950"
                 : "border-line text-paper-dim hover:border-line-strong",
             )}
           >
-            {item.label}
+            All
           </button>
-        ))}
-      </div>
+          {presentKinds.map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => setFilter(kind)}
+              aria-pressed={filter === kind}
+              className={cn(
+                "border px-3 py-2 font-mono text-[0.58rem] uppercase tracking-[0.14em] transition-colors",
+                filter === kind
+                  ? "border-paper bg-paper text-ink-950"
+                  : "border-line text-paper-dim hover:border-line-strong",
+              )}
+            >
+              {TIMELINE_KIND_LABELS[kind]}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
-      <div className="mt-10 space-y-12">
+      <div className="space-y-14">
         {years.map((year) => (
-          <div key={year} className="grid gap-6 md:grid-cols-[8rem_minmax(0,1fr)] md:gap-10">
-            <div>
-              <p className="font-mono text-3xl tracking-[-0.04em] text-paper">{year}</p>
-              <span className="mt-4 block h-px w-10 bg-signal" aria-hidden="true" />
-            </div>
-
-            <ol className="space-y-6 border-l border-line pl-6 sm:pl-8">
-              {grouped[year].map((entry) => (
-                <li key={entry.id} className="relative">
-                  <span
-                    className="absolute -left-[1.78rem] top-1.5 size-2 bg-signal sm:-left-[2.28rem]"
-                    aria-hidden="true"
-                  />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-                      {formatMonthYear(entry.year, entry.month)} / {KIND_LABELS[entry.kind]}
-                    </span>
-                    {entry.is_placeholder ? <Badge tone="placeholder">Placeholder</Badge> : null}
-                  </div>
-                  <h4 className="mt-2 text-lg font-medium tracking-tight text-paper">
-                    {entry.title}
-                  </h4>
-                  {entry.description ? (
-                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-                      {entry.description}
-                    </p>
-                  ) : null}
+          <section key={year} aria-labelledby={`timeline-year-${year}`}>
+            <h2
+              id={`timeline-year-${year}`}
+              className="font-mono text-xs uppercase tracking-[0.2em] text-signal"
+            >
+              {year}
+            </h2>
+            <ol className="mt-6 space-y-0 border-t border-line">
+              {groups[year].map((entry) => (
+                <li
+                  key={entry.id}
+                  id={entry.slug ?? undefined}
+                  className="scroll-mt-24 border-b border-line"
+                >
+                  <Reveal>
+                    <div className="grid gap-3 py-6 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-8">
+                      <div className="space-y-2">
+                        <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
+                          {timelineDateLabel(entry)}
+                        </p>
+                        <Badge tone="muted">{TIMELINE_KIND_LABELS[entry.kind]}</Badge>
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-medium tracking-tight text-paper">
+                            {entry.title}
+                          </h3>
+                          {entry.is_placeholder ? (
+                            <Badge tone="placeholder">Placeholder</Badge>
+                          ) : null}
+                        </div>
+                        {entry.organization ? (
+                          <p className="mt-1 text-sm text-paper-dim">{entry.organization}</p>
+                        ) : null}
+                        {entry.summary || entry.description ? (
+                          <p className="mt-3 max-w-2xl text-pretty text-sm leading-relaxed text-muted">
+                            {entry.summary || entry.description}
+                          </p>
+                        ) : null}
+                        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+                          {entry.related_project ? (
+                            <RelatedLink link={entry.related_project} />
+                          ) : null}
+                          {entry.related_experience ? (
+                            <RelatedLink link={entry.related_experience} />
+                          ) : null}
+                          {entry.related_leadership ? (
+                            <RelatedLink link={entry.related_leadership} />
+                          ) : null}
+                          {entry.external_url ? (
+                            <a
+                              href={entry.external_url}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-paper-dim underline decoration-line underline-offset-4 hover:text-paper"
+                            >
+                              External reference
+                              <span aria-hidden="true">↗</span>
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
                 </li>
               ))}
             </ol>
-          </div>
+          </section>
         ))}
       </div>
+
+      {visible.length === 0 ? (
+        <EmptyState
+          title="Nothing in this type yet"
+          description="Choose another type or return to the full timeline."
+        />
+      ) : null}
     </div>
   );
 }

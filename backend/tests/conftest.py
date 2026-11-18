@@ -16,6 +16,33 @@ TEST_ADMIN_EMAIL = "admin@test.dev"
 TEST_ADMIN_PASSWORD = "work-system-test-password"
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limiters() -> Iterator[None]:
+    """Keep per-client counters from leaking between tests."""
+
+    from app.api.v1.auth import login_limiter, reset_request_limiter, verify_limiter
+    from app.services.contact import contact_limiter
+    from app.services.otp import otp_request_limiter
+
+    for limiter in (
+        contact_limiter,
+        login_limiter,
+        verify_limiter,
+        reset_request_limiter,
+        otp_request_limiter,
+    ):
+        limiter._hits.clear()
+    yield
+    for limiter in (
+        contact_limiter,
+        login_limiter,
+        verify_limiter,
+        reset_request_limiter,
+        otp_request_limiter,
+    ):
+        limiter._hits.clear()
+
+
 @pytest.fixture()
 def db_session() -> Iterator[Session]:
     engine = create_engine(
@@ -34,7 +61,14 @@ def db_session() -> Iterator[Session]:
 
 
 @pytest.fixture()
-def client(db_session: Session) -> Iterator[TestClient]:
+def client(db_session: Session, monkeypatch: pytest.MonkeyPatch, tmp_path) -> Iterator[TestClient]:
+    from app.core.config import settings
+
+    # Tests must never provision the real bootstrap administrator or write into
+    # the developer media directory.
+    monkeypatch.setattr(settings, "initial_admin_email", None)
+    monkeypatch.setattr(settings, "media_storage_dir", str(tmp_path / "media"))
+
     app = create_app()
 
     def override_get_db() -> Iterator[Session]:
@@ -58,7 +92,7 @@ def admin_client(client: TestClient, db_session: Session) -> TestClient:
 
     response = client.post(
         "/api/v1/auth/login",
-        json={"email": TEST_ADMIN_EMAIL, "password": TEST_ADMIN_PASSWORD},
+        json={"identifier": TEST_ADMIN_EMAIL, "password": TEST_ADMIN_PASSWORD},
     )
     assert response.status_code == 200, response.text
     return client

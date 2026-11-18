@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/container";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { ProjectCard } from "@/components/work/project-card";
 import { useApiResource } from "@/hooks/useApiResource";
-import { useSeo } from "@/hooks/useSeo";
+import { usePageContent, usePageSeo } from "@/app/ContentProvider";
 import type { ListResponse, ProjectSummary } from "@/types/api";
 
 const CATEGORIES = ["Web", "APIs", "Cloud", "Automation", "Experiments", "Open Source"];
@@ -16,26 +16,35 @@ export default function BuildLabPage() {
     "/api/v1/projects?category=experiments&limit=50",
   );
 
-  useSeo({
+  usePageSeo("build-lab", {
     title: "Build Lab — Phill",
     description:
       "A working lab of technical experiments, smaller builds, automations, and open-source work.",
     path: "/build-lab",
   });
 
+  const page = usePageContent("build-lab");
+
   const items = projects.data?.items ?? [];
 
   return (
     <>
       <PageIntro
-        eyebrow="Build Lab"
+        eyebrow={page?.eyebrow || "Build Lab"}
         title={
-          <>
-            Where ideas get{" "}
-            <span className="display-serif text-signal">tested.</span>
-          </>
+          page?.title ? (
+            page.title
+          ) : (
+            <>
+              Where ideas get{" "}
+              <span className="display-serif text-signal">tested.</span>
+            </>
+          )
         }
-        description="Smaller builds, prototypes, automations, and technical experiments. This is the part of the practice where the objective is learning something concrete — and leaving a useful artefact behind."
+        description={
+          page?.description ||
+          "Smaller builds, prototypes, automations, and technical experiments. This is the part of the practice where the objective is learning something concrete — and leaving a useful artefact behind."
+        }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">

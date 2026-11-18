@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 
+import { SOCIAL_IMAGE } from "@/assets/registry";
+
 interface SeoOptions {
   title: string;
   description?: string | null;
@@ -66,6 +68,11 @@ export function useSeo({
         setMeta("property", "og:image:alt", imageAlt);
         setMeta("name", "twitter:image:alt", imageAlt);
       }
+    } else if (!noIndex) {
+      const href = absoluteUrl(SOCIAL_IMAGE);
+      setMeta("property", "og:image", href);
+      setMeta("name", "twitter:image", href);
+      setMeta("name", "twitter:card", "summary_large_image");
     }
 
     const canonical = path ? `${SITE_URL}${path}` : undefined;

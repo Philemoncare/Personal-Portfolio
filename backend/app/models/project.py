@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import (
     JSON,
@@ -7,6 +7,7 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     Date,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -107,6 +108,10 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base):
             "project_status IN ('in_progress', 'active', 'completed', 'archived', 'experiment')",
             name="project_status_valid",
         ),
+        CheckConstraint(
+            "deployment_status IN ('not_deployed', 'deploying', 'live', 'failed', 'offline')",
+            name="deployment_status_valid",
+        ),
     )
 
     title: Mapped[str] = mapped_column(String(160), nullable=False)
@@ -141,6 +146,48 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base):
     documentation_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     download_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     external_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # --- Deployment and publishing ---------------------------------------
+    github_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    demo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    video_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    external_project_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    deployment_provider: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    deployment_status: Mapped[str] = mapped_column(
+        String(20),
+        default="not_deployed",
+        server_default="not_deployed",
+        nullable=False,
+        index=True,
+    )
+    deployment_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # The administrator explicitly states whether the project may be framed.
+    # The browser still verifies the frame client-side; this is a permission
+    # flag, never a claim that embedding will succeed.
+    embed_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
+    last_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    public_visibility: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False, index=True
+    )
+
+    # --- Cached public GitHub metadata (never fabricated) -----------------
+    github_stars: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    github_forks: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    github_language: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    github_open_issues: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    github_metadata_checked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # --- Per-project SEO --------------------------------------------------
+    seo_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    seo_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    og_image: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+
     cover_image: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     sort_order: Mapped[int] = mapped_column(
         Integer, default=0, server_default="0", nullable=False

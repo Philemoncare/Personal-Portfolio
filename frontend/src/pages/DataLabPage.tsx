@@ -11,7 +11,7 @@ import { Container } from "@/components/ui/container";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useSeo } from "@/hooks/useSeo";
+import { usePageContent, usePageSeo } from "@/app/ContentProvider";
 import { dataProjectsService } from "@/services/dataProjects.service";
 import type { DataProjectType } from "@/types/api";
 import { cn } from "@/utils/cn";
@@ -90,12 +90,14 @@ export default function DataLabPage() {
     [],
   );
 
-  useSeo({
+  usePageSeo("data-lab", {
     title: "Data Lab — Philemon Melabah",
     description:
       "Data analysis projects built around real questions: datasets, preparation, methodology, visualizations, and decision-ready findings.",
     path: "/data-lab",
   });
+
+  const page = usePageContent("data-lab");
 
   const items = projects.data?.items ?? [];
   const allItems = facets.data?.items ?? [];
@@ -128,14 +130,21 @@ export default function DataLabPage() {
   return (
     <>
       <PageIntro
-        eyebrow="Index / Data Lab"
+        eyebrow={page?.eyebrow || "Index / Data Lab"}
         title={
-          <>
-            Ask the question.{" "}
-            <span className="display-serif text-signal">Interrogate the evidence.</span>
-          </>
+          page?.title ? (
+            page.title
+          ) : (
+            <>
+              Ask the question.{" "}
+              <span className="display-serif text-signal">Interrogate the evidence.</span>
+            </>
+          )
         }
-        description="I use data to investigate problems, identify patterns, communicate findings, and support decisions. This space holds the working analysis: the question, the dataset, the method, and what the evidence actually supports."
+        description={
+          page?.description ||
+          "I use data to investigate problems, identify patterns, communicate findings, and support decisions. This space holds the working analysis: the question, the dataset, the method, and what the evidence actually supports."
+        }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">

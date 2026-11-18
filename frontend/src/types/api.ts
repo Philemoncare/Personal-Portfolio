@@ -27,6 +27,13 @@ export interface ProjectMedia {
   sort_order: number;
 }
 
+export type DeploymentStatus =
+  | "not_deployed"
+  | "deploying"
+  | "live"
+  | "failed"
+  | "offline";
+
 export interface ProjectSummary {
   id: string;
   title: string;
@@ -45,6 +52,24 @@ export interface ProjectSummary {
   documentation_url: string | null;
   download_url: string | null;
   external_url: string | null;
+  external_project_url: string | null;
+  github_url: string | null;
+  demo_url: string | null;
+  video_url: string | null;
+  deployment_provider: string | null;
+  deployment_status: DeploymentStatus;
+  deployment_url: string | null;
+  embed_enabled: boolean;
+  last_verified_at: string | null;
+  public_visibility: boolean;
+  github_stars: number | null;
+  github_forks: number | null;
+  github_language: string | null;
+  github_open_issues: number | null;
+  github_metadata_checked_at: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image: string | null;
   cover_image_url: string | null;
   technologies: Technology[];
   sort_order: number;
@@ -62,6 +87,7 @@ export interface ProjectDetail extends ProjectSummary {
   completed_on: string | null;
   media: ProjectMedia[];
   case_study_slug: string | null;
+  case_study: CaseStudyDetail | null;
   related: ProjectSummary[];
   previous: ProjectLink | null;
   next: ProjectLink | null;
@@ -107,6 +133,7 @@ export interface ExperienceEntry {
   id: string;
   organization: string;
   title: string;
+  slug: string | null;
   location: string | null;
   description: string | null;
   started_on: string;
@@ -118,6 +145,7 @@ export interface LeadershipEntry {
   id: string;
   organization: string;
   title: string;
+  slug: string | null;
   description: string | null;
   contribution: string | null;
   outcome: string | null;
@@ -151,26 +179,119 @@ export interface Certificate {
   media_url: string | null;
 }
 
-export interface TimelineEntry {
-  id: string;
-  year: number;
-  month: number | null;
-  kind: TimelineKind;
+export interface ContentLink {
+  kind: "project" | "build_lab" | "leadership" | "experience" | "external";
   title: string;
-  description: string | null;
-  is_placeholder: boolean;
+  slug: string | null;
+  href: string;
+  label: string | null;
 }
+
+export type NowCategory =
+  | "building"
+  | "learning"
+  | "exploring"
+  | "leading"
+  | "reading"
+  | "experimenting"
+  | "other";
+export type NowStatus = "active" | "ongoing" | "paused" | "completed";
 
 export interface NowItem {
   id: string;
-  label: string;
   title: string;
   description: string | null;
+  category: NowCategory;
+  status: NowStatus;
+  active: boolean;
+  priority: number;
+  display_order: number;
+  external_url: string | null;
+  related_project: ContentLink | null;
+  related_build_lab: ContentLink | null;
+  related_leadership: ContentLink | null;
   is_placeholder: boolean;
+  created_at: string;
   updated_at: string;
 }
 
+export type TimelineKind =
+  | "education"
+  | "project"
+  | "experience"
+  | "leadership"
+  | "certification"
+  | "community"
+  | "technical"
+  | "milestone"
+  | "other";
+
+export interface TimelineEntry {
+  id: string;
+  slug: string | null;
+  title: string;
+  kind: TimelineKind;
+  summary: string | null;
+  description: string | null;
+  organization: string | null;
+  location: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  year: number;
+  month: number | null;
+  external_url: string | null;
+  featured: boolean;
+  display_order: number;
+  related_project: ContentLink | null;
+  related_experience: ContentLink | null;
+  related_leadership: ContentLink | null;
+  is_placeholder: boolean;
+  published_at: string | null;
+}
+
+export interface ResumePublic {
+  id: string;
+  title: string;
+  version_label: string;
+  file_size: number;
+  download_url: string;
+  published_at: string | null;
+  updated_at: string;
+}
+
+export interface SiteProfile {
+  name: string;
+  display_name: string;
+  professional_title: string | null;
+  short_bio: string | null;
+  long_bio: string | null;
+  what_i_build: string | null;
+  how_i_work: string | null;
+  current_direction: string | null;
+  personal_interests: string | null;
+  profile_image: string | null;
+  location: string | null;
+  email: string | null;
+  phone: string | null;
+  availability: string | null;
+  resume_url: string | null;
+  github_url: string | null;
+  linkedin_url: string | null;
+  website_url: string | null;
+  is_placeholder: boolean;
+  updated_at: string;
+  current_resume: ResumePublic | null;
+}
+
 export interface SiteSettings {
+  site_name: string;
+  site_description: string | null;
+  wordmark: string;
+  accent: string;
+  footer_text: string | null;
+  copyright_text: string | null;
+  social_image: string | null;
+  favicon: string | null;
   display_name: string;
   role_title: string;
   hero_intro: string | null;
@@ -178,17 +299,46 @@ export interface SiteSettings {
   location: string | null;
   availability: string | null;
   email: string | null;
+  phone: string | null;
+  website_url: string | null;
   github_url: string | null;
   linkedin_url: string | null;
   cv_url: string | null;
   seo_title: string | null;
   seo_description: string | null;
   is_placeholder: boolean;
+  updated_at: string;
+  contact_delivery: "email_configured" | "stored_only";
+  resume_available: boolean;
+}
+
+export interface SearchIndexEntry {
+  kind:
+    | "project"
+    | "data_project"
+    | "leadership"
+    | "experience"
+    | "timeline"
+    | "article";
+  title: string;
+  slug: string;
+  description: string | null;
+  category: string | null;
+  url: string;
+  updated_at: string | null;
 }
 
 export interface Admin {
+  id: string;
   email: string;
+  phone: string | null;
+  full_name: string | null;
+  role: "SUPER_ADMIN" | "EDITOR" | "ANALYST" | "VIEWER";
+  is_active: boolean;
+  must_change_password: boolean;
   last_login_at: string | null;
+  password_changed_at: string | null;
+  created_at: string;
 }
 
 export interface AdminRecentProject {
@@ -224,7 +374,8 @@ export interface AdminOverview {
   recent_messages: AdminRecentMessage[];
 }
 
-export type WorkMode = "build" | "data" | "lead" | "explore";export type ProjectStage =
+export type WorkMode = "build" | "data" | "lead" | "explore";
+export type ProjectStage =
   | "in_progress"
   | "active"
   | "completed"
@@ -232,18 +383,20 @@ export type WorkMode = "build" | "data" | "lead" | "explore";export type Project
   | "experiment";
 export type PublishStatus = "draft" | "published" | "archived";
 export type MediaType = "image" | "diagram" | "video";
-export type TimelineKind =
-  | "education"
-  | "project"
-  | "leadership"
-  | "cloud"
+
+export type ContactInquiryType =
+  | "project_collaboration"
+  | "data_analytics"
   | "development"
-  | "milestone";
+  | "technology_community"
+  | "speaking_workshops"
+  | "general";
 
 export interface ContactPayload {
   name: string;
   email: string;
   subject: string;
+  inquiry_type?: ContactInquiryType | null;
   message: string;
   website?: string;
 }
@@ -251,6 +404,8 @@ export interface ContactPayload {
 export interface ContactReceipt {
   status: string;
   message: string;
+  stored: boolean;
+  email_delivery: "configured" | "not_configured";
 }
 
 export interface AdminProject {
@@ -277,6 +432,24 @@ export interface AdminProject {
   documentation_url: string | null;
   download_url: string | null;
   external_url: string | null;
+  github_url: string | null;
+  demo_url: string | null;
+  video_url: string | null;
+  external_project_url: string | null;
+  deployment_provider: string | null;
+  deployment_status: DeploymentStatus;
+  deployment_url: string | null;
+  embed_enabled: boolean;
+  last_verified_at: string | null;
+  public_visibility: boolean;
+  github_stars: number | null;
+  github_forks: number | null;
+  github_language: string | null;
+  github_open_issues: number | null;
+  github_metadata_checked_at: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image: string | null;
   cover_image: string | null;
   cover_image_url: string | null;
   sort_order: number;
@@ -315,6 +488,19 @@ export interface ProjectInput {
   documentation_url: string | null;
   download_url: string | null;
   external_url: string | null;
+  github_url: string | null;
+  demo_url: string | null;
+  video_url: string | null;
+  external_project_url: string | null;
+  deployment_provider: string | null;
+  deployment_status: DeploymentStatus;
+  deployment_url: string | null;
+  embed_enabled: boolean;
+  last_verified_at: string | null;
+  public_visibility: boolean;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image: string | null;
   cover_image: string | null;
   sort_order: number;
   is_placeholder: boolean;
@@ -366,6 +552,9 @@ export interface AdminReference {
   modes: Array<{ value: WorkMode; label: string }>;
   case_study_sections: Array<{ value: CaseStudySectionKey; label: string }>;
   result_types: string[];
+  deployment_statuses: Array<{ value: DeploymentStatus; label: string }>;
+  deployment_providers: string[];
+  media_folders: string[];
 }
 
 export type CaseStudySectionKey =
@@ -623,4 +812,511 @@ export interface DataReference {
   chart_types: DataChartType[];
   resource_types: DataResourceType[];
   featured: DataProjectSummary[];
+}
+
+// --- Identity administration --------------------------------------------
+
+export interface ProfileAdmin extends SiteProfile {
+  created_at: string;
+}
+
+export interface ResumeAdmin {
+  id: string;
+  title: string;
+  version_label: string;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  status: PublishStatus;
+  is_current: boolean;
+  download_url: string;
+  download_count: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NowAdminItem extends NowItem {
+  publish_status: PublishStatus;
+  related_project_id: string | null;
+  related_build_lab_id: string | null;
+  related_leadership_id: string | null;
+  related_project_title: string | null;
+  related_build_lab_title: string | null;
+  related_leadership_title: string | null;
+}
+
+export interface TimelineAdminEntry extends TimelineEntry {
+  publish_status: PublishStatus;
+  related_project_id: string | null;
+  related_experience_id: string | null;
+  related_leadership_id: string | null;
+  related_project_title: string | null;
+  related_experience_title: string | null;
+  related_leadership_title: string | null;
+}
+
+export interface SiteSettingsAdmin {
+  site_name: string;
+  site_description: string | null;
+  wordmark: string;
+  accent: string;
+  footer_text: string | null;
+  copyright_text: string | null;
+  social_image: string | null;
+  favicon: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  display_name: string;
+  role_title: string;
+  hero_intro: string | null;
+  bio: string | null;
+  location: string | null;
+  email: string | null;
+  is_placeholder: boolean;
+  updated_at: string;
+}
+
+export interface LinkedRecord {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  slug: string | null;
+  status: string;
+}
+
+export interface ContentReference {
+  projects: LinkedRecord[];
+  leadership: LinkedRecord[];
+  experience: LinkedRecord[];
+  now_categories: Array<{ value: string; label: string }>;
+  now_statuses: string[];
+  timeline_kinds: Array<{ value: string; label: string }>;
+  publish_statuses: string[];
+  message_statuses: string[];
+  inquiry_types: Array<{ value: string; label: string }>;
+}
+
+export interface AdminSettings {
+  profile: ProfileAdmin;
+  site: SiteSettingsAdmin;
+  resume: ResumeAdmin | null;
+  email_delivery_configured: boolean;
+  notification_email: string | null;
+  options: {
+    now_categories: Array<{ value: string; label: string }>;
+    timeline_kinds: Array<{ value: string; label: string }>;
+  };
+}
+
+export interface ProfileInput {
+  name: string;
+  display_name: string;
+  professional_title: string | null;
+  short_bio: string | null;
+  long_bio: string | null;
+  what_i_build: string | null;
+  how_i_work: string | null;
+  current_direction: string | null;
+  personal_interests: string | null;
+  profile_image: string | null;
+  location: string | null;
+  email: string | null;
+  phone: string | null;
+  availability: string | null;
+  resume_url: string | null;
+  github_url: string | null;
+  linkedin_url: string | null;
+  website_url: string | null;
+  is_placeholder: boolean;
+}
+
+export interface SiteSettingsInput {
+  site_name: string;
+  site_description: string | null;
+  wordmark: string;
+  accent: string;
+  footer_text: string | null;
+  copyright_text: string | null;
+  social_image: string | null;
+  favicon: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+}
+
+export interface AdminSettingsInput {
+  profile: ProfileInput;
+  site: SiteSettingsInput;
+}
+
+export interface NowInput {
+  title: string;
+  description: string | null;
+  category: NowCategory;
+  status: NowStatus;
+  active: boolean;
+  priority: number;
+  display_order: number;
+  external_url: string | null;
+  related_project_id: string | null;
+  related_build_lab_id: string | null;
+  related_leadership_id: string | null;
+  publish_status: PublishStatus;
+  is_placeholder: boolean;
+}
+
+export interface TimelineInput {
+  title: string;
+  slug: string | null;
+  kind: TimelineKind;
+  summary: string | null;
+  description: string | null;
+  organization: string | null;
+  location: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  external_url: string | null;
+  related_project_id: string | null;
+  related_experience_id: string | null;
+  related_leadership_id: string | null;
+  featured: boolean;
+  display_order: number;
+  publish_status: PublishStatus;
+  is_placeholder: boolean;
+}
+
+export interface ResumePatch {
+  title?: string;
+  version_label?: string;
+  is_current?: boolean;
+  publish_status?: PublishStatus;
+}
+
+export interface ContactMessageAdmin {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  inquiry_type: string | null;
+  message: string;
+  status: "new" | "read" | "replied" | "archived" | "spam";
+  email_status: "not_configured" | "sent" | "failed";
+  created_at: string;
+  read_at: string | null;
+  replied_at: string | null;
+}
+
+export interface AdminMessageList {
+  items: ContactMessageAdmin[];
+  total: number;
+  unread: number;
+  spam: number;
+  email_delivery_configured: boolean;
+  notification_email: string | null;
+}
+
+export interface AuthChallenge {
+  status: "otp_required";
+  message: string | null;
+  challenge_id: string;
+  phone_masked: string | null;
+  expires_in: number;
+  dev_otp: string | null;
+}
+
+export interface AuthSuccess {
+  status: "authenticated";
+  admin: Admin;
+  message: string | null;
+}
+
+export type LoginResponse = AuthChallenge | AuthSuccess;
+
+export interface ForgotPasswordResponse {
+  message: string;
+  challenge_id: string;
+  phone_masked: string | null;
+  expires_in: number;
+  dev_otp: string | null;
+}
+
+export interface AuthSession {
+  id: string;
+  created_at: string;
+  last_used_at: string;
+  expires_at: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  is_current: boolean;
+}
+
+export interface ActivityEntry {
+  id: string;
+  event: string;
+  status: string;
+  identifier: string | null;
+  ip_address: string | null;
+  detail: string | null;
+  created_at: string;
+}
+
+export interface ActivityList {
+  items: ActivityEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export type SmsStatus =
+  | "QUEUED"
+  | "SENT"
+  | "DELIVERED"
+  | "FAILED"
+  | "EXPIRED"
+  | "CANCELLED";
+
+export interface SmsLogEntry {
+  id: string;
+  user_id: string | null;
+  purpose: string;
+  recipient_phone: string;
+  sender_id: string | null;
+  message_type: string;
+  provider: string;
+  provider_message_id: string | null;
+  status: SmsStatus;
+  failure_reason: string | null;
+  sent_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SmsLogList {
+  items: SmsLogEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export type SessionStatus = "active" | "revoked" | "expired";
+
+export interface AdminSession extends AuthSession {
+  revoked_at: string | null;
+  status: SessionStatus;
+}
+
+export interface SecurityOverview {
+  admin: Admin;
+  sessions: AuthSession[];
+  recent_events: ActivityEntry[];
+  failed_logins_24h: number;
+  active_sessions: number;
+  password_age_days: number | null;
+  successful_logins_24h: number;
+  otp_sent_24h: number;
+  otp_failures_24h: number;
+  otp_success_rate: number | null;
+  sms_delivery_24h: Record<SmsStatus, number>;
+  sms_success_rate: number | null;
+  sms_provider: string;
+  revoked_sessions: number;
+  password_changes_24h: number;
+}
+
+export interface MediaAsset {
+  id: string;
+  filename: string;
+  original_filename: string;
+  title: string;
+  url: string;
+  alt_text: string;
+  caption: string | null;
+  mime_type: string;
+  extension: string;
+  size_bytes: number;
+  width: number;
+  height: number;
+  kind: string;
+  folder: string;
+  checksum: string;
+  attached_to_type: string | null;
+  attached_to_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MediaList {
+  items: MediaAsset[];
+  total: number;
+  folders: string[];
+}
+
+export interface MediaUsageEntry {
+  type: string;
+  id: string;
+  title: string;
+  field: string;
+}
+
+export interface MediaUsage {
+  count: number;
+  entries: MediaUsageEntry[];
+}
+
+export interface MediaUpdateInput {
+  title?: string;
+  alt_text?: string;
+  caption?: string | null;
+  folder?: string;
+  attached_to_type?: string | null;
+  attached_to_id?: string | null;
+}
+
+export type MediaFolder =
+  | "brand"
+  | "profile"
+  | "projects"
+  | "data-lab"
+  | "build-lab"
+  | "leadership"
+  | "experience"
+  | "social"
+  | "blog"
+  | "documents"
+  | "ui"
+  | "misc"
+  | "uncategorised";
+
+// --- CMS: social links and editable pages --------------------------------
+
+export interface SocialLink {
+  id: string;
+  platform: string;
+  label: string;
+  url: string;
+  handle: string | null;
+  sort_order: number;
+  is_visible: boolean;
+}
+
+export interface SocialLinkAdmin extends SocialLink {
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SocialLinkInput {
+  platform: string;
+  label: string;
+  url: string;
+  handle: string | null;
+  sort_order: number;
+  is_visible: boolean;
+}
+
+export interface PageContent {
+  page_key: string;
+  eyebrow: string | null;
+  title: string | null;
+  description: string | null;
+  intro: string | null;
+  hero_image: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image: string | null;
+  canonical_path: string | null;
+  is_published: boolean;
+  content: Record<string, unknown> | null;
+  updated_at: string;
+}
+
+export interface PageContentAdmin extends PageContent {
+  id: string;
+  created_at: string;
+}
+
+export interface PageContentInput {
+  eyebrow: string | null;
+  title: string | null;
+  description: string | null;
+  intro: string | null;
+  hero_image: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image: string | null;
+  canonical_path: string | null;
+  is_published: boolean;
+  content: Record<string, unknown> | null;
+}
+
+export interface ExperienceAdmin {
+  id: string;
+  organization: string;
+  title: string;
+  slug: string | null;
+  location: string | null;
+  description: string | null;
+  started_on: string | null;
+  ended_on: string | null;
+  is_current: boolean;
+  sort_order: number;
+  status: string;
+  is_placeholder: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExperienceInput {
+  organization: string;
+  title: string;
+  slug: string | null;
+  location: string | null;
+  description: string | null;
+  started_on: string | null;
+  ended_on: string | null;
+  is_current: boolean;
+  sort_order: number;
+  publish_status: PublishStatus;
+  is_placeholder: boolean;
+}
+
+export interface LeadershipAdmin {
+  id: string;
+  organization: string;
+  title: string;
+  slug: string | null;
+  description: string | null;
+  contribution: string | null;
+  outcome: string | null;
+  started_on: string | null;
+  ended_on: string | null;
+  url: string | null;
+  sort_order: number;
+  status: string;
+  is_placeholder: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LeadershipInput {
+  organization: string;
+  title: string;
+  slug: string | null;
+  description: string | null;
+  contribution: string | null;
+  outcome: string | null;
+  started_on: string | null;
+  ended_on: string | null;
+  url: string | null;
+  sort_order: number;
+  publish_status: PublishStatus;
+  is_placeholder: boolean;
+}
+
+export interface PageKeyOption {
+  key: string;
+  label: string;
+  path: string;
 }

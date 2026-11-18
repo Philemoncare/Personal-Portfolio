@@ -8,11 +8,12 @@ import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { ProjectCard, ProjectRow } from "@/components/work/project-card";
+import { projectAssetId } from "@/components/work/project-assets";
 import { ProjectStatus } from "@/components/work/project-status";
 import { ProjectVisual } from "@/components/work/project-visual";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useSeo } from "@/hooks/useSeo";
+import { usePageContent, usePageSeo } from "@/app/ContentProvider";
 import { projectsService } from "@/services/projects.service";
 import type { ProjectStage, ProjectSummary } from "@/types/api";
 import { cn } from "@/utils/cn";
@@ -110,6 +111,7 @@ function WorkFeature({
           index={index}
           imageUrl={project.cover_image_url}
           imageAlt={`${project.title} project cover`}
+          assetId={projectAssetId(project.slug)}
           aspect="landscape"
           className="h-full"
         />
@@ -178,12 +180,14 @@ export default function WorkPage() {
     [],
   );
 
-  useSeo({
+  usePageSeo("work", {
     title: "Work — Philemon Melabah",
     description:
       "Projects, systems, and studies by Philemon Melabah. Filter by discipline, technology, or status and follow each project into its case study.",
     path: "/work",
   });
+
+  const page = usePageContent("work");
 
   const items = projects.data?.items ?? [];
   const allItems = facets.data?.items ?? [];
@@ -224,14 +228,21 @@ export default function WorkPage() {
   return (
     <>
       <PageIntro
-        eyebrow="Index / Work"
+        eyebrow={page?.eyebrow || "Index / Work"}
         title={
-          <>
-            Things I&apos;ve built, explored, and{" "}
-            <span className="display-serif text-signal">contributed to.</span>
-          </>
+          page?.title ? (
+            page.title
+          ) : (
+            <>
+              Things I&apos;ve built, explored, and{" "}
+              <span className="display-serif text-signal">contributed to.</span>
+            </>
+          )
         }
-        description="A working index of the products, systems, and studies I've spent time on — what they do, how they're put together, and what I learned. Some are finished; others are still moving."
+        description={
+          page?.description ||
+          "A working index of the products, systems, and studies I've spent time on — what they do, how they're put together, and what I learned. Some are finished; others are still moving."
+        }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">

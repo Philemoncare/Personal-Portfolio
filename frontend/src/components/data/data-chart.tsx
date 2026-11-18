@@ -50,7 +50,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="border border-line-strong bg-ink-950/95 px-3 py-2 shadow-xl backdrop-blur-sm">
+    <div className="border border-line-strong bg-surface/95 px-3 py-2 shadow-overlay backdrop-blur-sm">
       <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
         {displayValue(label)}
       </p>
@@ -63,7 +63,7 @@ function ChartTooltip({
               aria-hidden="true"
             />
             <span className="text-paper-dim">{humanizeKey(String(item.dataKey ?? item.name ?? ""))}</span>
-            <span className="ml-auto tabular-nums text-paper">{displayValue(item.value)}</span>
+            <span className="ml-auto tabular-nums text-paper font-medium">{displayValue(item.value)}</span>
           </li>
         ))}
       </ul>
@@ -72,12 +72,12 @@ function ChartTooltip({
 }
 
 const AXIS_TICK = {
-  fill: "#8b8a84",
+  fill: "var(--color-foreground-muted)",
   fontSize: 10,
   fontFamily: "JetBrains Mono Variable, monospace",
 };
 
-const GRID_STROKE = "rgba(233, 229, 220, 0.08)";
+const GRID_STROKE = "var(--grid-line-strong)";
 
 function ChartBody({ visualization }: { visualization: DataVisualization }) {
   const rows = visualization.data;
@@ -227,7 +227,7 @@ function ChartBody({ visualization }: { visualization: DataVisualization }) {
               outerRadius="82%"
               paddingAngle={chartType === "donut" ? 2 : 0}
               isAnimationActive={false}
-              stroke="#0a0b0d"
+              stroke="var(--color-surface)"
               strokeWidth={2}
             >
               {pieRows.map((row, index) => (
@@ -311,7 +311,7 @@ function ChartBody({ visualization }: { visualization: DataVisualization }) {
             <CartesianGrid stroke={GRID_STROKE} vertical={false} />
             <XAxis dataKey="__label" tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: GRID_STROKE }} interval={0} angle={chartData.length > 8 ? -25 : 0} textAnchor={chartData.length > 8 ? "end" : "middle"} height={chartData.length > 8 ? 48 : 30} />
             <YAxis tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: GRID_STROKE }} tickFormatter={(value: number) => formatCompactNumber(value)} width={52} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(233, 229, 220, 0.04)" }} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--grid-line)" }} />
             <Legend formatter={(value: string) => <span className="text-xs text-paper-dim">{humanizeKey(value)}</span>} />
             {seriesKeys.map((key, index) => (
               <Bar
@@ -344,7 +344,7 @@ export function DataChart({
   const issue = visualizationIssue(visualization);
 
   return (
-    <figure className={cn("border border-line bg-ink-900/50", className)}>
+    <figure className={cn("border border-line bg-surface/70", className)}>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
         <div>
           <figcaption className="text-sm font-medium text-paper">{visualization.title}</figcaption>

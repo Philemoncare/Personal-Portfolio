@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowUpRight, Code2, Database, FlaskConical } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import { CodeBlock } from "@/components/data/code-block";
 import { DataTable } from "@/components/data/data-table";
@@ -12,6 +12,7 @@ import {
 } from "@/components/data/analysis-blocks";
 import { LazyDataChart } from "@/components/data/lazy-chart";
 import { PageIntro } from "@/components/layout/PageIntro";
+import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -132,6 +133,9 @@ function StoryBlock({
 
 export default function DataProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const isDataLabAlias = location.pathname.startsWith("/data-lab/");
+  const basePath = isDataLabAlias ? "/data-lab" : "/data";
   const project = useApiResource<DataProjectDetail>(
     slug ? `/api/v1/data-projects/${encodeURIComponent(slug)}` : null,
   );
@@ -145,7 +149,7 @@ export default function DataProjectDetailPage() {
       data?.seo_description ||
       data?.short_description ||
       "Data analysis project from Philemon Melabah's Data Lab.",
-    path: slug ? `/data/${slug}` : undefined,
+    path: slug ? `${basePath}/${slug}` : undefined,
     type: "article",
     image: data?.cover_image_url ?? null,
     imageAlt: data ? `${data.title} analysis cover` : null,
@@ -235,12 +239,11 @@ export default function DataProjectDetailPage() {
 
           {data.cover_image_url ? (
             <figure className="mt-8 overflow-hidden border border-line">
-              <img
+              <PortfolioImage
                 src={data.cover_image_url}
                 alt={`${data.title} analysis cover`}
-                loading="lazy"
-                decoding="async"
-                className="w-full"
+                aspect="auto"
+                sizes="(max-width: 1024px) 100vw, 70vw"
               />
             </figure>
           ) : null}

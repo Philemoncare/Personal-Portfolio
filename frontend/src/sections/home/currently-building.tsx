@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useNowItems } from "@/hooks/useContent";
 import { cn } from "@/utils/cn";
 import { relativeTime } from "@/utils/format";
+import { NOW_CATEGORY_LABELS } from "@/utils/identity";
 
 export function CurrentlyBuilding() {
   const { data, loading, error, reload } = useNowItems();
@@ -64,7 +65,7 @@ export function CurrentlyBuilding() {
               </div>
 
               {published.slice(0, 6).map((item, index) => {
-                const active = /build|learn|explor/i.test(item.label);
+                const active = item.status === "active";
                 return (
                   <div
                     key={item.id}
@@ -82,7 +83,9 @@ export function CurrentlyBuilding() {
                         )}
                         aria-hidden="true"
                       />
-                      <span className="type-meta text-paper-dim">{item.label}</span>
+                      <span className="type-meta text-paper-dim">
+                        {NOW_CATEGORY_LABELS[item.category]}
+                      </span>
                     </span>
 
                     <div className="min-w-0">

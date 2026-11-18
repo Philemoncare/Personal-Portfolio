@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -9,6 +9,10 @@ from app.core.constants import (
     CASE_STUDY_RESULT_TYPES,
     CASE_STUDY_SECTIONS,
     CONTENT_STATUSES,
+    DEPLOYMENT_PROVIDERS,
+    DEPLOYMENT_STATUSES,
+    DEPLOYMENT_STATUS_LABELS,
+    MEDIA_FOLDERS,
     PROJECT_STAGES,
     WORK_MODES,
 )
@@ -37,8 +41,9 @@ from app.schemas.admin import (
     ProjectStatusInput,
 )
 from app.schemas.project import ProjectCategoryOut, ProjectDetail, TechnologyOut
-from app.services import project_admin
+from app.services import activity, project_admin
 from app.services.content import ContentService
+from app.services.github_metadata import GitHubMetadataError, refresh_project_metadata
 
 router = APIRouter()
 
@@ -180,6 +185,12 @@ def reference(
             for key in CASE_STUDY_SECTIONS
         ],
         result_types=list(CASE_STUDY_RESULT_TYPES),
+        deployment_statuses=[
+            {"value": value, "label": DEPLOYMENT_STATUS_LABELS[value]}
+            for value in DEPLOYMENT_STATUSES
+        ],
+        deployment_providers=list(DEPLOYMENT_PROVIDERS),
+        media_folders=list(MEDIA_FOLDERS),
     )
 
 
@@ -216,10 +227,19 @@ def list_projects(
 @router.post("/projects/reorder", response_model=dict[str, int])
 def reorder_projects(
     payload: ProjectReorderInput,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     updated = project_admin.reorder_projects(db, payload.ids)
+    activity.record(
+        db,
+        "project_reordered",
+        user_id=admin.id,
+        identifier=admin.email,
+        detail=f"{updated} projects reordered",
+        request=request,
+    )
     return {"updated": updated}
 
 
@@ -230,6 +250,7 @@ def reorder_projects(
 )
 def create_project(
     payload: ProjectInput,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> ProjectAdminOut:
@@ -237,6 +258,14 @@ def create_project(
         project = project_admin.create_project(db, payload)
     except project_admin.AdminInputError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    activity.record(
+        db,
+        "project_created",
+        user_id=admin.id,
+        identifier=project.slug,
+        detail=f"Created project “{project.title}” as {project.status}",
+        request=request,
+    )
     return ProjectAdminOut.model_validate(_get_project(db, project.id))
 
 
@@ -265,10 +294,38 @@ def preview_project(
     return detail
 
 
+@router.post("/projects/{project_id}/github", response_model=ProjectAdminOut)
+async def refresh_github(
+    project_id: uuid.UUID,
+    request: Request,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> ProjectAdminOut:
+    project = _get_project(db, project_id)
+    try:
+        project = await refresh_project_metadata(db, project)
+    except GitHubMetadataError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    activity.record(
+        db,
+        "project_github_refreshed",
+        user_id=admin.id,
+        identifier=project.slug,
+        detail=(
+            "Refreshed public GitHub metadata"
+            if project.github_metadata_checked_at
+            else "GitHub metadata unchanged"
+        ),
+        request=request,
+    )
+    return ProjectAdminOut.model_validate(_get_project(db, project.id))
+
+
 @router.put("/projects/{project_id}", response_model=ProjectAdminOut)
 def update_project(
     project_id: uuid.UUID,
     payload: ProjectInput,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> ProjectAdminOut:
@@ -277,17 +334,35 @@ def update_project(
         project = project_admin.update_project(db, project, payload)
     except project_admin.AdminInputError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    activity.record(
+        db,
+        "project_updated",
+        user_id=admin.id,
+        identifier=project.slug,
+        detail=f"Updated project “{project.title}”",
+        request=request,
+    )
     return ProjectAdminOut.model_validate(_get_project(db, project.id))
 
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_project(
     project_id: uuid.UUID,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> Response:
     project = _get_project(db, project_id)
+    title, slug = project.title, project.slug
     project_admin.delete_project(db, project)
+    activity.record(
+        db,
+        "project_deleted",
+        user_id=admin.id,
+        identifier=slug,
+        detail=f"Deleted project “{title}”",
+        request=request,
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -298,11 +373,20 @@ def delete_project(
 )
 def duplicate_project(
     project_id: uuid.UUID,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> ProjectAdminOut:
     project = _get_project(db, project_id)
     copy = project_admin.duplicate_project(db, project)
+    activity.record(
+        db,
+        "project_duplicated",
+        user_id=admin.id,
+        identifier=copy.slug,
+        detail=f"Duplicated project “{project.title}”",
+        request=request,
+    )
     return ProjectAdminOut.model_validate(_get_project(db, copy.id))
 
 
@@ -310,11 +394,22 @@ def duplicate_project(
 def set_project_status(
     project_id: uuid.UUID,
     payload: ProjectStatusInput,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> ProjectAdminOut:
     project = _get_project(db, project_id)
     project_admin.set_publish_status(db, project, payload.status)
+    activity.record(
+        db,
+        "project_published"
+        if payload.status == "published"
+        else "project_status_changed",
+        user_id=admin.id,
+        identifier=project.slug,
+        detail=f"“{project.title}” set to {payload.status}",
+        request=request,
+    )
     return ProjectAdminOut.model_validate(_get_project(db, project_id))
 
 
@@ -339,6 +434,7 @@ def list_case_studies(
 )
 def create_case_study(
     payload: CaseStudyInput,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> CaseStudyAdminOut:
@@ -346,6 +442,14 @@ def create_case_study(
         study = project_admin.create_case_study(db, payload)
     except project_admin.AdminInputError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    activity.record(
+        db,
+        "case_study_created",
+        user_id=admin.id,
+        identifier=study.slug,
+        detail=f"Created case study “{study.title}” as {study.status}",
+        request=request,
+    )
     return CaseStudyAdminOut.model_validate(_get_case_study(db, study.id))
 
 
@@ -362,6 +466,7 @@ def get_case_study(
 def update_case_study(
     study_id: uuid.UUID,
     payload: CaseStudyInput,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> CaseStudyAdminOut:
@@ -370,15 +475,33 @@ def update_case_study(
         study = project_admin.update_case_study(db, study, payload)
     except project_admin.AdminInputError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    activity.record(
+        db,
+        "case_study_updated",
+        user_id=admin.id,
+        identifier=study.slug,
+        detail=f"Updated case study “{study.title}”",
+        request=request,
+    )
     return CaseStudyAdminOut.model_validate(_get_case_study(db, study.id))
 
 
 @router.delete("/case-studies/{study_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_case_study(
     study_id: uuid.UUID,
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> Response:
     study = _get_case_study(db, study_id)
+    title, slug = study.title, study.slug
     project_admin.delete_case_study(db, study)
+    activity.record(
+        db,
+        "case_study_deleted",
+        user_id=admin.id,
+        identifier=slug,
+        detail=f"Deleted case study “{title}”",
+        request=request,
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

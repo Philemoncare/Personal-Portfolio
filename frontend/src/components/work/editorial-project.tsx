@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { projectAssetId } from "@/components/work/project-assets";
 import { ProjectVisual } from "@/components/work/project-visual";
 import type { ProjectSummary } from "@/types/api";
 import { cn } from "@/utils/cn";
@@ -87,6 +88,7 @@ export function FeaturedProject({
           index={index}
           imageUrl={project.cover_image_url}
           imageAlt={`${project.title} project visual`}
+          assetId={projectAssetId(project.slug)}
           aspect="landscape"
           className="h-full"
         />

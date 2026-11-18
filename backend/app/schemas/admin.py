@@ -12,6 +12,7 @@ PublishStatus = Literal["draft", "published", "archived"]
 ProjectStage = Literal["in_progress", "active", "completed", "archived", "experiment"]
 PrimaryMode = Literal["build", "data", "lead", "explore"]
 MediaType = Literal["image", "diagram", "video"]
+DeploymentStatus = Literal["not_deployed", "deploying", "live", "failed", "offline"]
 
 SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 
@@ -79,6 +80,19 @@ class ProjectInput(BaseModel):
     documentation_url: str | None = Field(default=None, max_length=500)
     download_url: str | None = Field(default=None, max_length=500)
     external_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
+    demo_url: str | None = Field(default=None, max_length=500)
+    video_url: str | None = Field(default=None, max_length=500)
+    external_project_url: str | None = Field(default=None, max_length=500)
+    deployment_provider: str | None = Field(default=None, max_length=80)
+    deployment_status: DeploymentStatus = "not_deployed"
+    deployment_url: str | None = Field(default=None, max_length=500)
+    embed_enabled: bool = False
+    last_verified_at: datetime | None = None
+    public_visibility: bool = True
+    seo_title: str | None = Field(default=None, max_length=200)
+    seo_description: str | None = None
+    og_image: str | None = Field(default=None, max_length=1000)
     cover_image: str | None = Field(default=None, max_length=1000)
     sort_order: int = 0
     is_placeholder: bool = False
@@ -117,6 +131,24 @@ class ProjectAdminOut(ORMModel):
     documentation_url: str | None
     download_url: str | None
     external_url: str | None
+    github_url: str | None
+    demo_url: str | None
+    video_url: str | None
+    external_project_url: str | None
+    deployment_provider: str | None
+    deployment_status: str
+    deployment_url: str | None
+    embed_enabled: bool
+    last_verified_at: datetime | None
+    public_visibility: bool
+    github_stars: int | None
+    github_forks: int | None
+    github_language: str | None
+    github_open_issues: int | None
+    github_metadata_checked_at: datetime | None
+    seo_title: str | None
+    seo_description: str | None
+    og_image: str | None
     cover_image: str | None
     cover_image_url: str | None
     sort_order: int
@@ -203,3 +235,6 @@ class AdminReference(BaseModel):
     modes: list[dict[str, str]]
     case_study_sections: list[dict[str, str]]
     result_types: list[str]
+    deployment_statuses: list[dict[str, str]] = []
+    deployment_providers: list[str] = []
+    media_folders: list[str] = []

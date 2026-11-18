@@ -1,384 +1,540 @@
-import { ArrowUpRight, Download } from "lucide-react";
+import { ArrowUpRight, Download, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { useSiteSettings } from "@/app/SiteSettingsProvider";
 import { PageIntro } from "@/components/layout/PageIntro";
+import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { EmptyState, ErrorState } from "@/components/ui/states";
+import { PageSkeleton } from "@/components/ui/skeletons";
 import { Timeline } from "@/features/timeline/Timeline";
-import { useApiResource } from "@/hooks/useApiResource";
-import { useSeo } from "@/hooks/useSeo";
-import type {
-  Certificate,
-  ExperienceEntry,
-  SkillGroup,
-  TimelineEntry,
-} from "@/types/api";
-import { formatDate, formatRange } from "@/utils/format";
+import {
+  useFeaturedProjects,
+  useLeadershipEntries,
+  useProfile,
+  useTimelineEntries,
+} from "@/hooks/useContent";
+import { usePageContent, usePageSeo } from "@/app/ContentProvider";
+import { formatFileSize } from "@/utils/identity";
 
-const PRACTICE = [
-  {
-    title: "Build",
-    body: "Full-stack applications and APIs with a bias toward clear boundaries, typed contracts, and maintainable code.",
-  },
-  {
-    title: "Analyze",
-    body: "Work with real data in Python and SQL, documenting assumptions and communicating the limits of the finding.",
-  },
-  {
-    title: "Lead",
-    body: "Technical programs and communities where coordination, mentoring, and clear communication are part of the work.",
-  },
-  {
-    title: "Explore",
-    body: "Prototype unfamiliar tools and approaches in a lab, then keep only what proves useful.",
-  },
-];
+function Paragraphs({ value }: { value: string }) {
+  return (
+    <div className="space-y-4">
+      {value
+        .split(/\n{2,}/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean)
+        .map((paragraph, index) => (
+          <p key={index} className="max-w-2xl text-pretty text-base leading-relaxed text-paper-dim">
+            {paragraph}
+          </p>
+        ))}
+    </div>
+  );
+}
 
-const PRINCIPLES = [
-  {
-    index: "01",
-    title: "Clarity before cleverness",
-    body: "A system that another person can understand is worth more than a clever system that only one person can maintain.",
-  },
-  {
-    index: "02",
-    title: "Evidence over assertion",
-    body: "Claims about outcomes should be traceable to a test, a measurement, or a written record — not a percentage bar.",
-  },
-  {
-    index: "03",
-    title: "Design the whole path",
-    body: "The interface, API, data model, and failure states are one product. Treating them separately produces seams.",
-  },
-];
+function NarrativeSection({
+  id,
+  eyebrow,
+  title,
+  body,
+  placeholder,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  body: string;
+  placeholder: string;
+}) {
+  return (
+    <section className="border-t border-line pt-10" aria-labelledby={id}>
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2 id={id} className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
+        {title}
+      </h2>
+      {body.trim() ? (
+        <div className="mt-6">
+          <Paragraphs value={body} />
+        </div>
+      ) : (
+        <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted">{placeholder}</p>
+      )}
+    </section>
+  );
+}
 
 export default function AboutPage() {
-  const { settings, loading: settingsLoading, error: settingsError, reload: reloadSettings } =
-    useSiteSettings();
-  const skills = useApiResource<SkillGroup[]>("/api/v1/skills");
-  const experience = useApiResource<ExperienceEntry[]>("/api/v1/experience");
-  const timeline = useApiResource<TimelineEntry[]>("/api/v1/timeline");
-  const certificates = useApiResource<Certificate[]>("/api/v1/certificates");
+  const profile = useProfile();
+  const projects = useFeaturedProjects(3);
+  const timeline = useTimelineEntries();
+  const leadership = useLeadershipEntries();
 
-  useSeo({
-    title: "About — Phill",
+  const person = profile.data;
+  const page = usePageContent("about");
+
+  usePageSeo("about", {
+    title: person
+      ? `About ${person.display_name} | ${person.professional_title ?? "Portfolio"}`
+      : "About | Portfolio",
     description:
-      settings?.bio ||
-      "About Phill: full-stack developer, data and analytics enthusiast, and technology builder.",
+      person?.short_bio ||
+      "A professional profile: what I build, how I work, and the direction of the practice.",
     path: "/about",
+    image: person?.profile_image ?? null,
+    imageAlt: person ? `${person.display_name} profile` : null,
   });
 
-  const skillGroups = skills.data ?? [];
-  const experienceEntries = experience.data ?? [];
+  if (profile.loading && !person) {
+    return <PageSkeleton label="Loading profile" />;
+  }
+
+  if (profile.error && !person) {
+    return (
+      <Container className="py-20">
+        <ErrorState
+          message="The profile could not be loaded. The API may be unavailable — try again in a moment."
+          onRetry={profile.reload}
+        />
+      </Container>
+    );
+  }
+
+  if (!person) {
+    return (
+      <Container className="py-20">
+        <EmptyState
+          title="Profile not configured yet"
+          description="The site owner has not published a profile. Public work and contact are still available."
+          action={
+            <Link to="/work" className={buttonStyles("secondary", "sm")}>
+              See the work index
+            </Link>
+          }
+        />
+      </Container>
+    );
+  }
+
+  const featured = projects.data?.items ?? [];
   const timelineEntries = timeline.data ?? [];
-  const certificateEntries = certificates.data ?? [];
+  const leadershipEntries = leadership.data ?? [];
+  const hasInterests = Boolean(person.personal_interests?.trim());
 
   return (
     <>
       <PageIntro
-        eyebrow="About"
+        eyebrow={page?.eyebrow || "About"}
         title={
-          <>
-            Developer first.{" "}
-            <span className="display-serif text-signal">Systems always.</span>
-          </>
+          page?.title ? (
+            page.title
+          ) : (
+            <>
+              {person.display_name}.{" "}
+              <span className="display-serif text-signal">
+                {person.professional_title ?? "Building systems."}
+              </span>
+            </>
+          )
         }
-        description="A short professional profile: what I build, how I work, and the record behind it. Detailed case studies carry the technical depth."
+        description={
+          page?.description ||
+          person.short_bio ||
+          "A short professional introduction. The longer story, working approach, and current direction are below."
+        }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
               <span>Base</span>
-              <span className="text-paper">{settings?.location || "Not listed"}</span>
+              <span className="text-right text-paper">{person.location || "Not listed"}</span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
               <span>Availability</span>
-              <span className="text-paper">{settings?.availability || "Not listed"}</span>
+              <span className="text-right text-paper">
+                {person.availability || "Not listed"}
+              </span>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-6">
+              <span>Current focus</span>
+              <Link to="/now" className="text-paper underline decoration-line underline-offset-4 hover:text-signal">
+                Now
+              </Link>
             </div>
           </div>
         }
       />
 
       <Container className="py-12 sm:py-16">
-        <section className="grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_20rem] lg:gap-20" aria-labelledby="who-heading">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.55fr)_20rem] lg:gap-20">
           <div>
-            <Eyebrow>Who I am</Eyebrow>
-            <h2 id="who-heading" className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-              A builder across the stack — and across the problem.
-            </h2>
-
-            {settingsLoading ? (
-              <div className="mt-8">
-                <LoadingState rows={3} label="Loading profile" />
+            <section aria-labelledby="story-heading">
+              <Eyebrow>The longer story</Eyebrow>
+              <h2
+                id="story-heading"
+                className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
+              >
+                More than a stack.
+              </h2>
+              <div className="mt-6">
+                {person.long_bio?.trim() ? (
+                  <Paragraphs value={person.long_bio} />
+                ) : (
+                  <p className="max-w-xl text-sm leading-relaxed text-muted">
+                    The longer biography has not been written yet. The short introduction above is
+                    the confirmed profile copy.
+                  </p>
+                )}
               </div>
-            ) : null}
+              {person.is_placeholder ? (
+                <div className="mt-6 flex items-start gap-3 border border-signal/25 bg-signal/5 p-4">
+                  <Badge tone="placeholder">Placeholder</Badge>
+                  <p className="text-xs leading-relaxed text-paper-dim">
+                    Some profile copy is still a placeholder. Confirmed details replace it from the
+                    admin panel; nothing here is invented.
+                  </p>
+                </div>
+              ) : null}
+            </section>
 
-            {settingsError ? (
-              <div className="mt-8">
-                <ErrorState message={settingsError} onRetry={reloadSettings} />
-              </div>
-            ) : null}
+            <div className="mt-12 space-y-12">
+              <NarrativeSection
+                id="build-heading"
+                eyebrow="What I build"
+                title="Products, systems, and analyses."
+                body={person.what_i_build ?? ""}
+                placeholder="No summary of the work has been published yet. The work index and Data Lab carry the actual records."
+              />
+              <NarrativeSection
+                id="work-heading"
+                eyebrow="How I work"
+                title="Method over improvisation."
+                body={person.how_i_work ?? ""}
+                placeholder="The working approach has not been written yet. Case studies and project records show the process in detail."
+              />
+              <NarrativeSection
+                id="direction-heading"
+                eyebrow="Current direction"
+                title="Where the work is heading."
+                body={person.current_direction ?? ""}
+                placeholder="The current direction has not been published. The Now page holds the live snapshot instead."
+              />
+            </div>
 
-            {!settingsLoading && settings?.bio ? (
-              <div className="prose-copy mt-6">
-                {settings.bio.split(/\n{2,}/).map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
+            {hasInterests ? (
+              <section className="mt-12 border-t border-line pt-10" aria-labelledby="interests-heading">
+                <Eyebrow>Beyond work</Eyebrow>
+                <h2
+                  id="interests-heading"
+                  className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
+                >
+                  Genuine interests.
+                </h2>
+                <div className="mt-6 max-w-2xl border-l border-signal pl-5">
+                  <Paragraphs value={person.personal_interests ?? ""} />
+                </div>
+              </section>
             ) : null}
+          </div>
 
-            {!settingsLoading && !settings?.bio ? (
-              <p className="mt-6 max-w-xl text-sm leading-relaxed text-muted">
-                The profile bio has not been added yet. It will be written here from the site
-                settings in the admin panel.
-              </p>
-            ) : null}
+          <aside className="h-fit space-y-6 lg:sticky lg:top-24">
+            <figure className="group border border-line">
+              <PortfolioImage
+                assetId="profile.portrait.square"
+                aspect="square"
+                sizes="(max-width: 1024px) 40vw, 320px"
+                imageClassName="grayscale-[0.25] transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+              />
+              <figcaption className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
+                <span className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
+                  Philemon Melabah
+                </span>
+                <span className="type-meta text-faint">{person.location || "Ghana"}</span>
+              </figcaption>
+            </figure>
 
-            {settings?.is_placeholder ? (
-              <div className="mt-6 flex items-start gap-3 border border-signal/25 bg-signal/5 p-4">
-                <Badge tone="placeholder">Placeholder</Badge>
-                <p className="text-xs leading-relaxed text-paper-dim">
-                  Profile copy is still a placeholder. Verified biography, experience, and
-                  education will replace it.
+            <div className="border border-line bg-ink-800/40">
+              <div className="border-b border-line px-5 py-3">
+                <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted">
+                  Profile record
                 </p>
               </div>
+              <dl className="divide-y divide-line">
+                <div className="flex items-start justify-between gap-4 px-5 py-4">
+                  <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
+                    Role
+                  </dt>
+                  <dd className="text-right text-sm text-paper">
+                    {person.professional_title || "Not listed"}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4 px-5 py-4">
+                  <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
+                    Email
+                  </dt>
+                  <dd className="max-w-[12rem] break-words text-right text-sm text-paper">
+                    {person.email ? (
+                      <a
+                        href={`mailto:${person.email}`}
+                        className="underline decoration-line underline-offset-4 hover:text-signal"
+                      >
+                        {person.email}
+                      </a>
+                    ) : (
+                      "Not published"
+                    )}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4 px-5 py-4">
+                  <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
+                    Resume
+                  </dt>
+                  <dd className="text-right text-sm text-paper">
+                    {person.current_resume ? "Available" : "Not published"}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4 px-5 py-4">
+                  <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
+                    Profile updated
+                  </dt>
+                  <dd className="text-right text-sm text-paper">
+                    {new Date(person.updated_at).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                    })}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            {person.current_resume ? (
+              <a
+                href={person.current_resume.download_url}
+                className={buttonStyles("primary", "md", "w-full")}
+                download
+              >
+                <Download className="size-4" aria-hidden="true" />
+                Download resume
+              </a>
             ) : null}
 
-            <div className="mt-8 flex flex-wrap gap-2">
-              <Link to="/contact" className={buttonStyles("secondary", "sm")}>
-                Contact
-                <ArrowUpRight className="size-3.5" aria-hidden="true" />
-              </Link>
-              {settings?.cv_url ? (
-                <a href={settings.cv_url} download className={buttonStyles("secondary", "sm")}>
-                  Download CV
-                  <Download className="size-3.5" aria-hidden="true" />
-                </a>
-              ) : (
-                <span className={buttonStyles("secondary", "sm", "cursor-not-allowed opacity-50")} aria-disabled="true">
-                  CV pending
-                </span>
-              )}
-            </div>
-          </div>
-
-          <aside className="h-fit border border-line bg-ink-800/40">
-            <div className="border-b border-line px-5 py-3">
-              <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted">
-                Profile facts
+            <div className="space-y-3 border border-line p-5">
+              <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
+                Go deeper
               </p>
+              {[
+                { label: "Work index", to: "/work" },
+                { label: "Data Lab", to: "/data-lab" },
+                { label: "Build Lab", to: "/build-lab" },
+                { label: "Leadership", to: "/leadership" },
+                { label: "Experience", to: "/experience" },
+                { label: "Resume", to: "/resume" },
+                { label: "Timeline", to: "/timeline" },
+              ].map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="flex items-center justify-between gap-3 text-sm text-paper-dim transition-colors hover:text-paper"
+                >
+                  {link.label}
+                  <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              ))}
             </div>
-            <dl className="divide-y divide-line">
-              <div className="flex items-start justify-between gap-4 px-5 py-4">
-                <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">Role</dt>
-                <dd className="text-right text-sm text-paper">{settings?.role_title || "Full-Stack Developer"}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-4 px-5 py-4">
-                <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">Location</dt>
-                <dd className="text-right text-sm text-paper">{settings?.location || "Not listed"}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-4 px-5 py-4">
-                <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">Email</dt>
-                <dd className="max-w-[11rem] break-words text-right text-sm text-paper">
-                  {settings?.email || "Not published"}
-                </dd>
-              </div>
-              <div className="flex items-start justify-between gap-4 px-5 py-4">
-                <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">CV</dt>
-                <dd className="text-right text-sm text-paper">
-                  {settings?.cv_url ? "Available" : "Pending"}
-                </dd>
-              </div>
-            </dl>
           </aside>
-        </section>
+        </div>
 
-        <section className="mt-20 border-t border-line pt-10" aria-labelledby="what-heading">
-          <Eyebrow>What I build</Eyebrow>
-          <h2 id="what-heading" className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Four kinds of work, one practice.
-          </h2>
-          <div className="mt-8 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-            {PRACTICE.map((item) => (
-              <div key={item.title} className="bg-ink-900 p-6">
-                <h3 className="text-lg font-medium text-paper">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-muted">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-20 border-t border-line pt-10" aria-labelledby="how-heading">
-          <Eyebrow>How I work</Eyebrow>
-          <h2 id="how-heading" className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Working principles.
-          </h2>
-          <div className="mt-8 grid gap-8 md:grid-cols-3">
-            {PRINCIPLES.map((principle) => (
-              <div key={principle.index} className="border-t border-line pt-5">
-                <span className="font-mono text-[0.58rem] tracking-[0.16em] text-signal">
-                  {principle.index}
-                </span>
-                <h3 className="mt-4 text-lg font-medium text-paper">{principle.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{principle.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-20 border-t border-line pt-10" aria-labelledby="technology-heading">
+        <section className="mt-20 border-t border-line pt-10" aria-labelledby="about-work-heading">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <Eyebrow>Technology</Eyebrow>
-              <h2 id="technology-heading" className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-                The working toolkit.
+              <Eyebrow>Selected work</Eyebrow>
+              <h2
+                id="about-work-heading"
+                className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
+              >
+                The work behind the profile.
               </h2>
             </div>
-            <p className="max-w-sm text-sm leading-relaxed text-muted">
-              Grouped by how the tools are used, not by arbitrary percentage scores.
+            <Link to="/work" className={buttonStyles("secondary", "sm")}>
+              Full work index
+              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+            </Link>
+          </div>
+
+          {projects.loading ? (
+            <p className="mt-6 text-sm text-muted">Loading selected work…</p>
+          ) : null}
+          {!projects.loading && projects.error ? (
+            <div className="mt-6">
+              <ErrorState
+                message="Selected work could not be loaded. The rest of the profile is still available."
+                onRetry={projects.reload}
+              />
+            </div>
+          ) : null}
+          {!projects.loading && !projects.error && featured.length === 0 ? (
+            <p className="mt-6 max-w-xl text-sm leading-relaxed text-muted">
+              No featured projects are published yet. The{" "}
+              <Link to="/work" className="text-paper underline decoration-line underline-offset-4">
+                work index
+              </Link>{" "}
+              will list them once they are available.
             </p>
-          </div>
-
-          <div className="mt-8">
-            {skills.loading ? <LoadingState rows={2} label="Loading skills" /> : null}
-            {!skills.loading && skills.error ? (
-              <ErrorState message={skills.error.detail} onRetry={skills.reload} />
-            ) : null}
-            {!skills.loading && !skills.error && skillGroups.length === 0 ? (
-              <EmptyState
-                title="Skills have not been added yet"
-                description="Add skill groups and skills from the admin panel. Proficiency is described in words, not percentages."
-              />
-            ) : null}
-            {!skills.loading && !skills.error && skillGroups.length > 0 ? (
-              <div className="grid gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-3">
-                {skillGroups.map((group) => (
-                  <div key={group.id} className="bg-ink-900 p-6">
-                    <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted">
-                      {group.name}
-                    </p>
-                    <ul className="mt-4 flex flex-wrap gap-1.5">
-                      {group.skills.map((skill) => (
-                        <li
-                          key={skill.id}
-                          className="border border-line px-2 py-1 text-sm text-paper-dim"
-                        >
-                          {skill.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="mt-20 border-t border-line pt-10" aria-labelledby="experience-heading">
-          <Eyebrow>Experience</Eyebrow>
-          <h2 id="experience-heading" className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Professional record.
-          </h2>
-          <div className="mt-8">
-            {experience.loading ? <LoadingState rows={2} label="Loading experience" /> : null}
-            {!experience.loading && experience.error ? (
-              <ErrorState message={experience.error.detail} onRetry={experience.reload} />
-            ) : null}
-            {!experience.loading && !experience.error && experienceEntries.length === 0 ? (
-              <EmptyState
-                title="Experience entries are not published"
-                description="Real roles will be listed with organization, period, and responsibility. This section stays closed until those records are confirmed."
-              />
-            ) : null}
-            {!experience.loading && !experience.error && experienceEntries.length > 0 ? (
-              <ol>
-                {experienceEntries.map((entry) => (
-                  <li key={entry.id} className="border-t border-line py-6 first:border-t-0 first:pt-0">
-                    <div className="grid gap-3 sm:grid-cols-[14rem_1fr] sm:gap-8">
-                      <div>
-                        <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted">
-                          {formatRange(entry.started_on, entry.ended_on, entry.is_current)}
+          ) : null}
+          {featured.length > 0 ? (
+            <ul className="mt-8 border-t border-line">
+              {featured.map((project, index) => (
+                <li key={project.id} className="border-b border-line">
+                  <Link
+                    to={`/work/${project.slug}`}
+                    className="group grid gap-3 py-6 transition-colors hover:bg-surface/40 sm:grid-cols-[3rem_minmax(0,1fr)_10rem] sm:items-baseline sm:gap-6 sm:px-2"
+                  >
+                    <span className="font-mono text-[0.58rem] tracking-[0.16em] text-signal">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-xl font-medium tracking-tight text-paper transition-colors group-hover:text-signal-soft">
+                        {project.title}
+                      </h3>
+                      {project.summary ? (
+                        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
+                          {project.summary}
                         </p>
-                        {entry.location ? (
-                          <p className="mt-1 text-xs text-faint">{entry.location}</p>
-                        ) : null}
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-medium text-paper">{entry.title}</h3>
-                        <p className="mt-1 text-sm text-signal-soft">{entry.organization}</p>
-                        {entry.description ? (
-                          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-                            {entry.description}
-                          </p>
-                        ) : null}
-                      </div>
+                      ) : null}
                     </div>
-                  </li>
-                ))}
-              </ol>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="mt-20 border-t border-line pt-10" aria-labelledby="timeline-heading">
-          <Eyebrow>Timeline</Eyebrow>
-          <h2 id="timeline-heading" className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            The chronology.
-          </h2>
-          <div className="mt-8">
-            {timeline.loading ? <LoadingState rows={2} label="Loading timeline" /> : null}
-            {!timeline.loading && timeline.error ? (
-              <ErrorState message={timeline.error.detail} onRetry={timeline.reload} />
-            ) : null}
-            {!timeline.loading && !timeline.error ? (
-              <Timeline entries={timelineEntries} />
-            ) : null}
-          </div>
-        </section>
-
-        {certificateEntries.length > 0 ? (
-          <section className="mt-20 border-t border-line pt-10" aria-labelledby="certificates-heading">
-            <Eyebrow>Certificates</Eyebrow>
-            <h2 id="certificates-heading" className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-              Verified credentials.
-            </h2>
-            <ul className="mt-8 grid gap-px border border-line bg-line sm:grid-cols-2">
-              {certificateEntries.map((certificate) => (
-                <li key={certificate.id} className="bg-ink-900 p-6">
-                  <h3 className="text-lg font-medium text-paper">{certificate.name}</h3>
-                  <p className="mt-1 text-sm text-muted">{certificate.issuer}</p>
-                  <p className="mt-3 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted">
-                    {formatDate(certificate.issued_on, { withDay: true })}
-                  </p>
-                  {certificate.credential_url ? (
-                    <a
-                      href={certificate.credential_url}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="mt-4 inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-paper hover:text-signal"
-                    >
-                      Verify credential
-                      <ArrowUpRight className="size-3" aria-hidden="true" />
-                    </a>
-                  ) : null}
+                    <div className="flex items-center gap-2 sm:justify-end">
+                      <Badge tone="muted">{project.category.name}</Badge>
+                      {project.year ? <Badge tone="outline">{project.year}</Badge> : null}
+                      <ArrowUpRight
+                        className="size-3.5 text-muted transition-colors group-hover:text-paper"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
-          </section>
-        ) : null}
+          ) : null}
+        </section>
+
+        <section
+          className="mt-20 grid gap-8 border-t border-line pt-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-16"
+          aria-labelledby="record-heading"
+        >
+          <div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <Eyebrow>Timeline</Eyebrow>
+                <h2
+                  id="record-heading"
+                  className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
+                >
+                  The chronology.
+                </h2>
+              </div>
+              <Link to="/timeline" className={buttonStyles("secondary", "sm")}>
+                Full timeline
+                <ArrowUpRight className="size-3.5" aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="mt-8">
+              {timeline.loading ? (
+                <p className="text-sm text-muted">Loading timeline…</p>
+              ) : null}
+              {!timeline.loading && timeline.error ? (
+                <ErrorState
+                  message="The timeline could not be loaded."
+                  onRetry={timeline.reload}
+                />
+              ) : null}
+              {!timeline.loading && !timeline.error ? (
+                <Timeline
+                  entries={timelineEntries.slice(0, 5)}
+                  showFilters={false}
+                  emptyTitle="Timeline entries are not published yet"
+                  emptyDescription="Milestones appear once they are confirmed and published."
+                />
+              ) : null}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="border border-line bg-ink-800/40 p-6">
+              <FileText className="size-4 text-signal" aria-hidden="true" />
+              <p className="mt-4 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
+                Experience
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-paper-dim">
+                The professional record is kept separate from this profile so roles and dates stay
+                accurate.
+              </p>
+              <Link
+                to="/experience"
+                className="mt-4 inline-flex items-center gap-1.5 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-paper hover:text-signal"
+              >
+                View experience
+                <ArrowUpRight className="size-3" aria-hidden="true" />
+              </Link>
+            </div>
+
+            <div className="border border-line bg-ink-800/40 p-6">
+              <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
+                Leadership
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-paper-dim">
+                {leadershipEntries.length > 0
+                  ? `${leadershipEntries.length} published ${
+                      leadershipEntries.length === 1 ? "entry" : "entries"
+                    } with responsibility, contribution, and outcome.`
+                  : "No leadership entries are published yet. The section stays open rather than padded with invented roles."}
+              </p>
+              <Link
+                to="/leadership"
+                className="mt-4 inline-flex items-center gap-1.5 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-paper hover:text-signal"
+              >
+                View leadership
+                <ArrowUpRight className="size-3" aria-hidden="true" />
+              </Link>
+            </div>
+
+            {person.current_resume ? (
+              <div className="border border-line bg-ink-800/40 p-6">
+                <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
+                  Managed resume
+                </p>
+                <p className="mt-2 text-sm text-paper">{person.current_resume.title}</p>
+                <p className="mt-1 font-mono text-[0.56rem] uppercase tracking-[0.12em] text-faint">
+                  {person.current_resume.version_label} /{" "}
+                  {formatFileSize(person.current_resume.file_size)} / PDF
+                </p>
+                <a
+                  href={person.current_resume.download_url}
+                  className={buttonStyles("secondary", "sm", "mt-4")}
+                  download
+                >
+                  Download PDF
+                  <Download className="size-3.5" aria-hidden="true" />
+                </a>
+              </div>
+            ) : null}
+          </div>
+        </section>
 
         <div className="mt-16 flex flex-col gap-5 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            The current focus and availability live on the Now page and are updated as work
-            changes.
+            The current focus is maintained on the Now page, and the professional record is
+            available as an online resume and a managed PDF.
           </p>
-          <Link to="/now" className={buttonStyles("secondary", "sm")}>
-            See what is happening now
-            <ArrowUpRight className="size-3.5" aria-hidden="true" />
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/resume" className={buttonStyles("secondary", "sm")}>
+              Online resume
+              <FileText className="size-3.5" aria-hidden="true" />
+            </Link>
+            <Link to="/contact" className={buttonStyles("primary", "sm")}>
+              Start a conversation
+              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
       </Container>
     </>

@@ -7,33 +7,42 @@ import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiResource } from "@/hooks/useApiResource";
-import { useSeo } from "@/hooks/useSeo";
+import { usePageContent, usePageSeo } from "@/app/ContentProvider";
 import type { LeadershipEntry } from "@/types/api";
 import { formatRange } from "@/utils/format";
 
 export default function LeadershipPage() {
   const entries = useApiResource<LeadershipEntry[]>("/api/v1/leadership");
 
-  useSeo({
+  usePageSeo("leadership", {
     title: "Leadership — Phill",
     description:
       "Technical leadership, community initiatives, and programs documented with role, contribution, and outcome.",
     path: "/leadership",
   });
 
+  const page = usePageContent("leadership");
+
   const items = entries.data ?? [];
 
   return (
     <>
       <PageIntro
-        eyebrow="Leadership"
+        eyebrow={page?.eyebrow || "Leadership"}
         title={
-          <>
-            Technical work beyond{" "}
-            <span className="display-serif text-signal">the editor.</span>
-          </>
+          page?.title ? (
+            page.title
+          ) : (
+            <>
+              Technical work beyond{" "}
+              <span className="display-serif text-signal">the editor.</span>
+            </>
+          )
         }
-        description="Roles in technology communities, academic initiatives, and programs. Every entry is written with the same rule as the project work: state the responsibility, the contribution, and the outcome."
+        description={
+          page?.description ||
+          "Roles in technology communities, academic initiatives, and programs. Every entry is written with the same rule as the project work: state the responsibility, the contribution, and the outcome."
+        }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
@@ -93,19 +102,36 @@ export default function LeadershipPage() {
                   <div>
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <h2 className="text-2xl font-medium tracking-tight text-paper sm:text-3xl">
-                        {entry.title}
+                        {entry.slug ? (
+                          <Link to={`/leadership/${entry.slug}`} className="hover:text-signal-soft">
+                            {entry.title}
+                          </Link>
+                        ) : (
+                          entry.title
+                        )}
                       </h2>
-                      {entry.url ? (
-                        <a
-                          href={entry.url}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
-                        >
-                          Organization
-                          <ArrowUpRight className="size-3" aria-hidden="true" />
-                        </a>
-                      ) : null}
+                      <div className="flex flex-wrap items-center gap-4">
+                        {entry.slug ? (
+                          <Link
+                            to={`/leadership/${entry.slug}`}
+                            className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-paper hover:text-signal"
+                          >
+                            Full entry
+                            <ArrowUpRight className="size-3" aria-hidden="true" />
+                          </Link>
+                        ) : null}
+                        {entry.url ? (
+                          <a
+                            href={entry.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
+                          >
+                            Organization
+                            <ArrowUpRight className="size-3" aria-hidden="true" />
+                          </a>
+                        ) : null}
+                      </div>
                     </div>
 
                     <div className="mt-5 grid gap-6 sm:grid-cols-2">

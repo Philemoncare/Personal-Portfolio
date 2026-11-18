@@ -1,7 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { ProjectStatus } from "@/components/work/project-status";
+import { projectAssetId } from "@/components/work/project-assets";
 import { ProjectVisual } from "@/components/work/project-visual";
 import type { ProjectSummary } from "@/types/api";
 import { cn } from "@/utils/cn";
@@ -42,12 +44,10 @@ export function ProjectCard({
   project,
   index,
   className,
-  imageLoading = "lazy",
 }: {
   project: ProjectSummary;
   index: number;
   className?: string;
-  imageLoading?: "lazy" | "eager";
 }) {
   const summary = projectSummaryText(project);
   const cover = project.cover_image_url;
@@ -56,19 +56,19 @@ export function ProjectCard({
     <Link
       to={`/work/${project.slug}`}
       className={cn(
-        "group flex flex-col overflow-hidden border border-line bg-ink-800/40 transition-colors duration-300 hover:border-line-strong hover:bg-ink-700/50",
+        "group flex flex-col overflow-hidden border border-line bg-surface transition-colors duration-300 hover:border-line-strong hover:bg-surface-raised",
         className,
       )}
     >
       <div className="relative overflow-hidden">
         {cover ? (
-          <div className="relative aspect-[16/10] overflow-hidden bg-surface">
-            <img
+          <div className="relative aspect-[16/10] overflow-hidden bg-background">
+            <PortfolioImage
               src={cover}
               alt={`${project.title} project cover`}
-              loading={imageLoading}
-              decoding="async"
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+              aspect="auto"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              imageClassName="transition-transform duration-700 ease-out group-hover:scale-[1.02]"
             />
             <span
               className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-line-strong"
@@ -79,6 +79,7 @@ export function ProjectCard({
           <ProjectVisual
             title={project.title}
             index={index}
+            assetId={projectAssetId(project.slug)}
             aspect="landscape"
             className="border-0 border-b border-line"
           />

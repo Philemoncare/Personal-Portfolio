@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Project, ProjectCategory, Technology
+from app.models import ActivityLog, Project, ProjectCategory, Technology
 
 
 def _category(db: Session, name: str, slug: str) -> ProjectCategory:
@@ -229,6 +229,31 @@ def test_admin_project_lifecycle(admin_client: TestClient, db_session: Session) 
     assert admin_client.get("/api/v1/projects/runtime-flow").status_code == 404
     assert admin_client.get(f"/api/v1/admin/projects/{project_id}").status_code == 404
 
+    events = {
+        row.event
+        for row in db_session.scalars(
+            select(ActivityLog).where(ActivityLog.identifier.is_not(None))
+        ).all()
+    }
+    assert {
+        "project_created",
+        "project_updated",
+        "project_published",
+        "project_duplicated",
+        "project_reordered",
+        "project_deleted",
+    } <= events
+
+    project_rows = db_session.scalars(
+        select(ActivityLog).where(ActivityLog.event.like("project_%"))
+    ).all()
+    assert project_rows
+    for row in project_rows:
+        assert "Draft overview." not in (row.detail or "")
+        assert "Summary." not in (row.detail or "")
+        assert "password" not in (row.detail or "").lower()
+        assert row.user_id is not None
+
 
 def test_case_study_visibility_and_hidden_sections(
     admin_client: TestClient, db_session: Session
@@ -294,6 +319,17 @@ def test_case_study_visibility_and_hidden_sections(
     )
     assert archived.status_code == 200, archived.text
     assert admin_client.get("/api/v1/case-studies/alpha-case-study").status_code == 404
+
+    deleted = admin_client.delete(f"/api/v1/admin/case-studies/{study_id}")
+    assert deleted.status_code == 204
+
+    events = {
+        row.event
+        for row in db_session.scalars(
+            select(ActivityLog).where(ActivityLog.event.like("case_study_%"))
+        ).all()
+    }
+    assert {"case_study_created", "case_study_updated", "case_study_deleted"} <= events
 
 
 def test_admin_project_endpoints_require_authentication(client: TestClient) -> None:

@@ -6,6 +6,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { Wordmark } from "@/components/brand/wordmark";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/utils/cn";
 
 const NAV_ITEMS = [
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
   { label: "Leadership", to: "/leadership" },
   { label: "About", to: "/about" },
   { label: "Now", to: "/now" },
+  { label: "Contact", to: "/contact" },
 ];
 
 export function Header() {
@@ -55,19 +57,19 @@ export function Header() {
   }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-ink-900">
+    <header className="sticky top-0 z-40 border-b border-line bg-background/90 backdrop-blur-md">
       <Container className="flex h-[var(--header-height)] items-center justify-between gap-6">
         <Wordmark compact className="shrink-0" />
 
         <nav aria-label="Primary" className="hidden lg:block">
-          <ul className="flex items-center gap-7">
+          <ul className="flex items-center gap-5 xl:gap-6">
             {NAV_ITEMS.map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
                     cn(
-                      "relative block py-2 font-mono text-[0.66rem] uppercase tracking-[0.16em] transition-colors",
+                      "relative block py-2 font-mono text-[0.66rem] uppercase tracking-[0.16em] transition-colors select-none",
                       isActive ? "text-paper" : "text-muted hover:text-paper",
                     )
                   }
@@ -95,18 +97,21 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle className="hidden sm:inline-block" />
+
           <Link
-            to="/contact"
+            to="/resume"
             className={buttonStyles("secondary", "sm", "hidden sm:inline-flex")}
           >
-            Contact
+            Resume
             <ArrowUpRight className="size-3.5" aria-hidden="true" />
           </Link>
+
           <button
             ref={openButtonRef}
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="inline-flex size-10 items-center justify-center border border-line-strong text-paper transition-colors hover:border-paper lg:hidden"
+            className="inline-flex size-10 items-center justify-center border border-line-strong bg-surface text-paper transition-colors hover:border-paper lg:hidden"
             aria-expanded={menuOpen}
             aria-controls="mobile-navigation"
             aria-label="Open navigation menu"
@@ -123,7 +128,7 @@ export function Header() {
             role="dialog"
             aria-modal="true"
             aria-label="Site navigation"
-            className="fixed inset-0 z-50 flex flex-col bg-ink-950 lg:hidden"
+            className="fixed inset-0 z-50 flex flex-col bg-background lg:hidden"
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -131,15 +136,18 @@ export function Header() {
           >
             <div className="flex h-[var(--header-height)] items-center justify-between border-b border-line px-5 sm:px-8">
               <Wordmark compact />
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={closeMenu}
-                className="inline-flex size-10 items-center justify-center border border-line-strong text-paper"
-                aria-label="Close navigation menu"
-              >
-                <X className="size-5" aria-hidden="true" />
-              </button>
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <button
+                  ref={closeButtonRef}
+                  type="button"
+                  onClick={closeMenu}
+                  className="inline-flex size-10 items-center justify-center border border-line-strong text-paper"
+                  aria-label="Close navigation menu"
+                >
+                  <X className="size-5" aria-hidden="true" />
+                </button>
+              </div>
             </div>
 
             <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-5 py-8 sm:px-8">
@@ -187,6 +195,10 @@ export function Header() {
               <div className="mt-10 flex flex-col gap-3">
                 <Link to="/contact" className={buttonStyles("primary", "lg", "w-full")}>
                   Start a conversation
+                  <ArrowUpRight className="size-4" aria-hidden="true" />
+                </Link>
+                <Link to="/resume" className={buttonStyles("secondary", "lg", "w-full")}>
+                  Resume
                   <ArrowUpRight className="size-4" aria-hidden="true" />
                 </Link>
                 <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">

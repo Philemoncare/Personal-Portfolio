@@ -20,7 +20,14 @@ class ContentService:
 
     def _project_detail(self, project: Project) -> ProjectDetail:
         detail = ProjectDetail.model_validate(project)
-        detail.case_study_slug = self.projects.published_case_study_slug(project.id)
+        study = self.projects.published_case_study(project.id)
+        if study is not None:
+            detail.case_study = CaseStudyDetail.model_validate(study)
+            detail.case_study.project_slug = project.slug
+            detail.case_study.hidden_sections = list(study.hidden_sections or [])
+            detail.case_study_slug = study.slug
+        else:
+            detail.case_study_slug = None
         detail.related = [
             ProjectSummary.model_validate(item)
             for item in self.projects.related(project)

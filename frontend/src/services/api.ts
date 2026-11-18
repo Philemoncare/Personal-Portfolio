@@ -1,5 +1,20 @@
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
 
+/** Broadcast when the server rejects a cookie-authenticated request. */
+export const AUTH_EXPIRED_EVENT = "phill:session-expired";
+
+const UNAUTHENTICATED_AUTH_PATHS = [
+  "/api/v1/auth/login",
+  "/api/v1/auth/verify-otp",
+  "/api/v1/auth/resend-otp",
+  "/api/v1/auth/forgot-password",
+  "/api/v1/auth/reset-password",
+];
+
+function isSessionExpiry(path: string): boolean {
+  return !UNAUTHENTICATED_AUTH_PATHS.some((prefix) => path.startsWith(prefix));
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly detail: string;
@@ -39,7 +54,8 @@ interface RequestOptions {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, signal } = options;
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isFormData) headers["Content-Type"] = "application/json";
 
   let response: Response;
   try {
@@ -47,7 +63,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       method,
       headers,
       credentials: "include",
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isFormData
+            ? (body as FormData)
+            : JSON.stringify(body),
       signal,
     });
   } catch (error) {
@@ -65,6 +86,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
+    if (response.status === 401 && isSessionExpiry(path)) {
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
     throw new ApiError(
       response.status,
       extractDetail(payload, `Request failed (${response.status}).`),

@@ -7,20 +7,39 @@ import {
   Download,
   ExternalLink,
   FileText,
+  GitBranch,
   Globe,
   Layers,
+  Play,
+  Sparkles,
+  Star,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { PageIntro } from "@/components/layout/PageIntro";
+import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { EmptyState } from "@/components/ui/states";
+import { LiveProjectPreview } from "@/components/work/LiveProjectPreview";
 import { ProjectCard } from "@/components/work/project-card";
+import { ProjectGallery } from "@/components/work/ProjectGallery";
 import { ProjectStatus } from "@/components/work/project-status";
-import type { ProjectDetail, ProjectMedia } from "@/types/api";
+import type { CaseStudyDetail, ProjectDetail } from "@/types/api";
+import { cn } from "@/utils/cn";
 import { groupTechnologies } from "@/utils/projects";
+
+const DEPLOYMENT_LABELS: Record<string, string> = {
+  not_deployed: "Not deployed",
+  deploying: "Deploying",
+  live: "Live",
+  failed: "Deployment failed",
+  offline: "Offline",
+};
+
+function hasText(value: string | null | undefined): value is string {
+  return Boolean(value && value.trim());
+}
 
 function Paragraphs({ text }: { text: string }) {
   return (
@@ -40,25 +59,28 @@ function Section({
   id,
   label,
   children,
-  className,
+  meta,
 }: {
   id: string;
   label: string;
   children: ReactNode;
-  className?: string;
+  meta?: ReactNode;
 }) {
   return (
     <section
       id={id}
       aria-labelledby={`${id}-heading`}
-      className={`scroll-mt-28 border-t border-line pt-8 ${className ?? ""}`}
+      className="scroll-mt-28 border-t border-line pt-8"
     >
-      <h2
-        id={`${id}-heading`}
-        className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted"
-      >
-        {label}
-      </h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h2
+          id={`${id}-heading`}
+          className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted"
+        >
+          {label}
+        </h2>
+        {meta}
+      </div>
       <div className="mt-6">{children}</div>
     </section>
   );
@@ -75,74 +97,116 @@ function MetaItem({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function ProjectLinks({ project }: { project: ProjectDetail }) {
-  const links = [
-    project.live_url
-      ? { href: project.live_url, label: "Live demo", icon: Globe }
-      : null,
-    project.repository_url
-      ? { href: project.repository_url, label: "GitHub", icon: Code2 }
-      : null,
-    project.documentation_url
-      ? { href: project.documentation_url, label: "Documentation", icon: FileText }
-      : null,
-    project.download_url
-      ? { href: project.download_url, label: "Download", icon: Download }
-      : null,
-    project.external_url
-      ? { href: project.external_url, label: "External resource", icon: ExternalLink }
-      : null,
-  ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Globe }>;
-
-  if (links.length === 0) return null;
-
-  return (
-    <ul className="flex flex-wrap gap-2">
-      {links.map((link) => (
-        <li key={link.label}>
-          <a
-            href={link.href}
-            target="_blank"
-            rel="noreferrer noopener"
-            className={buttonStyles("secondary", "sm")}
-          >
-            <link.icon className="size-3.5" aria-hidden="true" />
-            {link.label}
-            <ArrowUpRight className="size-3" aria-hidden="true" />
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
+function formatDate(value: string | null): string {
+  if (!value) return "Not recorded";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
-function MediaFigure({ media, eager = false }: { media: ProjectMedia; eager?: boolean }) {
+interface ActionLink {
+  href: string;
+  label: string;
+  icon: typeof Globe;
+  primary?: boolean;
+}
+
+function projectActions(project: ProjectDetail): ActionLink[] {
+  const live =
+    project.deployment_url || project.live_url || project.demo_url || null;
+  const actions: ActionLink[] = [];
+  if (live) actions.push({ href: live, label: "Live project", icon: Globe, primary: true });
+  if (project.github_url || project.repository_url) {
+    actions.push({
+      href: (project.github_url || project.repository_url) as string,
+      label: "Source code",
+      icon: GitBranch,
+    });
+  }
+  if (project.documentation_url) {
+    actions.push({
+      href: project.documentation_url,
+      label: "Documentation",
+      icon: FileText,
+    });
+  }
+  if (project.video_url) {
+    actions.push({ href: project.video_url, label: "Watch demo", icon: Play });
+  }
+  if (project.download_url) {
+    actions.push({ href: project.download_url, label: "Download", icon: Download });
+  }
+  if (project.external_project_url || project.external_url) {
+    actions.push({
+      href: (project.external_project_url || project.external_url) as string,
+      label: "External project",
+      icon: ExternalLink,
+    });
+  }
+  return actions;
+}
+
+interface NarrativeSection {
+  id: string;
+  label: string;
+  text: string | null;
+}
+
+function narrativeSections(study: CaseStudyDetail | null): NarrativeSection[] {
+  if (!study) return [];
+  const hidden = new Set(study.hidden_sections ?? []);
+  const sections: NarrativeSection[] = [
+    { id: "problem", label: "The problem", text: study.problem },
+    { id: "context", label: "Context", text: study.context },
+    { id: "goals", label: "Goals", text: study.goals },
+    { id: "idea", label: "Approach", text: study.idea },
+    { id: "research", label: "Research and planning", text: study.research ?? study.planning },
+    { id: "design", label: "Design", text: study.design },
+    { id: "solution", label: "Solution", text: study.solution },
+    { id: "key_features", label: "Key features", text: study.key_features },
+    { id: "implementation", label: "Implementation", text: study.implementation },
+    { id: "challenges", label: "Challenges", text: study.challenges },
+    { id: "technical_decisions", label: "Technical decisions", text: study.technical_decisions },
+    { id: "testing", label: "Testing and verification", text: study.testing },
+    { id: "results", label: "Results", text: study.results },
+    { id: "lessons", label: "Lessons", text: study.lessons },
+    { id: "future_improvements", label: "Future improvements", text: study.future_improvements },
+  ];
+  return sections.filter((section) => hasText(section.text) && !hidden.has(section.id));
+}
+
+function GitHubMeta({ project }: { project: ProjectDetail }) {
+  const hasMeta =
+    project.github_stars !== null ||
+    project.github_forks !== null ||
+    project.github_language ||
+    project.github_open_issues !== null;
+  if (!hasMeta) return null;
   return (
-    <figure className="border border-line bg-ink-800/40">
-      {media.media_type === "video" ? (
-        <video
-          src={media.url}
-          controls
-          playsInline
-          preload="metadata"
-          aria-label={media.alt_text}
-          className="w-full"
-        />
-      ) : (
-        <img
-          src={media.url}
-          alt={media.alt_text}
-          loading={eager ? "eager" : "lazy"}
-          decoding="async"
-          className="w-full"
-        />
-      )}
-      {media.caption ? (
-        <figcaption className="border-t border-line px-4 py-3 text-xs leading-relaxed text-muted">
-          {media.caption}
-        </figcaption>
+    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border border-line bg-ink-800/30 px-4 py-3 font-mono text-[0.56rem] uppercase tracking-[0.12em] text-muted">
+      <span className="inline-flex items-center gap-1.5">
+        <Star className="size-3 text-signal" aria-hidden="true" />
+        {project.github_stars ?? 0} stars
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <GitBranch className="size-3 text-signal" aria-hidden="true" />
+        {project.github_forks ?? 0} forks
+      </span>
+      {project.github_open_issues !== null ? (
+        <span>{project.github_open_issues} open issues</span>
       ) : null}
-    </figure>
+      {project.github_language ? <span>{project.github_language}</span> : null}
+      <span className="ml-auto normal-case tracking-normal text-faint">
+        Public GitHub metadata
+        {project.github_metadata_checked_at
+          ? ` · checked ${formatDate(project.github_metadata_checked_at)}`
+          : ""}
+      </span>
+    </div>
   );
 }
 
@@ -150,6 +214,7 @@ interface ProjectDetailContentProps {
   data: ProjectDetail;
   backTo?: string;
   backLabel?: string;
+  basePath?: string;
   preview?: boolean;
 }
 
@@ -157,6 +222,7 @@ export function ProjectDetailContent({
   data,
   backTo = "/work",
   backLabel = "Back to work",
+  basePath = "/work",
   preview = false,
 }: ProjectDetailContentProps) {
   const diagrams = data.media.filter((item) => item.media_type === "diagram");
@@ -166,6 +232,17 @@ export function ProjectDetailContent({
       !(data.cover_image_url && item.url === data.cover_image_url),
   );
   const techGroups = groupTechnologies(data.technologies);
+  const study = data.case_study;
+  const actions = projectActions(data);
+  const previewUrl = data.deployment_url || data.demo_url || data.live_url || null;
+  const narrative = narrativeSections(study);
+  const overview = (hasText(study?.overview) ? study?.overview : data.body) ?? null;
+  const architectureText = hasText(study?.architecture) ? study?.architecture : null;
+  const resultsMeta = study?.result_type ? (
+    <span className="border border-line px-2 py-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">
+      {study.result_type}
+    </span>
+  ) : null;
 
   return (
     <>
@@ -177,11 +254,28 @@ export function ProjectDetailContent({
           <div className="border-t border-line pt-4">
             <ProjectStatus status={data.project_status} />
             <div className="mt-3 flex items-center justify-between gap-4 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
-              <span>{data.year ?? data.published_at?.slice(0, 4) ?? "Not recorded"}</span>
+              <span>{data.year ?? data.published_at?.slice(0, 4) ?? "No year"}</span>
               <span>
                 {preview ? "Preview" : data.is_placeholder ? "Draft content" : "Published"}
               </span>
             </div>
+            {data.deployment_status !== "not_deployed" ? (
+              <div className="mt-3 flex items-center justify-between gap-4 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
+                <span>Deployment</span>
+                <span
+                  className={cn(
+                    data.deployment_status === "live"
+                      ? "text-success"
+                      : data.deployment_status === "failed" ||
+                          data.deployment_status === "offline"
+                        ? "text-warning"
+                        : "text-paper",
+                  )}
+                >
+                  {DEPLOYMENT_LABELS[data.deployment_status] ?? data.deployment_status}
+                </span>
+              </div>
+            ) : null}
           </div>
         }
       />
@@ -198,56 +292,56 @@ export function ProjectDetailContent({
         <article className="mt-8">
           {data.cover_image_url ? (
             <figure className="overflow-hidden border border-line bg-surface">
-              <img
+              <PortfolioImage
                 src={data.cover_image_url}
                 alt={`${data.title} project cover`}
-                loading="eager"
-                decoding="async"
-                className="max-h-[38rem] w-full object-cover"
+                aspect="auto"
+                priority
+                sizes="(max-width: 1024px) 100vw, 70vw"
+                imageClassName="max-h-[38rem]"
               />
             </figure>
           ) : null}
 
-          <dl className="mt-8 grid gap-6 border-y border-line py-6 sm:grid-cols-2 lg:grid-cols-4">
-            <MetaItem label="Discipline">
-              <span>{data.category.name}</span>
-              {data.secondary_categories.length > 0 ? (
-                <span className="mt-1 block text-xs text-muted">
-                  {data.secondary_categories.map((item) => item.name).join(" · ")}
-                </span>
-              ) : null}
-            </MetaItem>
-            <MetaItem label="Year">
-              {data.year ??
-                (data.published_at
-                  ? `${new Date(data.published_at).getFullYear()} (published)`
-                  : "Not recorded")}
-            </MetaItem>
-            <MetaItem label="Role">{data.role ?? "Not recorded"}</MetaItem>
-            <MetaItem label="Status">
-              <ProjectStatus status={data.project_status} />
-            </MetaItem>
-          </dl>
-
-          <div className="mt-6 flex flex-col gap-4 border-b border-line pb-8 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <span className="font-mono text-[0.56rem] uppercase tracking-[0.18em] text-muted">
-                Stack
-              </span>
-              {data.technologies.length > 0 ? (
-                data.technologies.map((technology) => (
-                  <span
-                    key={technology.id}
-                    className="border border-line px-2 py-1 font-mono text-[0.56rem] uppercase tracking-[0.1em] text-paper-dim"
-                  >
-                    {technology.name}
+          <div className="mt-8 flex flex-col gap-5 border-y border-line py-6 lg:flex-row lg:items-center lg:justify-between">
+            <dl className="grid flex-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <MetaItem label="Discipline">
+                <span>{data.category.name}</span>
+                {data.secondary_categories.length > 0 ? (
+                  <span className="mt-1 block text-xs text-muted">
+                    {data.secondary_categories.map((item) => item.name).join(" · ")}
                   </span>
-                ))
-              ) : (
-                <span className="text-sm text-muted">Not documented yet</span>
-              )}
-            </div>
-            <ProjectLinks project={data} />
+                ) : null}
+              </MetaItem>
+              <MetaItem label="Year">
+                {data.year ??
+                  (data.published_at
+                    ? `${new Date(data.published_at).getFullYear()} (published)`
+                    : "Not recorded")}
+              </MetaItem>
+              <MetaItem label="Role">{data.role ?? "Not recorded"}</MetaItem>
+              <MetaItem label="Stage">
+                <ProjectStatus status={data.project_status} />
+              </MetaItem>
+            </dl>
+            {actions.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {actions.map((link) => (
+                  <li key={`${link.label}-${link.href}`}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className={buttonStyles(link.primary ? "primary" : "secondary", "sm")}
+                    >
+                      <link.icon className="size-3.5" aria-hidden="true" />
+                      {link.label}
+                      <ArrowUpRight className="size-3" aria-hidden="true" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
 
           {data.is_placeholder ? (
@@ -256,47 +350,117 @@ export function ProjectDetailContent({
                 Record still being written
               </p>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-paper-dim">
-                The structure, link slots, and media system are live. The summary and
-                technical details will be replaced with verified project information from
-                the admin panel.
+                This project is marked as placeholder content. Sections without verified
+                information are hidden rather than filled with invented detail.
               </p>
             </div>
           ) : null}
 
           <div className="mt-12 space-y-12">
-            <Section id="overview" label="Overview">
-              {data.body ? (
-                <Paragraphs text={data.body} />
-              ) : (
-                <EmptyState
-                  title="Overview pending"
-                  description="There is no long-form project description yet. The case-study system is ready for the real problem, decisions, and results."
-                />
-              )}
-            </Section>
+            {hasText(overview) ? (
+              <Section id="overview" label="Overview">
+                <Paragraphs text={overview} />
+              </Section>
+            ) : null}
 
-            {diagrams.length > 0 ? (
+            {previewUrl ? (
+              <Section
+                id="live-preview"
+                label="Live preview"
+                meta={
+                  data.last_verified_at ? (
+                    <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
+                      Last verified {formatDate(data.last_verified_at)}
+                    </span>
+                  ) : null
+                }
+              >
+                <LiveProjectPreview
+                  url={previewUrl}
+                  title={data.title}
+                  embedEnabled={data.embed_enabled}
+                  deploymentStatus={data.deployment_status}
+                />
+              </Section>
+            ) : null}
+
+            {narrative
+              .filter((section) => ["problem", "context", "goals", "idea"].includes(section.id))
+              .map((section) => (
+                <Section key={section.id} id={section.id} label={section.label}>
+                  <Paragraphs text={section.text as string} />
+                </Section>
+              ))}
+
+            {hasText(architectureText) || diagrams.length > 0 ? (
               <Section id="architecture" label="Architecture">
                 <div className="space-y-6">
+                  {architectureText ? <Paragraphs text={architectureText} /> : null}
                   {diagrams.map((media) => (
-                    <MediaFigure key={media.id} media={media} />
+                    <figure key={media.id} className="border border-line bg-ink-800/40">
+                      {media.media_type === "video" ? (
+                        <video
+                          src={media.url}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          aria-label={media.alt_text}
+                          className="w-full"
+                        />
+                      ) : (
+                        <PortfolioImage
+                          src={media.url}
+                          alt={media.alt_text}
+                          aspect="auto"
+                          sizes="(max-width: 1024px) 100vw, 70vw"
+                        />
+                      )}
+                      {media.caption ? (
+                        <figcaption className="border-t border-line px-4 py-3 text-xs leading-relaxed text-muted">
+                          {media.caption}
+                        </figcaption>
+                      ) : null}
+                    </figure>
                   ))}
                 </div>
               </Section>
             ) : null}
 
+            {narrative
+              .filter((section) =>
+                [
+                  "research",
+                  "design",
+                  "solution",
+                  "key_features",
+                  "implementation",
+                  "challenges",
+                  "technical_decisions",
+                  "testing",
+                  "results",
+                  "lessons",
+                  "future_improvements",
+                ].includes(section.id),
+              )
+              .map((section) => (
+                <Section
+                  key={section.id}
+                  id={section.id}
+                  label={section.label}
+                  meta={section.id === "results" ? resultsMeta : undefined}
+                >
+                  <Paragraphs text={section.text as string} />
+                </Section>
+              ))}
+
             {gallery.length > 0 ? (
               <Section id="gallery" label="Screens and artefacts">
-                <div className="grid gap-5 md:grid-cols-2">
-                  {gallery.map((media) => (
-                    <MediaFigure key={media.id} media={media} />
-                  ))}
-                </div>
+                <ProjectGallery media={gallery} />
               </Section>
             ) : null}
 
             {techGroups.length > 0 ? (
-              <Section id="technology" label="Technology">
+              <Section id="technology" label="Stack">
                 <div
                   className={`grid gap-px border border-line bg-line sm:grid-cols-2 ${
                     techGroups.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
@@ -328,11 +492,14 @@ export function ProjectDetailContent({
                     </div>
                   ))}
                 </div>
+                <GitHubMeta project={data} />
               </Section>
-            ) : null}
+            ) : (
+              <GitHubMeta project={data} />
+            )}
 
-            <Section id="case-study" label="Case study">
-              {data.case_study_slug ? (
+            {data.case_study_slug && !study ? (
+              <Section id="case-study" label="Case study">
                 <div className="flex flex-col items-start gap-5 border border-line bg-ink-800/30 p-6 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-4">
                     <FileText className="mt-1 size-5 text-signal" aria-hidden="true" />
@@ -354,13 +521,24 @@ export function ProjectDetailContent({
                     <ArrowUpRight className="size-3.5" aria-hidden="true" />
                   </Link>
                 </div>
-              ) : (
-                <p className="max-w-2xl text-sm leading-relaxed text-muted">
-                  No case study has been published for this project yet. The long-form
-                  record appears here once it is written and published.
+              </Section>
+            ) : null}
+
+            {data.case_study_slug && study && narrative.length > 0 ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
+                <p className="inline-flex items-center gap-2 text-sm text-muted">
+                  <Sparkles className="size-4 text-signal" aria-hidden="true" />
+                  This project has a standalone case study.
                 </p>
-              )}
-            </Section>
+                <Link
+                  to={`/case-studies/${data.case_study_slug}`}
+                  className={buttonStyles("secondary", "sm")}
+                >
+                  Read the full case study
+                  <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           {data.related.length > 0 ? (
@@ -381,7 +559,7 @@ export function ProjectDetailContent({
                   </h2>
                 </div>
                 <Link
-                  to="/work"
+                  to={basePath}
                   className="hidden items-center gap-2 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted transition-colors hover:text-paper sm:inline-flex"
                 >
                   Full index
@@ -403,7 +581,7 @@ export function ProjectDetailContent({
             >
               {data.previous ? (
                 <Link
-                  to={`/work/${data.previous.slug}`}
+                  to={`${basePath}/${data.previous.slug}`}
                   className="group flex flex-col gap-2 border-b border-line py-4 pr-6 sm:border-b-0"
                 >
                   <span className="inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
@@ -419,7 +597,7 @@ export function ProjectDetailContent({
               )}
               {data.next ? (
                 <Link
-                  to={`/work/${data.next.slug}`}
+                  to={`${basePath}/${data.next.slug}`}
                   className="group flex flex-col gap-2 py-4 sm:items-end sm:text-right"
                 >
                   <span className="inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">

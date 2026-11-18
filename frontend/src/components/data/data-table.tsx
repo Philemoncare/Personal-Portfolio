@@ -83,7 +83,7 @@ export function DataTable({
   };
 
   return (
-    <div className={cn("border border-line bg-ink-900/50", className)}>
+    <div className={cn("border border-line bg-surface/50", className)}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="type-meta text-muted">{sorted.length} rows</span>
@@ -105,27 +105,27 @@ export function DataTable({
                 }}
                 placeholder="Search rows"
                 aria-label="Search table rows"
-                className="h-8 w-40 border border-line bg-ink-950 pl-8 pr-2 text-xs text-paper placeholder:text-faint focus:border-line-strong focus:outline-none"
+                className="h-8 w-40 border border-line bg-background pl-8 pr-2 text-xs text-paper placeholder:text-faint focus:border-line-strong focus:outline-none"
               />
             </div>
           ) : null}
           {columnToggle ? (
             <details className="relative">
-              <summary className="inline-flex h-8 cursor-pointer list-none items-center gap-1.5 border border-line px-2 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted hover:border-paper hover:text-paper">
+              <summary className="inline-flex h-8 cursor-pointer list-none items-center gap-1.5 border border-line bg-surface px-2 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted hover:border-paper hover:text-paper">
                 <Columns3 className="size-3" aria-hidden="true" />
                 Columns
               </summary>
-              <div className="absolute right-0 z-20 mt-1 w-52 border border-line bg-ink-900 p-2 shadow-xl">
+              <div className="absolute right-0 z-20 mt-1 w-52 border border-line bg-surface p-2 shadow-overlay">
                 {allColumns.map((column) => (
                   <label
                     key={column}
-                    className="flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs text-paper-dim hover:bg-ink-800"
+                    className="flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs text-paper-dim hover:bg-surface-raised"
                   >
                     <input
                       type="checkbox"
                       checked={visible.includes(column)}
                       onChange={() => toggleColumn(column)}
-                      className="size-3.5 accent-[#ff4e1f]"
+                      className="size-3.5 accent-signal"
                     />
                     {humanizeKey(column)}
                   </label>
@@ -140,7 +140,7 @@ export function DataTable({
         <table className="w-full min-w-[32rem] border-collapse text-left">
           {caption ? <caption className="sr-only">{caption}</caption> : null}
           <thead>
-            <tr className="border-b border-line">
+            <tr className="border-b border-line bg-surface-raised/40">
               {activeColumns.map((column) => {
                 const active = sortKey === column;
                 return (
@@ -148,7 +148,7 @@ export function DataTable({
                     key={column}
                     scope="col"
                     aria-sort={active ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
-                    className="px-4 py-3 font-mono text-[0.52rem] font-normal uppercase tracking-[0.14em] text-muted"
+                    className="px-4 py-3 font-mono text-[0.52rem] font-normal uppercase tracking-[0.14em] text-muted select-none"
                   >
                     <button
                       type="button"
@@ -171,7 +171,7 @@ export function DataTable({
           </thead>
           <tbody className="divide-y divide-line">
             {pageRows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="transition-colors hover:bg-ink-800/40">
+              <tr key={rowIndex} className="transition-colors hover:bg-surface-raised/40">
                 {activeColumns.map((column) => (
                   <td
                     key={column}
@@ -220,7 +220,7 @@ export function DataTable({
               type="button"
               onClick={() => setPage((current) => Math.max(0, current - 1))}
               disabled={safePage === 0}
-              className="inline-flex size-7 items-center justify-center border border-line text-muted hover:border-paper hover:text-paper disabled:opacity-30"
+              className="inline-flex size-7 items-center justify-center border border-line bg-surface text-muted hover:border-paper hover:text-paper disabled:opacity-30"
               aria-label="Previous page"
             >
               <ChevronLeft className="size-3.5" aria-hidden="true" />
@@ -229,7 +229,7 @@ export function DataTable({
               type="button"
               onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}
               disabled={safePage >= pageCount - 1}
-              className="inline-flex size-7 items-center justify-center border border-line text-muted hover:border-paper hover:text-paper disabled:opacity-30"
+              className="inline-flex size-7 items-center justify-center border border-line bg-surface text-muted hover:border-paper hover:text-paper disabled:opacity-30"
               aria-label="Next page"
             >
               <ChevronRight className="size-3.5" aria-hidden="true" />

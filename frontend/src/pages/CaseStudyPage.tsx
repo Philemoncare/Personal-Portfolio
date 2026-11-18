@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowUpRight, Boxes, Code2, Globe, Layers } from "lucide-rea
 import { Link, useParams } from "react-router-dom";
 
 import { PageIntro } from "@/components/layout/PageIntro";
+import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -102,12 +103,11 @@ function ChallengeBlocks({ text }: { text: string }) {
 function Diagram({ media }: { media: ProjectMedia }) {
   return (
     <figure className="border border-line bg-ink-800/40">
-      <img
+      <PortfolioImage
         src={media.url}
         alt={media.alt_text}
-        loading="lazy"
-        decoding="async"
-        className="w-full"
+        aspect="auto"
+        sizes="(max-width: 1024px) 100vw, 70vw"
       />
       {media.caption ? (
         <figcaption className="border-t border-line px-4 py-3 text-xs leading-relaxed text-muted">

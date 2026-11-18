@@ -1,6 +1,8 @@
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { PortfolioImage } from "@/components/media/PortfolioImage";
+
 import type { DataProjectSummary } from "@/types/api";
 import { cn } from "@/utils/cn";
 import {
@@ -19,13 +21,14 @@ function DataProjectVisual({
 }) {
   if (project.cover_image_url) {
     return (
-      <div className="relative aspect-[16/9] overflow-hidden bg-surface">
-        <img
+      <div className="relative aspect-[16/9] overflow-hidden bg-background">
+        <PortfolioImage
           src={project.cover_image_url}
           alt={`${project.title} analysis cover`}
-          loading={imageLoading}
-          decoding="async"
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+          aspect="auto"
+          priority={imageLoading === "eager"}
+          sizes="(max-width: 768px) 100vw, 50vw"
+          imageClassName="transition-transform duration-700 ease-out group-hover:scale-[1.02]"
         />
         <span
           className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-line-strong"
@@ -36,7 +39,7 @@ function DataProjectVisual({
   }
 
   return (
-    <div className="technical-grid-fine relative flex aspect-[16/9] flex-col justify-between overflow-hidden border-b border-line bg-ink-950 p-5">
+    <div className="technical-grid-fine relative flex aspect-[16/9] flex-col justify-between overflow-hidden border-b border-line bg-surface p-5">
       <div className="flex items-start justify-between gap-4">
         <span className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-signal">
           Data Lab / {String(index).padStart(2, "0")}
@@ -76,7 +79,7 @@ export function DataProjectCard({
   return (
     <Link
       to={`/data/${project.slug}`}
-      className="group flex flex-col overflow-hidden border border-line bg-ink-800/40 transition-colors duration-300 hover:border-line-strong hover:bg-ink-700/50"
+      className="group flex flex-col overflow-hidden border border-line bg-surface transition-colors duration-300 hover:border-line-strong hover:bg-surface-raised"
     >
       <DataProjectVisual project={project} index={index} imageLoading={imageLoading} />
 

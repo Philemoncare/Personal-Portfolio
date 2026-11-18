@@ -7,6 +7,7 @@ import { DataTable } from "@/components/data/data-table";
 import { DatasetPanel, InsightCard, Paragraphs, ResourceList } from "@/components/data/analysis-blocks";
 import { LazyDataChart } from "@/components/data/lazy-chart";
 import { PageIntro } from "@/components/layout/PageIntro";
+import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -150,12 +151,11 @@ export default function AdminDataPreviewPage() {
 
         {data.cover_image_url ? (
           <figure className="mb-10 overflow-hidden border border-line">
-            <img
+            <PortfolioImage
               src={data.cover_image_url}
               alt={`${data.title} analysis cover`}
-              loading="lazy"
-              decoding="async"
-              className="w-full"
+              aspect="auto"
+              sizes="(max-width: 1024px) 100vw, 70vw"
             />
           </figure>
         ) : null}

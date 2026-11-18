@@ -24,7 +24,7 @@ export function KpiGrid({ rows, caption }: { rows: DataRow[]; caption?: string |
           const label = String(row.label ?? row.name ?? `Metric ${index + 1}`);
           const value = row.value ?? row.metric ?? row.total ?? null;
           return (
-            <div key={`${label}-${index}`} className="bg-ink-900 p-5">
+            <div key={`${label}-${index}`} className="bg-surface p-5">
               <dt className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
                 {label}
               </dt>

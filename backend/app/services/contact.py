@@ -1,4 +1,4 @@
-"""Contact submission handling: validate, rate-limit, persist."""
+"""Contact submission handling: validate, rate-limit, persist, notify."""
 
 from sqlalchemy.orm import Session
 
@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.rate_limit import SlidingWindowLimiter
 from app.models import ContactMessage
 from app.schemas.contact import ContactCreate
+from app.services.notifications import send_contact_notification
 
 contact_limiter = SlidingWindowLimiter(
     limit=settings.contact_rate_limit_per_hour, window_seconds=3600
@@ -18,18 +19,31 @@ class ContactRateLimited(Exception):
         super().__init__("Too many contact submissions")
 
 
+def _clean(value: str) -> str:
+    """Normalise stored text; never render it as HTML."""
+
+    return value.replace("\r\n", "\n").replace("\x00", "").strip()
+
+
 def submit_message(db: Session, payload: ContactCreate, client_key: str) -> ContactMessage:
     allowed, retry_after = contact_limiter.hit(client_key)
     if not allowed:
         raise ContactRateLimited(retry_after)
 
     message = ContactMessage(
-        name=payload.name,
+        name=_clean(payload.name),
         email=payload.email.lower(),
-        subject=payload.subject,
-        message=payload.message,
+        subject=_clean(payload.subject),
+        inquiry_type=payload.inquiry_type,
+        message=_clean(payload.message),
     )
     db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    # Store first, then attempt delivery. A delivery failure never loses the
+    # message and is surfaced honestly in the admin inbox.
+    message.email_status = send_contact_notification(message)
     db.commit()
     db.refresh(message)
     return message

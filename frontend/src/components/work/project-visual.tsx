@@ -1,5 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 
+import { getImage, type ImageId } from "@/assets/registry";
+import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { cn } from "@/utils/cn";
 
 export function ProjectVisual({
@@ -7,6 +9,7 @@ export function ProjectVisual({
   index,
   imageUrl,
   imageAlt,
+  assetId,
   aspect = "landscape",
   className,
 }: {
@@ -14,6 +17,8 @@ export function ProjectVisual({
   index: number;
   imageUrl?: string | null;
   imageAlt?: string;
+  /** Registry asset used when the project has no uploaded cover. */
+  assetId?: ImageId;
   aspect?: "landscape" | "portrait" | "square";
   className?: string;
 }) {
@@ -32,12 +37,78 @@ export function ProjectVisual({
           className,
         )}
       >
-        <img
+        <PortfolioImage
           src={imageUrl}
-          alt={imageAlt ?? `${title} project visual`}
-          loading="lazy"
-          decoding="async"
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+          alt={imageAlt ?? `${title} project cover`}
+          aspect="auto"
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          imageClassName="transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+        />
+        <span
+          className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-line-strong"
+          aria-hidden="true"
+        />
+      </div>
+    );
+  }
+
+  if (assetId) {
+    const asset = getImage(assetId);
+
+    if (asset.kind === "logo") {
+      return (
+        <div
+          className={cn(
+            "relative flex flex-col overflow-hidden border border-line bg-surface",
+            aspectClass,
+            className,
+          )}
+        >
+          <div className="flex items-center justify-between gap-4 border-b border-line px-4 py-2.5">
+            <span className="type-meta text-muted">Brand mark</span>
+            <span className="type-meta text-faint">{String(index).padStart(2, "0")}</span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center bg-[#f3f0e9] px-8 py-10">
+            <PortfolioImage
+              assetId={assetId}
+              alt={asset.alt}
+              aspect="auto"
+              fit="contain"
+              sizes="(max-width: 1024px) 90vw, 45vw"
+              className="w-full max-w-[30rem]"
+              imageClassName="transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+            />
+            <span
+              className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/10"
+              aria-hidden="true"
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 border-t border-line px-4 py-2.5">
+            <span className="type-meta text-paper-dim">{title}</span>
+            <span className="font-mono text-[0.55rem] uppercase tracking-[0.14em] text-faint">
+              Identity asset
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={cn(
+          "relative overflow-hidden border border-line bg-surface",
+          aspectClass,
+          className,
+        )}
+      >
+        <PortfolioImage
+          assetId={assetId}
+          alt={asset.alt}
+          aspect="auto"
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          imageClassName="transition-transform duration-700 ease-out group-hover:scale-[1.02]"
         />
         <span
           className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-line-strong"

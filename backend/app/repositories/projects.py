@@ -25,7 +25,7 @@ class ProjectRepository:
     def _base_statement(cls) -> Select[tuple[Project]]:
         return (
             select(Project)
-            .where(Project.status == "published")
+            .where(Project.status == "published", Project.public_visibility.is_(True))
             .options(*cls._load_options())
         )
 
@@ -115,6 +115,17 @@ class ProjectRepository:
             )
         )
 
+    def published_case_study(self, project_id: uuid.UUID) -> CaseStudy | None:
+        return self.db.scalar(
+            select(CaseStudy)
+            .where(
+                CaseStudy.project_id == project_id,
+                CaseStudy.status == "published",
+            )
+            .options(selectinload(CaseStudy.project))
+            .order_by(CaseStudy.sort_order, CaseStudy.published_at.desc())
+        )
+
     def related(self, project: Project, limit: int = 3) -> list[Project]:
         conditions = [Project.category_id == project.category_id]
         technology_ids = [item.id for item in project.technologies]
@@ -137,7 +148,11 @@ class ProjectRepository:
     ) -> tuple[Project | None, Project | None]:
         rows = self.db.execute(
             select(Project.id, Project.title, Project.slug)
-            .where(Project.status == "published", Project.project_status != "archived")
+            .where(
+                Project.status == "published",
+                Project.project_status != "archived",
+                Project.public_visibility.is_(True),
+            )
             .order_by(
                 Project.sort_order.asc(),
                 Project.published_at.desc(),

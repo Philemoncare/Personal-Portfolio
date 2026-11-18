@@ -7,17 +7,9 @@ import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useTimelineEntries } from "@/hooks/useContent";
-import type { TimelineEntry, TimelineKind } from "@/types/api";
+import type { TimelineEntry } from "@/types/api";
 import { formatMonthYear } from "@/utils/format";
-
-const KIND_LABELS: Record<TimelineKind, string> = {
-  education: "Education",
-  project: "Projects",
-  leadership: "Leadership",
-  cloud: "AWS / Cloud",
-  development: "Development",
-  milestone: "Milestones",
-};
+import { TIMELINE_KIND_LABELS } from "@/utils/identity";
 
 function groupByYear(entries: TimelineEntry[]) {
   return entries.reduce<Record<number, TimelineEntry[]>>((groups, entry) => {
@@ -54,9 +46,9 @@ export function TimelinePreview() {
             </h2>
             <p className="mt-5 max-w-md text-pretty text-sm leading-relaxed text-paper-dim">
               A short professional chronology. The full record, including education, projects, and
-              leadership, lives on the About page.
+              leadership, lives on the Timeline page.
             </p>
-            <Link to="/about" className={buttonStyles("secondary", "sm", "mt-7")}>
+            <Link to="/timeline" className={buttonStyles("secondary", "sm", "mt-7")}>
               Full timeline
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
@@ -92,7 +84,8 @@ export function TimelinePreview() {
                           />
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="type-meta text-muted">
-                              {formatMonthYear(entry.year, entry.month)} / {KIND_LABELS[entry.kind]}
+                              {formatMonthYear(entry.year, entry.month)} /{" "}
+                              {TIMELINE_KIND_LABELS[entry.kind]}
                             </span>
                             {entry.is_placeholder ? (
                               <Badge tone="placeholder">Pending</Badge>
@@ -101,9 +94,9 @@ export function TimelinePreview() {
                           <h3 className="mt-1.5 text-lg font-medium tracking-tight text-paper">
                             {entry.title}
                           </h3>
-                          {entry.description ? (
+                          {entry.summary || entry.description ? (
                             <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted">
-                              {entry.description}
+                              {entry.summary || entry.description}
                             </p>
                           ) : null}
                         </li>

@@ -1,3 +1,5 @@
+"""Published-only content queries for shared content records."""
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -6,11 +8,12 @@ from app.models import (
     Certificate,
     ExperienceEntry,
     LeadershipEntry,
-    NowItem,
-    SiteSettings,
     SkillGroup,
-    TimelineEntry,
 )
+
+from app.repositories.identity import IdentityRepository
+
+__all__ = ["ContentRepository", "IdentityRepository"]
 
 
 class ContentRepository:
@@ -32,7 +35,8 @@ class ContentRepository:
                 select(LeadershipEntry)
                 .where(LeadershipEntry.status == "published")
                 .order_by(
-                    LeadershipEntry.sort_order, LeadershipEntry.started_on.desc().nulls_last()
+                    LeadershipEntry.sort_order,
+                    LeadershipEntry.started_on.desc().nulls_last(),
                 )
             ).all()
         )
@@ -73,28 +77,3 @@ class ContentRepository:
                 Article.slug == slug, Article.status == "published"
             )
         )
-
-    def timeline(self) -> list[TimelineEntry]:
-        return list(
-            self.db.scalars(
-                select(TimelineEntry)
-                .where(TimelineEntry.status == "published")
-                .order_by(
-                    TimelineEntry.year.desc(),
-                    TimelineEntry.month.desc().nulls_last(),
-                    TimelineEntry.sort_order,
-                )
-            ).all()
-        )
-
-    def now_items(self) -> list[NowItem]:
-        return list(
-            self.db.scalars(
-                select(NowItem)
-                .where(NowItem.status == "published")
-                .order_by(NowItem.sort_order)
-            ).all()
-        )
-
-    def site_settings(self) -> SiteSettings | None:
-        return self.db.get(SiteSettings, 1)

@@ -6,16 +6,17 @@
 
 /* -------------------------------------------------------------------------
    Design tokens
-   Change the semantic values below to re-skin the whole product. The ink/
-   paper/signal names are retained as aliases so existing components keep
-   working while new work uses the semantic names.
+   Centralized source of truth for color, typography, spacing, borders, radius, motion.
    ------------------------------------------------------------------------- */
 @theme {
   /* Foundation */
   --color-background: #0a0b0d;
   --color-surface: #101215;
   --color-surface-raised: #171a1e;
+  --color-surface-hover: #1f2329;
+  --color-surface-active: #272c33;
   --color-border: rgba(233, 229, 220, 0.13);
+  --color-border-subtle: rgba(233, 229, 220, 0.07);
   --color-border-strong: rgba(233, 229, 220, 0.26);
 
   /* Type */
@@ -24,7 +25,7 @@
   --color-foreground-muted: #8b8a84;
   --color-foreground-faint: #6a6964;
 
-  /* One accent, used intentionally */
+  /* Accent */
   --color-accent: #ff4e1f;
   --color-accent-hover: #ff7a52;
 
@@ -32,8 +33,9 @@
   --color-success: #5ea77a;
   --color-warning: #d9a441;
   --color-error: #e2564a;
+  --color-info: #4a90e2;
 
-  /* Legacy aliases */
+  /* Aliases for backwards compatibility */
   --color-ink-950: #070809;
   --color-ink-900: var(--color-background);
   --color-ink-800: var(--color-surface);
@@ -69,12 +71,105 @@
   --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
 
+  /* Radius scale — structured, non-bubbly geometry */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-full: 9999px;
+
+  /* Spacing rhythm */
+  --space-row: 0.875rem;
+  --space-cell-x: 1rem;
+  --space-panel: 1.25rem;
+
+  /* Elevation */
+  --shadow-panel: 0 1px 0 rgba(0, 0, 0, 0.25);
+  --shadow-overlay: 0 24px 80px rgba(0, 0, 0, 0.45);
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-:root {
+:root,
+html[data-theme="dark"] {
   color-scheme: dark;
   --header-height: 4.5rem;
+  --grid-line: rgba(233, 229, 220, 0.045);
+  --grid-line-strong: rgba(233, 229, 220, 0.07);
+  --grid-line-fine: rgba(233, 229, 220, 0.055);
+  --color-background: #0a0b0d;
+  --color-surface: #101215;
+  --color-surface-raised: #171a1e;
+  --color-surface-hover: #1f2329;
+  --color-surface-active: #272c33;
+  --color-border: rgba(233, 229, 220, 0.13);
+  --color-border-subtle: rgba(233, 229, 220, 0.07);
+  --color-border-strong: rgba(233, 229, 220, 0.26);
+  --color-foreground: #e9e5dc;
+  --color-foreground-secondary: #c4c0b7;
+  --color-foreground-muted: #8b8a84;
+  --color-foreground-faint: #6a6964;
+  --color-accent: #ff4e1f;
+  --color-accent-hover: #ff7a52;
+  --color-success: #5ea77a;
+  --color-warning: #d9a441;
+  --color-error: #e2564a;
+  --color-info: #4a90e2;
+  --color-ink-950: #070809;
+  --color-ink-900: var(--color-background);
+  --color-ink-800: var(--color-surface);
+  --color-ink-700: var(--color-surface-raised);
+  --color-line: var(--color-border);
+  --color-line-strong: var(--color-border-strong);
+  --color-paper: var(--color-foreground);
+  --color-paper-dim: var(--color-foreground-secondary);
+  --color-muted: var(--color-foreground-muted);
+  --color-faint: var(--color-foreground-faint);
+  --color-signal: var(--color-accent);
+  --color-signal-soft: var(--color-accent-hover);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --grid-line: rgba(23, 22, 20, 0.05);
+  --grid-line-strong: rgba(23, 22, 20, 0.08);
+  --grid-line-fine: rgba(23, 22, 20, 0.06);
+  --color-background: #f6f4ee;
+  --color-surface: #ffffff;
+  --color-surface-raised: #efece4;
+  --color-surface-hover: #e7e3d8;
+  --color-surface-active: #dfdbc8;
+  --color-border: rgba(23, 22, 20, 0.14);
+  --color-border-subtle: rgba(23, 22, 20, 0.07);
+  --color-border-strong: rgba(23, 22, 20, 0.3);
+  --color-foreground: #171614;
+  --color-foreground-secondary: #3e3b35;
+  --color-foreground-muted: #5f5b52;
+  --color-foreground-faint: #7a756a;
+  --color-accent: #d63c10;
+  --color-accent-hover: #b8310c;
+  --color-success: #2f7a4d;
+  --color-warning: #9a6a12;
+  --color-error: #b23a30;
+  --color-info: #216ba5;
+  --color-ink-950: #efeae0;
+  --color-ink-900: var(--color-background);
+  --color-ink-800: var(--color-surface);
+  --color-ink-700: var(--color-surface-raised);
+  --color-ink-600: #d8d1c4;
+  --color-line: var(--color-border);
+  --color-line-strong: var(--color-border-strong);
+  --color-paper: var(--color-foreground);
+  --color-paper-dim: var(--color-foreground-secondary);
+  --color-muted: var(--color-foreground-muted);
+  --color-faint: var(--color-foreground-faint);
+  --color-signal: var(--color-accent);
+  --color-signal-soft: var(--color-accent-hover);
 }
 
 * {
@@ -89,8 +184,8 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background-color: var(--color-ink-900);
-  color: var(--color-paper);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
   font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -104,19 +199,19 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(233, 229, 220, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(233, 229, 220, 0.045) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 6rem 6rem;
   mask-image: linear-gradient(to bottom, black 0%, transparent 62%);
 }
 
 ::selection {
-  background: var(--color-signal);
-  color: var(--color-ink-950);
+  background: var(--color-accent);
+  color: #070809;
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-signal);
+  outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
 
@@ -203,15 +298,15 @@ img {
 /* Technical surfaces used by project plates and data panels */
 .technical-grid {
   background-image:
-    linear-gradient(to right, rgba(233, 229, 220, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(233, 229, 220, 0.07) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line-strong) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-strong) 1px, transparent 1px);
   background-size: 2.5rem 2.5rem;
 }
 
 .technical-grid-fine {
   background-image:
-    linear-gradient(to right, rgba(233, 229, 220, 0.055) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(233, 229, 220, 0.055) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line-fine) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-fine) 1px, transparent 1px);
   background-size: 1rem 1rem;
 }
 

@@ -10,6 +10,7 @@ class ExperienceOut(ORMModel):
     id: uuid.UUID
     organization: str
     title: str
+    slug: str | None
     location: str | None
     description: str | None
     started_on: date
@@ -21,6 +22,7 @@ class LeadershipOut(ORMModel):
     id: uuid.UUID
     organization: str
     title: str
+    slug: str | None
     description: str | None
     contribution: str | None
     outcome: str | None
@@ -68,41 +70,6 @@ class ArticleDetail(ArticleSummary):
     body: str | None
 
 
-class TimelineOut(ORMModel):
-    id: uuid.UUID
-    year: int
-    month: int | None
-    kind: str
-    title: str
-    description: str | None
-    is_placeholder: bool
-
-
-class NowOut(ORMModel):
-    id: uuid.UUID
-    label: str
-    title: str
-    description: str | None
-    is_placeholder: bool
-    updated_at: datetime
-
-
-class SiteSettingsPublic(ORMModel):
-    display_name: str
-    role_title: str
-    hero_intro: str | None
-    bio: str | None
-    location: str | None
-    availability: str | None
-    email: str | None
-    github_url: str | None
-    linkedin_url: str | None
-    cv_url: str | None
-    seo_title: str | None
-    seo_description: str | None
-    is_placeholder: bool
-
-
 class TimelineGroup(BaseModel):
     year: int
-    entries: list[TimelineOut]
+    entries: list[dict]

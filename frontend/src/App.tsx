@@ -2,7 +2,10 @@ import { MotionConfig } from "framer-motion";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 
+import { ContentProvider } from "@/app/ContentProvider";
 import { SiteSettingsProvider } from "@/app/SiteSettingsProvider";
+import { ThemeProvider } from "@/app/ThemeProvider";
+import { AuthProvider } from "@/auth/AuthProvider";
 import { InlineLoading } from "@/components/ui/states";
 import { AdminLayout, AdminRoute } from "@/layouts/AdminLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
@@ -15,12 +18,33 @@ const DataLabPage = lazy(() => import("@/pages/DataLabPage"));
 const DataProjectDetailPage = lazy(() => import("@/pages/DataProjectDetailPage"));
 const BuildLabPage = lazy(() => import("@/pages/BuildLabPage"));
 const LeadershipPage = lazy(() => import("@/pages/LeadershipPage"));
+const LeadershipDetailPage = lazy(() => import("@/pages/LeadershipDetailPage"));
+const ExperiencePage = lazy(() => import("@/pages/ExperiencePage"));
+const ExperienceDetailPage = lazy(() => import("@/pages/ExperienceDetailPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const NowPage = lazy(() => import("@/pages/NowPage"));
+const TimelinePage = lazy(() => import("@/pages/TimelinePage"));
+const ResumePage = lazy(() => import("@/pages/ResumePage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
-const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
+const AdminLoginPage = lazy(() => import("@/pages/auth/LoginPage"));
+const VerifyOtpPage = lazy(() => import("@/pages/auth/VerifyOtpPage"));
+const ForgotPasswordPage = lazy(() => import("@/pages/auth/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/auth/ResetPasswordPage"));
+const ChangePasswordPage = lazy(() => import("@/pages/auth/ChangePasswordPage"));
+const AdminAccountPage = lazy(() => import("@/pages/admin/AdminAccountPage"));
+const AdminSecurityPage = lazy(() => import("@/pages/admin/AdminSecurityPage"));
+const AdminSecuritySessionsPage = lazy(
+  () => import("@/pages/admin/AdminSecuritySessionsPage"),
+);
+const AdminMediaPage = lazy(() => import("@/pages/admin/AdminMediaPage"));
 const AdminDashboardPage = lazy(() => import("@/pages/admin/AdminDashboardPage"));
+const AdminProfilePage = lazy(() => import("@/pages/admin/AdminProfilePage"));
+const AdminNowPage = lazy(() => import("@/pages/admin/AdminNowPage"));
+const AdminTimelinePage = lazy(() => import("@/pages/admin/AdminTimelinePage"));
+const AdminResumePage = lazy(() => import("@/pages/admin/AdminResumePage"));
+const AdminMessagesPage = lazy(() => import("@/pages/admin/AdminMessagesPage"));
+const AdminSettingsPage = lazy(() => import("@/pages/admin/AdminSettingsPage"));
 const AdminProjectsPage = lazy(() => import("@/pages/admin/AdminProjectsPage"));
 const AdminProjectEditorPage = lazy(() => import("@/pages/admin/AdminProjectEditorPage"));
 const AdminProjectPreviewPage = lazy(
@@ -37,6 +61,11 @@ const AdminDataEditorPage = lazy(() => import("@/pages/admin/AdminDataEditorPage
 const AdminDataPreviewPage = lazy(
   () => import("@/pages/admin/AdminDataPreviewPage"),
 );
+const AdminPagesPage = lazy(() => import("@/pages/admin/AdminPagesPage"));
+const AdminSocialLinksPage = lazy(() => import("@/pages/admin/AdminSocialLinksPage"));
+const AdminExperiencePage = lazy(() => import("@/pages/admin/AdminExperiencePage"));
+const AdminLeadershipPage = lazy(() => import("@/pages/admin/AdminLeadershipPage"));
+const AdminAppearancePage = lazy(() => import("@/pages/admin/AdminAppearancePage"));
 
 function RouteFallback() {
   return (
@@ -48,13 +77,17 @@ function RouteFallback() {
 
 export default function App() {
   return (
-    <MotionConfig reducedMotion="user">
-      <Suspense fallback={<RouteFallback />}>
+    <ThemeProvider>
+      <MotionConfig reducedMotion="user">
+        <AuthProvider>
+          <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route
             element={
               <SiteSettingsProvider>
-                <PublicLayout />
+                <ContentProvider>
+                  <PublicLayout />
+                </ContentProvider>
               </SiteSettingsProvider>
             }
           >
@@ -64,33 +97,62 @@ export default function App() {
             <Route path="case-studies/:slug" element={<CaseStudyPage />} />
             <Route path="data-lab" element={<DataLabPage />} />
             <Route path="data/:slug" element={<DataProjectDetailPage />} />
+            <Route path="data-lab/:slug" element={<DataProjectDetailPage />} />
             <Route path="build-lab" element={<BuildLabPage />} />
+            <Route path="build-lab/:slug" element={<ProjectDetailPage />} />
             <Route path="leadership" element={<LeadershipPage />} />
+            <Route path="leadership/:slug" element={<LeadershipDetailPage />} />
+            <Route path="experience" element={<ExperiencePage />} />
+            <Route path="experience/:slug" element={<ExperienceDetailPage />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="now" element={<NowPage />} />
+            <Route path="timeline" element={<TimelinePage />} />
+            <Route path="resume" element={<ResumePage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
+          <Route path="/login" element={<AdminLoginPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/verify-otp" element={<VerifyOtpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/change-password" element={<ChangePasswordPage />} />
           <Route path="/admin" element={<AdminRoute />}>
             <Route path="projects/:id/preview" element={<AdminProjectPreviewPage />} />
             <Route path="data/:id/preview" element={<AdminDataPreviewPage />} />
             <Route element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
+              <Route path="now" element={<AdminNowPage />} />
+              <Route path="timeline" element={<AdminTimelinePage />} />
+              <Route path="resume" element={<AdminResumePage />} />
+              <Route path="messages" element={<AdminMessagesPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="projects" element={<AdminProjectsPage />} />
               <Route path="projects/new" element={<AdminProjectEditorPage />} />
               <Route path="projects/:id" element={<AdminProjectEditorPage />} />
+              <Route path="pages" element={<AdminPagesPage />} />
+              <Route path="social-links" element={<AdminSocialLinksPage />} />
+              <Route path="experience" element={<AdminExperiencePage />} />
+              <Route path="leadership" element={<AdminLeadershipPage />} />
+              <Route path="appearance" element={<AdminAppearancePage />} />
               <Route path="case-studies" element={<AdminCaseStudiesPage />} />
               <Route path="case-studies/new" element={<AdminCaseStudyEditorPage />} />
               <Route path="case-studies/:id" element={<AdminCaseStudyEditorPage />} />
               <Route path="data" element={<AdminDataProjectsPage />} />
               <Route path="data/new" element={<AdminDataEditorPage />} />
               <Route path="data/:id" element={<AdminDataEditorPage />} />
+              <Route path="media" element={<AdminMediaPage />} />
+              <Route path="account" element={<AdminAccountPage />} />
+              <Route path="security" element={<AdminSecurityPage />} />
+              <Route path="security/sessions" element={<AdminSecuritySessionsPage />} />
             </Route>
           </Route>
         </Routes>
-      </Suspense>
-    </MotionConfig>
+          </Suspense>
+        </AuthProvider>
+      </MotionConfig>
+    </ThemeProvider>
   );
 }

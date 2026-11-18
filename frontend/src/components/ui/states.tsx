@@ -19,7 +19,7 @@ export function LoadingState({
       {Array.from({ length: rows }).map((_, index) => (
         <div
           key={index}
-          className="h-16 animate-pulse border border-line bg-ink-800/60"
+          className="h-16 animate-pulse border border-line bg-surface-raised/50"
           style={{ animationDelay: `${index * 80}ms` }}
         />
       ))}
@@ -61,14 +61,14 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-4 border border-dashed border-line-strong bg-ink-800/30 p-8 sm:p-10",
+        "flex flex-col items-start gap-4 border border-dashed border-line-strong bg-surface/50 p-8 sm:p-10",
         className,
       )}
     >
       <Inbox className="size-5 text-muted" aria-hidden="true" />
       <div>
         <p className="text-lg font-medium text-paper">{title}</p>
-        <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted">{description}</p>
+        <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-muted">{description}</p>
       </div>
       {action}
     </div>
@@ -87,15 +87,15 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-4 border border-signal/30 bg-signal/5 p-8",
+        "flex flex-col items-start gap-4 border border-error/40 bg-error/10 p-8",
         className,
       )}
       role="alert"
     >
-      <AlertTriangle className="size-5 text-signal" aria-hidden="true" />
+      <AlertTriangle className="size-5 text-error" aria-hidden="true" />
       <div>
         <p className="font-medium text-paper">This section could not load</p>
-        <p className="mt-2 max-w-lg text-sm leading-relaxed text-paper-dim">{message}</p>
+        <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-paper-dim">{message}</p>
       </div>
       {onRetry ? (
         <button type="button" onClick={onRetry} className={buttonStyles("secondary", "sm")}>
