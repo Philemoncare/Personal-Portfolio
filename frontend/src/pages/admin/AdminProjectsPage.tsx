@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   Copy,
   Eye,
+  GitBranch,
   Pencil,
   Plus,
   Search,
@@ -28,6 +29,14 @@ const STATUS_TABS: Array<{ value: "" | PublishStatus; label: string }> = [
   { value: "published", label: "Published" },
   { value: "archived", label: "Archived" },
 ];
+
+function projectSource(project: AdminProject): string {
+  if (project.github_repository_id) return "GitHub";
+  if (project.repository_url || project.external_url || project.external_project_url) {
+    return "External";
+  }
+  return "Manual";
+}
 
 export default function AdminProjectsPage() {
   const projects = useApiQuery(
@@ -141,9 +150,30 @@ export default function AdminProjectsPage() {
             here is stored in the database and served by the same API the public site reads.
           </p>
         </div>
-        <Link to="/admin/projects/new" className={buttonStyles("primary", "md")}>
-          <Plus className="size-4" aria-hidden="true" />
-          New project
+        <div className="flex flex-wrap gap-2">
+          <Link to="/admin/projects/new" className={buttonStyles("secondary", "md")}>
+            <Plus className="size-4" aria-hidden="true" />
+            Create project
+          </Link>
+          <Link to="/admin/github" className={buttonStyles("primary", "md")}>
+            <GitBranch className="size-4" aria-hidden="true" />
+            Import from GitHub
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 border border-line bg-ink-800/40 px-4 py-3 text-xs text-paper-dim">
+        <GitBranch className="size-4 text-signal" aria-hidden="true" />
+        <span>
+          GitHub-linked projects appear with a GitHub source marker. Imports always start as
+          drafts and can be synchronized without overwriting editorial content.
+        </span>
+        <Link
+          to="/admin/integrations/github"
+          className="ml-auto inline-flex items-center gap-1 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-signal hover:underline"
+        >
+          GitHub settings
+          <ArrowUpRight className="size-3" aria-hidden="true" />
         </Link>
       </div>
 
@@ -236,9 +266,10 @@ export default function AdminProjectsPage() {
 
         {items.length > 0 ? (
           <div className="border border-line">
-            <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_9rem_7rem_8rem_11rem] gap-4 border-b border-line bg-ink-800/50 px-4 py-3 font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted lg:grid">
+            <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_7rem_9rem_7rem_8rem_11rem] gap-4 border-b border-line bg-ink-800/50 px-4 py-3 font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted xl:grid">
               <span>Order</span>
               <span>Project</span>
+              <span>Source</span>
               <span>Category</span>
               <span>Stage</span>
               <span>Publish</span>
@@ -248,7 +279,7 @@ export default function AdminProjectsPage() {
               {items.map((project) => (
                 <li
                   key={project.id}
-                  className="grid gap-3 px-4 py-4 lg:grid-cols-[2.5rem_minmax(0,1fr)_9rem_7rem_8rem_11rem] lg:items-center lg:gap-4"
+                  className="grid gap-3 px-4 py-4 xl:grid-cols-[2.5rem_minmax(0,1fr)_7rem_9rem_7rem_8rem_11rem] xl:items-center xl:gap-4"
                 >
                   <div className="flex items-center gap-2 font-mono text-[0.58rem] text-faint">
                     <span className="tabular-nums">{String(project.sort_order).padStart(3, "0")}</span>
@@ -289,6 +320,15 @@ export default function AdminProjectsPage() {
                           Featured
                         </span>
                       ) : null}
+                      {project.github_repository_id ? (
+                        <span
+                          className="inline-flex items-center gap-1 font-mono text-[0.5rem] uppercase tracking-[0.14em] text-signal-soft"
+                          title={project.github_owner ? `Linked to ${project.github_owner}/${project.github_repository_name}` : "Linked to GitHub"}
+                        >
+                          <GitBranch className="size-3" aria-hidden="true" />
+                          GitHub
+                        </span>
+                      ) : null}
                       {project.is_placeholder ? (
                         <span className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-warning">
                           Placeholder
@@ -300,6 +340,9 @@ export default function AdminProjectsPage() {
                     </p>
                   </div>
 
+                  <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
+                    {projectSource(project)}
+                  </span>
                   <span className="text-xs text-paper-dim">{project.category.name}</span>
                   <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
                     {PROJECT_STAGE_LABELS[project.project_status]}

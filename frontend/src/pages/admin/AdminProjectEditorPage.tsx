@@ -8,8 +8,10 @@ import {
   Image as ImageIcon,
   LoaderCircle,
   Plus,
+  RefreshCw,
   Save,
   Trash2,
+  Unlink,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -21,6 +23,7 @@ import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useApiResource } from "@/hooks/useApiResource";
 import { adminProjectsService, type AdminCaseStudyInput } from "@/services/adminProjects.service";
+import { githubService } from "@/services/github.service";
 import { listMedia } from "@/services/auth.service";
 import type {
   AdminCaseStudy,
@@ -33,6 +36,7 @@ import type {
   PublishStatus,
 } from "@/types/api";
 import { cn } from "@/utils/cn";
+import { relativeTime } from "@/utils/format";
 import { PROJECT_STAGE_LABELS, PROJECT_STAGE_ORDER } from "@/utils/projects";
 
 type SectionKey = "basic" | "media" | "deployment" | "case-study" | "seo" | "publishing";
@@ -465,6 +469,11 @@ export default function AdminProjectEditorPage() {
   const [caseStudyNotice, setCaseStudyNotice] = useState<string | null>(null);
   const [githubMeta, setGithubMeta] = useState<AdminProject | null>(null);
   const [githubBusy, setGithubBusy] = useState(false);
+  const githubLink = useApiQuery(
+    (signal) =>
+      id ? githubService.projectLink(id, signal) : Promise.resolve(null),
+    [id],
+  );
 
   useEffect(() => {
     if (!isNew) {
@@ -582,6 +591,49 @@ export default function AdminProjectEditorPage() {
     }
   };
 
+  const syncLinkedGithub = async () => {
+    if (!id) return;
+    setGithubBusy(true);
+    setNotice(null);
+    try {
+      const result = await githubService.syncProject(id);
+      setNotice(result.message);
+      githubLink.reload();
+      project.reload();
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? `GitHub sync failed: ${error.message}`
+          : "GitHub metadata could not be synchronized.",
+      );
+    } finally {
+      setGithubBusy(false);
+    }
+  };
+
+  const disconnectLinkedGithub = async () => {
+    if (!id) return;
+    const confirmed = window.confirm(
+      "Remove the GitHub repository link from this project? The project and its editorial content are kept. The repository can be linked again later.",
+    );
+    if (!confirmed) return;
+    setGithubBusy(true);
+    setNotice(null);
+    try {
+      await githubService.disconnectProject(id);
+      githubLink.reload();
+      setNotice("GitHub repository link removed. The project was kept.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? `GitHub link could not be removed: ${error.message}`
+          : "GitHub link could not be removed.",
+      );
+    } finally {
+      setGithubBusy(false);
+    }
+  };
+
   const remove = async () => {
     if (!id || !form) return;
     const confirmed = window.confirm(
@@ -635,6 +687,7 @@ export default function AdminProjectEditorPage() {
   ).sort();
   const mediaAssets = media.data?.items ?? [];
   const meta = githubMeta;
+  const linkedGithub = githubLink.data;
 
   return (
     <>
@@ -717,6 +770,104 @@ export default function AdminProjectEditorPage() {
         <p role="status" className="mt-4 border border-line bg-ink-800/60 px-4 py-3 text-sm text-paper-dim">
           {notice}
         </p>
+      ) : null}
+
+      {!isNew && id ? (
+        <div className="mt-4">
+          {githubLink.loading ? (
+            <p className="border border-line bg-ink-800/40 px-4 py-3 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
+              Checking GitHub link…
+            </p>
+          ) : githubLink.error ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 border border-error/40 bg-error/10 px-4 py-3 text-xs text-error">
+              <span>{githubLink.error.message}</span>
+              <button type="button" onClick={githubLink.reload} className={buttonStyles("outline", "sm")}>
+                Retry
+              </button>
+            </div>
+          ) : linkedGithub?.connected ? (
+            <div className="border border-signal/30 bg-signal/5 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="flex flex-wrap items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-signal">
+                    <GitBranch className="size-3.5" aria-hidden="true" />
+                    Linked GitHub repository
+                  </p>
+                  <p className="mt-2 truncate text-sm text-paper">
+                    {linkedGithub.repository_full_name || linkedGithub.repository_id}
+                  </p>
+                  <p className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
+                    <span>{linkedGithub.visibility || "visibility unknown"}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <GitBranch className="size-3" aria-hidden="true" />
+                      {linkedGithub.default_branch || "branch unknown"}
+                    </span>
+                    <span>
+                      {linkedGithub.last_synced_at
+                        ? `Synced ${relativeTime(linkedGithub.last_synced_at)}`
+                        : "Not synchronized yet"}
+                    </span>
+                    {linkedGithub.is_archived ? (
+                      <span className="text-warning">Archived on GitHub</span>
+                    ) : null}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {linkedGithub.repository_url ? (
+                    <a
+                      href={linkedGithub.repository_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={buttonStyles("secondary", "sm")}
+                    >
+                      <GitBranch className="size-3.5" aria-hidden="true" />
+                      Open repository
+                      <ArrowUpRight className="size-3" aria-hidden="true" />
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void syncLinkedGithub()}
+                    disabled={githubBusy}
+                    className={buttonStyles("primary", "sm")}
+                  >
+                    {githubBusy ? (
+                      <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <RefreshCw className="size-3.5" aria-hidden="true" />
+                    )}
+                    Sync GitHub
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void disconnectLinkedGithub()}
+                    disabled={githubBusy}
+                    className={buttonStyles("danger", "sm")}
+                  >
+                    <Unlink className="size-3.5" aria-hidden="true" />
+                    Unlink
+                  </button>
+                </div>
+              </div>
+              <p className="mt-3 border-t border-signal/20 pt-3 text-xs leading-relaxed text-muted">
+                Sync updates GitHub-owned fields only: repository metadata, visibility, default
+                branch, stars, forks, issues, and cached activity. Title, description, category,
+                role, year, featured state, status, case study, lessons, results, images, order,
+                SEO, and public visibility are never overwritten.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 border border-line bg-ink-800/40 px-4 py-3 text-xs text-paper-dim">
+              <span className="flex items-center gap-2">
+                <GitBranch className="size-4 text-muted" aria-hidden="true" />
+                This project is not linked to a GitHub repository.
+              </span>
+              <Link to="/admin/github" className={buttonStyles("outline", "sm")}>
+                Import from GitHub
+              </Link>
+            </div>
+          )}
+        </div>
       ) : null}
 
       <nav aria-label="Project editor sections" className="mt-6 flex flex-wrap gap-1 border-b border-line">

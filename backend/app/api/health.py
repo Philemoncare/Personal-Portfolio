@@ -7,8 +7,14 @@ from app.db.session import get_db
 router = APIRouter()
 
 
+@router.get("", include_in_schema=False)
 @router.get("/live")
 def live() -> dict[str, str]:
+    """Liveness probe.
+
+    `/health` is kept as an alias because external monitors commonly probe the
+    bare path. `/health/live` remains the documented endpoint.
+    """
     return {"status": "ok"}
 
 

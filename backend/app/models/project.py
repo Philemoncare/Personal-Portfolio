@@ -15,6 +15,8 @@ from sqlalchemy import (
     Table,
     Text,
     Uuid,
+    false,
+    true,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -181,6 +183,33 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base):
     github_open_issues: Mapped[int | None] = mapped_column(Integer, nullable=True)
     github_metadata_checked_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+
+    # --- Linked GitHub repository (provider-owned metadata) --------------
+    # One repository may be linked to at most one portfolio project, which is
+    # what prevents duplicate imports. Editorial fields stay untouched by sync.
+    github_repository_id: Mapped[str | None] = mapped_column(
+        String(40), unique=True, nullable=True, index=True
+    )
+    github_owner: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    github_repository_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    github_default_branch: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    github_last_synced_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    github_repository_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    github_visibility: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    github_is_fork: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
+    github_is_archived: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
+    github_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    github_sync_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=true(), nullable=False
     )
 
     # --- Per-project SEO --------------------------------------------------

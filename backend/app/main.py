@@ -14,6 +14,7 @@ from app.api.v1 import auth as auth_router
 from app.api.v1 import content_admin as content_admin_router
 from app.api.v1 import data_admin as data_admin_router
 from app.api.v1 import data_public as data_public_router
+from app.api.v1 import github as github_router
 from app.api.v1 import media_admin as media_admin_router
 from app.api.v1 import public as public_router
 from app.api.v1 import security_admin as security_admin_router
@@ -21,6 +22,7 @@ from app.api.v1 import site_admin as site_admin_router
 from app.api.v1 import webhooks as webhooks_router
 from app.core.config import settings
 from app.db.session import SessionLocal
+from app.integrations.github.client import GitHubError
 from app.services.bootstrap import ensure_initial_admin
 from app.services.media import media_directory
 from app.services.sms import provider_name
@@ -156,6 +158,20 @@ def create_app() -> FastAPI:
         )
         return response
 
+    @app.exception_handler(GitHubError)
+    async def github_error_handler(request: Request, exc: GitHubError):
+        """Translate GitHub provider failures into friendly API responses."""
+        headers = (
+            {"Retry-After": str(exc.retry_after)}
+            if exc.retry_after is not None
+            else None
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.message},
+            headers=headers,
+        )
+
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
         logger.exception("Unhandled error on %s %s", request.method, request.url.path)
@@ -176,6 +192,12 @@ def create_app() -> FastAPI:
     )
     app.include_router(
         data_public_router.router, prefix=settings.api_v1_prefix, tags=["data"]
+    )
+    # Mounted before the admin router so GitHub-specific project routes win.
+    app.include_router(
+        github_router.router,
+        prefix=settings.api_v1_prefix,
+        tags=["github"],
     )
     app.include_router(
         admin_router.router,

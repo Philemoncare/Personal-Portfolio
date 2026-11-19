@@ -55,6 +55,25 @@ class Settings(BaseSettings):
     arkesel_webhook_max_skew_seconds: int = 300
     sms_brand_name: str = "Phill Portfolio"
 
+    # --- GitHub integration ------------------------------------------------
+    # OAuth app credentials. These are backend-only and never sent to React.
+    github_client_id: str | None = None
+    github_client_secret: str | None = None
+    github_redirect_uri: str | None = None
+    github_api_base_url: str = "https://api.github.com"
+    github_oauth_authorize_url: str = "https://github.com/login/oauth/authorize"
+    github_oauth_token_url: str = "https://github.com/login/oauth/access_token"
+    github_timeout_seconds: float = 20.0
+    github_max_retries: int = 2
+    github_cache_ttl_seconds: int = 300
+    github_max_repository_pages: int = 5
+    github_repository_page_size: int = 100
+    github_oauth_state_ttl_minutes: int = 10
+    # `repo` also grants write access, so private repository access is opt-in.
+    github_allow_private_repositories: bool = False
+    # Used to encrypt provider tokens at rest. Falls back to SECRET_KEY.
+    github_token_encryption_key: str | None = None
+
     initial_admin_email: str | None = None
     initial_admin_phone: str | None = None
     initial_admin_password: str | None = None
@@ -126,6 +145,35 @@ class Settings(BaseSettings):
             and self.contact_notification_email
             and (self.smtp_from_email or self.smtp_username)
         )
+
+    @property
+    def github_configured(self) -> bool:
+        return bool(
+            self.github_client_id
+            and self.github_client_secret
+            and self.github_redirect_uri
+        )
+
+    @property
+    def github_scopes(self) -> list[str]:
+        """Minimum scopes. `public_repo` avoids write access entirely.
+
+        GitHub has no read-only scope for private repositories, so `repo`
+        (which also permits writes) is only requested when the administrator
+        explicitly asks for private repository access.
+        """
+
+        scopes = ["read:user"]
+        scopes.append("repo" if self.github_allow_private_repositories else "public_repo")
+        return scopes
+
+    @property
+    def github_token_key(self) -> str:
+        return self.github_token_encryption_key or self.secret_key
+
+    @property
+    def frontend_public_url(self) -> str:
+        return self.public_site_url.rstrip("/")
 
 
 @lru_cache

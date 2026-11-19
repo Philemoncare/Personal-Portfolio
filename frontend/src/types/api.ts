@@ -447,6 +447,17 @@ export interface AdminProject {
   github_language: string | null;
   github_open_issues: number | null;
   github_metadata_checked_at: string | null;
+  github_repository_id: string | null;
+  github_owner: string | null;
+  github_repository_name: string | null;
+  github_default_branch: string | null;
+  github_last_synced_at: string | null;
+  github_repository_updated_at: string | null;
+  github_visibility: string | null;
+  github_is_fork: boolean;
+  github_is_archived: boolean;
+  github_metadata: Record<string, unknown> | null;
+  github_sync_enabled: boolean;
   seo_title: string | null;
   seo_description: string | null;
   og_image: string | null;
@@ -1319,4 +1330,296 @@ export interface PageKeyOption {
   key: string;
   label: string;
   path: string;
+}
+
+// --- GitHub integration ---------------------------------------------------
+
+export interface GitHubConnection {
+  connected: boolean;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  account_url: string | null;
+  github_account_id: string | null;
+  scopes: string[];
+  repository_access: string | null;
+  private_repository_access: boolean;
+  connected_at: string | null;
+  updated_at: string | null;
+  revoked_at: string | null;
+}
+
+export interface GitHubRateLimit {
+  limit: number | null;
+  remaining: number | null;
+  reset_at: string | null;
+}
+
+export interface GitHubStatus {
+  configured: boolean;
+  connected: boolean;
+  connection: GitHubConnection | null;
+  requested_scopes: string[];
+  private_access_requested: boolean;
+  authorize_url: string | null;
+  redirect_uri: string | null;
+  account_api_available: boolean | null;
+  rate_limit: GitHubRateLimit | null;
+  message: string | null;
+}
+
+export interface GitHubConnectResult {
+  authorize_url: string;
+  scopes: string[];
+  redirect_uri: string;
+  expires_in_minutes: number;
+}
+
+export interface GitHubRepository {
+  id: string;
+  name: string;
+  full_name: string;
+  description: string | null;
+  owner: string;
+  owner_avatar_url: string | null;
+  private: boolean;
+  visibility: string;
+  html_url: string;
+  homepage: string | null;
+  language: string | null;
+  languages: Record<string, number>;
+  topics: string[];
+  stargazers_count: number;
+  forks_count: number;
+  watchers_count: number;
+  open_issues_count: number;
+  default_branch: string;
+  created_at: string | null;
+  updated_at: string | null;
+  pushed_at: string | null;
+  license: string | null;
+  archived: boolean;
+  fork: boolean;
+  size_kb: number;
+  linked_project_id: string | null;
+  linked_project_title: string | null;
+  linked_project_status: string | null;
+  import_state: string;
+  sync_available: boolean;
+  last_synced_at: string | null;
+}
+
+export interface GitHubRepositoryList {
+  items: GitHubRepository[];
+  total: number;
+  page: number;
+  per_page: number;
+  has_more: boolean;
+  truncated: boolean;
+  languages: string[];
+  rate_limit_remaining: number | null;
+  fetched_at: string | null;
+  cached: boolean;
+}
+
+export interface GitHubTreeEntry {
+  name: string;
+  path: string;
+  type: string;
+  size: number | null;
+  html_url: string | null;
+}
+
+export interface GitHubContents {
+  path: string;
+  entries: GitHubTreeEntry[];
+  truncated: boolean;
+  default_branch: string;
+}
+
+export interface GitHubReadme {
+  path: string | null;
+  content: string | null;
+  html_url: string | null;
+  truncated: boolean;
+  available: boolean;
+}
+
+export interface GitHubImage {
+  path: string;
+  name: string;
+  markdown: string | null;
+  source_url: string;
+  preview_url: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+}
+
+export interface GitHubImages {
+  items: GitHubImage[];
+  readme_path: string | null;
+  ignored: Array<{ reference: string; reason: string }>;
+}
+
+export interface DetectedTechnology {
+  name: string;
+  confidence: string;
+  evidence: string[];
+}
+
+export interface DetectedArchitectureLayer {
+  layer: string;
+  technologies: string[];
+  evidence: string[];
+}
+
+export interface LiveUrlCandidate {
+  url: string;
+  source: string;
+  confidence: string;
+}
+
+export interface CategorySuggestion {
+  name: string;
+  slug: string;
+  reason: string;
+  category_id: string | null;
+}
+
+export interface ReadmeSection {
+  key: string;
+  label: string;
+  content: string;
+  documented: boolean;
+}
+
+export interface CaseStudyDraft {
+  overview: string;
+  problem: string;
+  solution: string;
+  features: string;
+  architecture: string;
+  technology: string;
+  implementation: string;
+  challenges: string;
+  testing: string;
+  lessons: string;
+  future_improvements: string;
+}
+
+export interface GitHubCommit {
+  sha: string;
+  message: string | null;
+  author: string | null;
+  authored_at: string | null;
+  html_url: string | null;
+}
+
+export interface GitHubActivity {
+  default_branch: string;
+  pushed_at: string | null;
+  updated_at: string | null;
+  open_issues_count: number;
+  recent_commits: GitHubCommit[];
+  commits_available: boolean;
+}
+
+export interface RepositoryInspection {
+  repository: GitHubRepository;
+  structure: GitHubContents;
+  inspected_files: string[];
+  skipped_files: Array<{ path: string; reason: string }>;
+  readme: GitHubReadme;
+  readme_sections: ReadmeSection[];
+  technologies: DetectedTechnology[];
+  architecture: DetectedArchitectureLayer[];
+  category_suggestions: CategorySuggestion[];
+  live_url_candidates: LiveUrlCandidate[];
+  documentation_url: string | null;
+  images: GitHubImages;
+  activity: GitHubActivity;
+  case_study: CaseStudyDraft;
+  limitations: string[];
+  fetched_at: string;
+}
+
+export interface GitHubImportRequest {
+  category_id: string | null;
+  title: string | null;
+  summary: string | null;
+  body: string | null;
+  use_readme: boolean;
+  case_study: boolean;
+  live_url: string | null;
+  documentation_url: string | null;
+  technology_names: string[];
+  cover_image_path: string | null;
+  gallery_image_paths: string[];
+  featured: boolean;
+  primary_mode: WorkMode;
+  project_status: ProjectStage;
+  import_images: boolean;
+}
+
+export interface GitHubImportResult {
+  project_id: string;
+  project_slug: string;
+  project_title: string;
+  status: string;
+  case_study_id: string | null;
+  images_imported: number;
+  technologies: string[];
+  repository_full_name: string;
+  message: string;
+}
+
+export interface GitHubSyncResult {
+  project_id: string;
+  repository_full_name: string;
+  updated_fields: string[];
+  preserved_fields: string[];
+  stars: number | null;
+  forks: number | null;
+  language: string | null;
+  open_issues: number | null;
+  default_branch: string | null;
+  last_synced_at: string;
+  message: string;
+}
+
+export interface GitHubProjectLink {
+  connected: boolean;
+  project_id: string;
+  repository_id: string | null;
+  repository_full_name: string | null;
+  repository_url: string | null;
+  owner: string | null;
+  default_branch: string | null;
+  visibility: string | null;
+  is_fork: boolean;
+  is_archived: boolean;
+  sync_enabled: boolean;
+  last_synced_at: string | null;
+  repository_updated_at: string | null;
+  description: string | null;
+  homepage: string | null;
+  topics: string[];
+}
+
+export interface GitHubImportLog {
+  id: string;
+  project_id: string | null;
+  repository_id: string;
+  repository_full_name: string;
+  action: string;
+  status: string;
+  summary: string | null;
+  details: Record<string, unknown> | null;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface GitHubImportLogList {
+  items: GitHubImportLog[];
+  total: number;
 }

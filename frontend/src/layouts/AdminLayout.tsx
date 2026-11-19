@@ -8,9 +8,11 @@ import {
   FileText,
   FlaskConical,
   FolderGit2,
+  GitBranch,
   Image as ImageIcon,
   KeyRound,
   LayoutDashboard,
+  Link2,
   LogOut,
   Mail,
   Menu,
@@ -51,6 +53,7 @@ const ADMIN_NAV = [
     group: "Content",
     items: [
       { label: "Projects", to: "/admin/projects", end: false, icon: FolderGit2 },
+      { label: "Import from GitHub", to: "/admin/github", end: false, icon: GitBranch },
       { label: "Case studies", to: "/admin/case-studies", end: false, icon: BookOpen },
       { label: "Data Lab", to: "/admin/data", end: false, icon: FlaskConical },
       { label: "Leadership", to: "/admin/leadership", end: false, icon: Users },
@@ -83,6 +86,12 @@ const ADMIN_NAV = [
     group: "System",
     items: [
       { label: "Settings", to: "/admin/settings", end: false, icon: Settings },
+      {
+        label: "Integrations",
+        to: "/admin/settings/integrations",
+        end: false,
+        icon: Link2,
+      },
       { label: "Appearance", to: "/admin/appearance", end: false, icon: Palette },
       { label: "Resume", to: "/admin/resume", end: false, icon: FileDown },
       { label: "Account", to: "/admin/account", end: false, icon: UserCog },

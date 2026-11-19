@@ -146,6 +146,17 @@ class ProjectAdminOut(ORMModel):
     github_language: str | None
     github_open_issues: int | None
     github_metadata_checked_at: datetime | None
+    github_repository_id: str | None = None
+    github_owner: str | None = None
+    github_repository_name: str | None = None
+    github_default_branch: str | None = None
+    github_last_synced_at: datetime | None = None
+    github_repository_updated_at: datetime | None = None
+    github_visibility: str | None = None
+    github_is_fork: bool = False
+    github_is_archived: bool = False
+    github_metadata: dict | None = None
+    github_sync_enabled: bool = False
     seo_title: str | None
     seo_description: str | None
     og_image: str | None

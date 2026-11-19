@@ -47,6 +47,15 @@ const AdminMessagesPage = lazy(() => import("@/pages/admin/AdminMessagesPage"));
 const AdminSettingsPage = lazy(() => import("@/pages/admin/AdminSettingsPage"));
 const AdminProjectsPage = lazy(() => import("@/pages/admin/AdminProjectsPage"));
 const AdminProjectEditorPage = lazy(() => import("@/pages/admin/AdminProjectEditorPage"));
+const AdminGitHubIntegrationPage = lazy(
+  () => import("@/pages/admin/AdminGitHubIntegrationPage"),
+);
+const AdminGitHubRepositoriesPage = lazy(
+  () => import("@/pages/admin/AdminGitHubRepositoriesPage"),
+);
+const AdminGitHubRepositoryPage = lazy(
+  () => import("@/pages/admin/AdminGitHubRepositoryPage"),
+);
 const AdminProjectPreviewPage = lazy(
   () => import("@/pages/admin/AdminProjectPreviewPage"),
 );
@@ -129,7 +138,13 @@ export default function App() {
               <Route path="resume" element={<AdminResumePage />} />
               <Route path="messages" element={<AdminMessagesPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="settings/integrations" element={<AdminGitHubIntegrationPage />} />
+              <Route path="integrations/github" element={<AdminGitHubIntegrationPage />} />
+              <Route path="github" element={<AdminGitHubRepositoriesPage />} />
+              <Route path="github/:repositoryId" element={<AdminGitHubRepositoryPage />} />
               <Route path="projects" element={<AdminProjectsPage />} />
+              <Route path="projects/import" element={<AdminGitHubRepositoriesPage />} />
+              <Route path="projects/import/github" element={<AdminGitHubRepositoriesPage />} />
               <Route path="projects/new" element={<AdminProjectEditorPage />} />
               <Route path="projects/:id" element={<AdminProjectEditorPage />} />
               <Route path="pages" element={<AdminPagesPage />} />

@@ -5,12 +5,15 @@ not hand over live admin sessions. OTP codes are HMACed with the backend
 secret, so a database dump alone cannot recover a live code.
 """
 
+import base64
 import hashlib
 import hmac
 import secrets
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from app.core.config import settings
 
@@ -18,6 +21,8 @@ _hasher = PasswordHasher()
 
 MIN_PASSWORD_LENGTH = 12
 MAX_PASSWORD_LENGTH = 200
+
+ENCRYPTION_PREFIX = "v1"
 
 
 def hash_password(password: str) -> str:
@@ -91,3 +96,44 @@ def verify_webhook_signature(
     if provided.startswith("sha256="):
         provided = provided[len("sha256=") :]
     return hmac.compare_digest(expected, provided)
+
+
+def _provider_key() -> bytes:
+    """Derive an AES-256 key from the configured provider-token secret."""
+
+    return hashlib.sha256(settings.github_token_key.encode("utf-8")).digest()
+
+
+def encrypt_secret(value: str, purpose: str = "github") -> str:
+    """Encrypt a provider credential with AES-256-GCM.
+
+    The purpose string is authenticated but not stored separately; it is part
+    of the envelope so a token cannot be silently reused in another context.
+    """
+
+    nonce = secrets.token_bytes(12)
+    sealed = AESGCM(_provider_key()).encrypt(
+        nonce, value.encode("utf-8"), purpose.encode("utf-8")
+    )
+    payload = base64.urlsafe_b64encode(nonce + sealed).decode("ascii")
+    return f"{ENCRYPTION_PREFIX}.{purpose}.{payload}"
+
+
+def decrypt_secret(envelope: str, purpose: str = "github") -> str:
+    """Return the plaintext credential or raise ValueError if it is invalid."""
+
+    try:
+        version, stored_purpose, payload = envelope.split(".", 2)
+    except ValueError as exc:
+        raise ValueError("Malformed credential envelope.") from exc
+    if version != ENCRYPTION_PREFIX or stored_purpose != purpose:
+        raise ValueError("Unsupported credential envelope.")
+    try:
+        raw = base64.urlsafe_b64decode(payload.encode("ascii"))
+        nonce, sealed = raw[:12], raw[12:]
+        plaintext = AESGCM(_provider_key()).decrypt(
+            nonce, sealed, purpose.encode("utf-8")
+        )
+    except (ValueError, InvalidTag, KeyError) as exc:
+        raise ValueError("The stored credential could not be decrypted.") from exc
+    return plaintext.decode("utf-8")

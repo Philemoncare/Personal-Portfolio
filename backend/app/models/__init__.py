@@ -20,6 +20,7 @@ from app.models.content import (
     TimelineEntry,
 )
 from app.models.identity import Resume, SiteProfile
+from app.models.integration import GitHubConnection, GitHubImportLog
 from app.models.media import ArkeselWebhookEvent, MediaAsset
 from app.models.project import (
     CaseStudy,
@@ -49,6 +50,8 @@ __all__ = [
     "DataTool",
     "DataVisualization",
     "ExperienceEntry",
+    "GitHubConnection",
+    "GitHubImportLog",
     "LeadershipEntry",
     "MediaAsset",
     "NowItem",
