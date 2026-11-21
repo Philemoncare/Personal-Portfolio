@@ -67,7 +67,9 @@ from app.schemas.github import (
     GitHubSyncOut,
     RepositoryInspectionOut,
 )
+from app.api.v1.auth import _client_meta, _set_session_cookie
 from app.services import activity
+from app.services import auth as auth_service
 from app.services.auth import resolve_session
 
 logger = logging.getLogger("portfolio.github")
@@ -237,21 +239,22 @@ async def github_callback(
     admin = resolve_session(db, session_token)
     if admin is None or admin.id != user_id:
         admin = db.get(AdminUser, user_id)
+        if admin is not None and admin.is_active:
+            ip, agent = _client_meta(request)
+            session_token, _ = auth_service.create_session(
+                db, admin, ip_address=ip, user_agent=agent
+            )
 
     if admin is None or not admin.is_active:
         return _frontend_redirect(
             "error", "Your admin session expired before GitHub finished connecting.", base_url=target_origin
         )
 
-    session_token = request.cookies.get(settings.session_cookie_name) or ""
-    admin = resolve_session(db, session_token)
-    if admin is None or admin.id != user_id:
-        return _frontend_redirect(
-            "error", "Your admin session expired before GitHub finished connecting."
-        )
-
     if not code:
-        return _frontend_redirect("error", "GitHub did not return an authorization code.")
+        res = _frontend_redirect("error", "GitHub did not return an authorization code.", base_url=target_origin)
+        if session_token:
+            _set_session_cookie(res, session_token)
+        return res
 
     try:
         token_payload = await auth.exchange_code(code)
@@ -261,10 +264,15 @@ async def github_callback(
         )
     except GitHubError as exc:
         logger.warning("GitHub OAuth callback failed: %s", exc.code)
-        return _frontend_redirect("error", exc.message)
+        res = _frontend_redirect("error", exc.message, base_url=target_origin)
+        if session_token:
+            _set_session_cookie(res, session_token)
+        return res
 
     clear_cache()
-    response = _frontend_redirect("connected")
+    response = _frontend_redirect("connected", base_url=target_origin)
+    if session_token:
+        _set_session_cookie(response, session_token)
     response.delete_cookie(OAUTH_COOKIE, path=OAUTH_COOKIE_PATH)
     return response
 
