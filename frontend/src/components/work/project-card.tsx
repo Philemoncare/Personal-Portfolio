@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { PortfolioImage } from "@/components/media/PortfolioImage";
+import { HomepagePreview, hasHomepagePreview } from "@/components/work/HomepagePreview";
 import { ProjectStatus } from "@/components/work/project-status";
 import { projectAssetId } from "@/components/work/project-assets";
 import { ProjectVisual } from "@/components/work/project-visual";
@@ -51,6 +52,7 @@ export function ProjectCard({
 }) {
   const summary = projectSummaryText(project);
   const cover = project.cover_image_url;
+  const hasPreview = hasHomepagePreview(project);
 
   return (
     <Link
@@ -61,7 +63,13 @@ export function ProjectCard({
       )}
     >
       <div className="relative overflow-hidden">
-        {cover ? (
+        {hasPreview ? (
+          <HomepagePreview
+            project={project}
+            interactive={false}
+            className="border-0 border-b border-line"
+          />
+        ) : cover ? (
           <div className="relative aspect-[16/10] overflow-hidden bg-background">
             <PortfolioImage
               src={cover}

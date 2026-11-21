@@ -1,5 +1,6 @@
 import { Checkbox, Field, TextArea, TextInput } from "@/components/admin/form";
-import type { ProfileAdmin, ProfileInput } from "@/types/api";
+import { MediaField } from "@/components/admin/MediaField";
+import type { MediaAsset, ProfileAdmin, ProfileInput } from "@/types/api";
 
 export interface ProfileFormState {
   name: string;
@@ -80,10 +81,16 @@ export function ProfileFields({
   form,
   onChange,
   idPrefix = "profile",
+  mediaAssets = [],
+  mediaLoading = false,
+  onMediaUploaded,
 }: {
   form: ProfileFormState;
   onChange: (next: ProfileFormState) => void;
   idPrefix?: string;
+  mediaAssets?: MediaAsset[];
+  mediaLoading?: boolean;
+  onMediaUploaded?: (asset: MediaAsset) => void;
 }) {
   const set = <K extends keyof ProfileFormState,>(key: K, value: ProfileFormState[K]) => {
     onChange({ ...form, [key]: value });
@@ -94,7 +101,7 @@ export function ProfileFields({
     <div className="space-y-8">
       <fieldset className="space-y-4">
         <legend className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-signal">
-          Identity
+          Name and role
         </legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name" htmlFor={id("name")} required>
@@ -102,7 +109,7 @@ export function ProfileFields({
               id={id("name")}
               value={form.name}
               onChange={(event) => set("name", event.target.value)}
-              placeholder="Full name as it should appear in records"
+              placeholder="Enter your full name"
             />
           </Field>
           <Field label="Display name" htmlFor={id("display_name")} required>
@@ -110,7 +117,7 @@ export function ProfileFields({
               id={id("display_name")}
               value={form.display_name}
               onChange={(event) => set("display_name", event.target.value)}
-              placeholder="Short name used in headings"
+              placeholder="The name shown on your website"
             />
           </Field>
         </div>
@@ -120,7 +127,7 @@ export function ProfileFields({
               id={id("professional_title")}
               value={form.professional_title}
               onChange={(event) => set("professional_title", event.target.value)}
-              placeholder="For example: Full-Stack Developer"
+              placeholder="Enter your main professional title"
             />
           </Field>
           <Field label="Location" htmlFor={id("location")}>
@@ -128,28 +135,32 @@ export function ProfileFields({
               id={id("location")}
               value={form.location}
               onChange={(event) => set("location", event.target.value)}
-              placeholder="Only if you want it published"
+              placeholder="Where you are based"
             />
           </Field>
         </div>
-        <Field label="Availability" htmlFor={id("availability")}>
+        <Field
+          label="Availability"
+          htmlFor={id("availability")}
+          hint="Say whether you are available for work or collaboration."
+        >
           <TextInput
             id={id("availability")}
             value={form.availability}
             onChange={(event) => set("availability", event.target.value)}
-            placeholder="A short, honest availability statement"
+            placeholder="For example: Open to new projects"
           />
         </Field>
       </fieldset>
 
       <fieldset className="space-y-4 border-t border-line pt-6">
         <legend className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-signal">
-          About narrative
+          About you
         </legend>
         <Field
           label="Short bio"
           htmlFor={id("short_bio")}
-          hint="Used in the hero and as the profile summary. Two or three sentences."
+          hint="A short introduction shown on your homepage and profile. Two or three sentences is enough."
         >
           <TextArea
             id={id("short_bio")}
@@ -159,9 +170,9 @@ export function ProfileFields({
           />
         </Field>
         <Field
-          label="Long story"
+          label="About you"
           htmlFor={id("long_bio")}
-          hint="The longer About narrative. Separate paragraphs with a blank line."
+          hint="Tell visitors a little more about your background, work and interests. Leave a blank line between paragraphs."
         >
           <TextArea
             id={id("long_bio")}
@@ -171,7 +182,7 @@ export function ProfileFields({
           />
         </Field>
         <div className="grid gap-4 lg:grid-cols-2">
-          <Field label="What I build" htmlFor={id("what_i_build")}>
+          <Field label="What I do" htmlFor={id("what_i_build")}>
             <TextArea
               id={id("what_i_build")}
               rows={5}
@@ -189,7 +200,7 @@ export function ProfileFields({
           </Field>
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
-          <Field label="Current direction" htmlFor={id("current_direction")}>
+          <Field label="What I'm working on" htmlFor={id("current_direction")}>
             <TextArea
               id={id("current_direction")}
               rows={4}
@@ -198,9 +209,9 @@ export function ProfileFields({
             />
           </Field>
           <Field
-            label="Personal interests"
+            label="Interests"
             htmlFor={id("personal_interests")}
-            hint="Only genuine interests. Leave empty to hide the section entirely."
+            hint="Only include genuine interests. Leave empty to hide this section."
           >
             <TextArea
               id={id("personal_interests")}
@@ -214,82 +225,79 @@ export function ProfileFields({
 
       <fieldset className="space-y-4 border-t border-line pt-6">
         <legend className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-signal">
-          Contact and links
+          Contact details
         </legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Public email" htmlFor={id("email")}>
+          <Field label="Email address" htmlFor={id("email")}>
             <TextInput
               id={id("email")}
               type="email"
               value={form.email}
               onChange={(event) => set("email", event.target.value)}
+              placeholder="Enter your email address"
             />
           </Field>
-          <Field label="Phone" htmlFor={id("phone")} hint="Optional. Leave empty to keep it private.">
+          <Field label="Phone number" htmlFor={id("phone")} hint="Optional. Leave empty to keep it private.">
             <TextInput
               id={id("phone")}
               value={form.phone}
               onChange={(event) => set("phone", event.target.value)}
+              placeholder="Enter your phone number"
             />
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="GitHub URL" htmlFor={id("github_url")}>
+          <Field label="GitHub profile" htmlFor={id("github_url")}>
             <TextInput
               id={id("github_url")}
               value={form.github_url}
               onChange={(event) => set("github_url", event.target.value)}
-              placeholder="https://github.com/…"
+              placeholder="https://github.com/username"
             />
           </Field>
-          <Field label="LinkedIn URL" htmlFor={id("linkedin_url")}>
+          <Field label="LinkedIn profile" htmlFor={id("linkedin_url")}>
             <TextInput
               id={id("linkedin_url")}
               value={form.linkedin_url}
               onChange={(event) => set("linkedin_url", event.target.value)}
-              placeholder="https://www.linkedin.com/in/…"
+              placeholder="https://www.linkedin.com/in/username"
             />
           </Field>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Website URL" htmlFor={id("website_url")}>
-            <TextInput
-              id={id("website_url")}
-              value={form.website_url}
-              onChange={(event) => set("website_url", event.target.value)}
-            />
-          </Field>
-          <Field
-            label="Profile image"
-            htmlFor={id("profile_image")}
-            hint="A full URL or a site-relative path starting with /."
-          >
-            <TextInput
-              id={id("profile_image")}
-              value={form.profile_image}
-              onChange={(event) => set("profile_image", event.target.value)}
-            />
-          </Field>
-        </div>
-        <Field
-          label="Legacy CV URL"
-          htmlFor={id("resume_url")}
-          hint="Used only when no managed resume PDF is published."
-        >
+        <Field label="Personal website" htmlFor={id("website_url")}>
           <TextInput
-            id={id("resume_url")}
-            value={form.resume_url}
-            onChange={(event) => set("resume_url", event.target.value)}
+            id={id("website_url")}
+            value={form.website_url}
+            onChange={(event) => set("website_url", event.target.value)}
+            placeholder="https://example.com"
           />
         </Field>
+        <div className="grid gap-5">
+          <Field
+            label="Profile photo"
+            hint="Upload a clear photo of yourself. It appears on your homepage and profile."
+          >
+            <MediaField
+              value={form.profile_image}
+              onChange={(value) => set("profile_image", value)}
+              assets={mediaAssets}
+              loading={mediaLoading}
+              onUploaded={onMediaUploaded}
+              folder="profile"
+              altText={form.name ? `${form.name} profile photo` : "Profile photo"}
+              title="Profile photo"
+              emptyLabel="No profile photo uploaded."
+            />
+          </Field>
+        </div>
       </fieldset>
 
       <div className="border-t border-line pt-5">
         <Checkbox
           checked={form.is_placeholder}
           onChange={(checked) => set("is_placeholder", checked)}
-          label="Profile copy is still placeholder content"
-          hint="Keep this checked until the biography and direction are confirmed. The public site labels it honestly."
+          label="This profile is not finished yet"
+          hint="Leave this checked until your biography is ready. Your website will show a note instead of treating it as final."
         />
       </div>
     </div>

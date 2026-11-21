@@ -5,6 +5,7 @@ import { useSocialLinks } from "@/app/ContentProvider";
 import { useSiteSettings } from "@/app/SiteSettingsProvider";
 import { Wordmark } from "@/components/brand/wordmark";
 import { Container } from "@/components/ui/container";
+import { useProfile } from "@/hooks/useContent";
 
 const INDEX_LINKS = [
   { label: "Work", to: "/work" },
@@ -12,6 +13,7 @@ const INDEX_LINKS = [
   { label: "Build Lab", to: "/build-lab" },
   { label: "Leadership", to: "/leadership" },
   { label: "Experience", to: "/experience" },
+  { label: "Articles", to: "/articles" },
   { label: "About", to: "/about" },
   { label: "Now", to: "/now" },
   { label: "Timeline", to: "/timeline" },
@@ -19,7 +21,13 @@ const INDEX_LINKS = [
   { label: "Contact", to: "/contact" },
 ];
 
-const ROLE_AREAS = ["Full-Stack Developer", "Data & Analytics", "Technology Builder"];
+function profileRoles(title: string | null | undefined): string[] {
+  if (!title) return [];
+  return title
+    .split(/[·/|,]/)
+    .map((role) => role.trim())
+    .filter(Boolean);
+}
 
 function socialIcon(platform: string) {
   switch (platform) {
@@ -46,9 +54,14 @@ function isHttpUrl(value: string): boolean {
 
 export function Footer() {
   const { settings } = useSiteSettings();
+  const profile = useProfile();
   const socialLinks = useSocialLinks();
   const year = new Date().getFullYear();
-  const displayName = settings?.display_name || "Philemon Melabah";
+  const displayName = profile.data?.display_name || settings?.display_name || "Philemon Melabah";
+  const roles =
+    profileRoles(profile.data?.professional_title).length > 0
+      ? profileRoles(profile.data?.professional_title)
+      : profileRoles(settings?.role_title);
 
   const configured = socialLinks
     .filter((link) => link.is_visible)
@@ -63,19 +76,23 @@ export function Footer() {
     {
       label: "Email",
       icon: Mail,
-      href: settings?.email ? `mailto:${settings.email}` : null,
+      href: profile.data?.email
+        ? `mailto:${profile.data.email}`
+        : settings?.email
+          ? `mailto:${settings.email}`
+          : null,
       external: false,
     },
     {
       label: "GitHub",
       icon: Code2,
-      href: settings?.github_url ?? null,
+      href: profile.data?.github_url ?? settings?.github_url ?? null,
       external: true,
     },
     {
       label: "LinkedIn",
       icon: Link2,
-      href: settings?.linkedin_url ?? null,
+      href: profile.data?.linkedin_url ?? settings?.linkedin_url ?? null,
       external: true,
     },
   ].filter((social): social is typeof social & { href: string } => Boolean(social.href));
@@ -90,7 +107,7 @@ export function Footer() {
             <Wordmark />
 
             <ul className="mt-7 space-y-1.5">
-              {ROLE_AREAS.map((role) => (
+              {roles.map((role) => (
                 <li
                   key={role}
                   className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted"

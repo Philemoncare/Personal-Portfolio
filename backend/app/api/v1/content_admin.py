@@ -38,6 +38,7 @@ from app.core.constants import (
 from app.db.session import get_db
 from app.models import (
     AdminUser,
+    Article,
     ContactMessage,
     ExperienceEntry,
     LeadershipEntry,
@@ -47,6 +48,11 @@ from app.models import (
     TimelineEntry,
 )
 from app.repositories.identity import IdentityRepository
+from app.schemas.content import (
+    ArticleAdminOut,
+    ArticleInput,
+    ArticleReorderInput,
+)
 from app.schemas.identity import (
     AdminMessageList,
     AdminSettingsInput,
@@ -68,7 +74,7 @@ from app.schemas.identity import (
     TimelineReorderInput,
 )
 from app.schemas.identity import SiteSettingsInput
-from app.services import activity, identity_admin
+from app.services import activity, identity_admin, article_admin
 from app.services.identity import (
     now_public,
     profile_admin,
@@ -303,6 +309,118 @@ def delete_timeline(
     if item is None:
         raise HTTPException(status_code=404, detail="Timeline entry not found")
     identity_admin.delete_timeline(db, item)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --- Articles -------------------------------------------------------------
+
+
+@router.get("/articles", response_model=list[ArticleAdminOut])
+def list_articles(
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> list[ArticleAdminOut]:
+    rows = db.scalars(
+        select(Article).order_by(
+            Article.sort_order,
+            Article.published_at.desc().nulls_last(),
+            Article.created_at.desc(),
+        )
+    ).all()
+    return [ArticleAdminOut.model_validate(item) for item in rows]
+
+
+@router.get("/articles/{article_id}", response_model=ArticleAdminOut)
+def get_article(
+    article_id: uuid.UUID,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> ArticleAdminOut:
+    article = db.get(Article, article_id)
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return ArticleAdminOut.model_validate(article)
+
+
+@router.post(
+    "/articles", response_model=ArticleAdminOut, status_code=status.HTTP_201_CREATED
+)
+def create_article(
+    payload: ArticleInput,
+    request: Request,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> ArticleAdminOut:
+    try:
+        article = article_admin.create_article(db, payload)
+    except article_admin.AdminInputError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    activity.record(
+        db,
+        "article_created",
+        user_id=admin.id,
+        identifier=admin.email,
+        detail=f"Created article “{article.title}”",
+        request=request,
+    )
+    return ArticleAdminOut.model_validate(article)
+
+
+@router.put("/articles/{article_id}", response_model=ArticleAdminOut)
+def update_article(
+    article_id: uuid.UUID,
+    payload: ArticleInput,
+    request: Request,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> ArticleAdminOut:
+    article = db.get(Article, article_id)
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+    try:
+        article = article_admin.update_article(db, article, payload)
+    except article_admin.AdminInputError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    activity.record(
+        db,
+        "article_updated",
+        user_id=admin.id,
+        identifier=admin.email,
+        detail=f"Updated article “{article.title}” ({article.status})",
+        request=request,
+    )
+    return ArticleAdminOut.model_validate(article)
+
+
+@router.post("/articles/reorder", response_model=dict[str, int])
+def reorder_articles(
+    payload: ArticleReorderInput,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    return {"updated": article_admin.reorder_articles(db, payload.ids)}
+
+
+@router.delete("/articles/{article_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_article(
+    article_id: uuid.UUID,
+    request: Request,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> Response:
+    article = db.get(Article, article_id)
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+    title = article.title
+    article_admin.delete_article(db, article)
+    activity.record(
+        db,
+        "article_deleted",
+        user_id=admin.id,
+        identifier=admin.email,
+        detail=f"Deleted article “{title}”",
+        request=request,
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

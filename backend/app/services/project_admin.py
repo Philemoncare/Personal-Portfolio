@@ -86,6 +86,7 @@ def _apply_project_fields(
     *,
     is_new: bool,
 ) -> None:
+    previous_live_url = project.live_url
     project.title = payload.title.strip()
     requested_slug = payload.slug or slugify(payload.title)
     if not requested_slug:
@@ -141,6 +142,16 @@ def _apply_project_fields(
     project.sort_order = payload.sort_order
     project.is_placeholder = payload.is_placeholder
     _apply_publish_state(project, payload.status)
+
+    if not is_new and (previous_live_url or None) != (payload.live_url or None):
+        # The screenshot belongs to the previous URL. Keep the asset in the
+        # media library, but never serve it as the current homepage preview.
+        project.preview_status = "awaiting_verification"
+        project.preview_source_url = None
+        project.preview_checked_at = None
+        project.preview_error = (
+            "The live URL changed. Verify it and generate a new homepage preview."
+        )
 
     project.media = [
         ProjectMedia(
@@ -282,6 +293,7 @@ def _apply_case_study_fields(
     )
     for field in (
         "summary",
+        "cover_image_url",
         "overview",
         "problem",
         "context",

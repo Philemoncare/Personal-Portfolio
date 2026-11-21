@@ -8,17 +8,15 @@ import { useApiResource } from "@/hooks/useApiResource";
 import type { AdminOverview } from "@/types/api";
 import { relativeTime } from "@/utils/format";
 
-const PLANNED_MODULES = [
-  { name: "Data Lab", phase: "Phase 3" },
-  { name: "Build Lab", phase: "Phase 3" },
-  { name: "Experience", phase: "Phase 3" },
-  { name: "Leadership", phase: "Phase 3" },
-  { name: "Skills", phase: "Phase 3" },
-  { name: "Certificates", phase: "Phase 3" },
-  { name: "Articles", phase: "Later" },
-  { name: "Timeline", phase: "Phase 3" },
-  { name: "Now", phase: "Phase 3" },
-  { name: "Site settings", phase: "Phase 3" },
+const WORKSPACES = [
+  { name: "Data Lab", to: "/admin/data", note: "Data projects and analysis" },
+  { name: "Experience", to: "/admin/experience", note: "Roles and organizations" },
+  { name: "Leadership", to: "/admin/leadership", note: "Community work" },
+  { name: "Articles", to: "/admin/articles", note: "Written articles" },
+  { name: "Timeline", to: "/admin/timeline", note: "Key dates" },
+  { name: "Now", to: "/admin/now", note: "Current focus" },
+  { name: "Pages & SEO", to: "/admin/pages", note: "Page titles and search info" },
+  { name: "Settings", to: "/admin/settings", note: "Branding and footer" },
 ];
 
 export default function AdminDashboardPage() {
@@ -30,14 +28,14 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col gap-5 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">
-            Content Overview
+            Dashboard
           </p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Control Center
+            Dashboard
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
-            Live database state and content control surface. Projects and case studies can be
-            created, edited, published, and archived from here.
+            A summary of your content. Create, edit and publish projects, case studies and
+            other pages from here.
           </p>
         </div>
         {data?.admin.email ? (
@@ -58,7 +56,7 @@ export default function AdminDashboardPage() {
           <ErrorState
             message={
               overview.error.status === 401
-                ? "The administrator session has expired. Sign out and sign in again."
+                ? "Your session has expired. Sign in again."
                 : overview.error.detail
             }
             onRetry={overview.reload}
@@ -102,7 +100,7 @@ export default function AdminDashboardPage() {
                   to="/work"
                   className="inline-flex items-center gap-1.5 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
                 >
-                  Public index
+                  View work page
                   <ArrowUpRight className="size-3" aria-hidden="true" />
                 </Link>
               </div>
@@ -110,8 +108,13 @@ export default function AdminDashboardPage() {
               {data.recent_projects.length === 0 ? (
                 <div className="p-5">
                   <EmptyState
-                    title="No projects in the database"
-                    description="Run the seed command or create projects once the editor is available."
+                    title="No projects yet"
+                    description="Add your first project to see it here."
+                    action={
+                      <Link to="/admin/projects/new" className={buttonStyles("secondary", "sm")}>
+                        Add project
+                      </Link>
+                    }
                   />
                 </div>
               ) : (
@@ -151,21 +154,21 @@ export default function AdminDashboardPage() {
                   id="status-heading"
                   className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted"
                 >
-                  Content status
+                  Content summary
                 </h2>
               </div>
               <dl className="divide-y divide-line">
                 {Object.entries(data.project_counts).map(([status, count]) => (
                   <div key={status} className="flex items-center justify-between gap-4 px-5 py-3.5">
                     <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
-                      {status}
+                      {status.replace(/_/g, " ")}
                     </dt>
                     <dd className="text-sm tabular-nums text-paper font-medium">{count}</dd>
                   </div>
                 ))}
                 <div className="flex items-center justify-between gap-4 px-5 py-3.5">
                   <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
-                    Leadership entries
+                    Leadership
                   </dt>
                   <dd className="text-sm tabular-nums text-paper font-medium">{data.leadership_entries}</dd>
                 </div>
@@ -177,7 +180,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex items-center justify-between gap-4 px-5 py-3.5">
                   <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
-                    Now items
+                    Now updates
                   </dt>
                   <dd className="text-sm tabular-nums text-paper font-medium">{data.now_items}</dd>
                 </div>
@@ -193,17 +196,17 @@ export default function AdminDashboardPage() {
               >
                 Recent messages
               </h2>
-              <Badge tone="outline">Inbox storage live</Badge>
+              <Badge tone="outline">Inbox</Badge>
             </div>
 
             {data.recent_messages.length === 0 ? (
               <div className="p-5">
                 <EmptyState
                   title="No messages yet"
-                  description="Contact submissions are stored in the database and will appear here. The public form is already functional."
+                  description="Messages sent from your contact form will appear here."
                   action={
                     <Link to="/contact" className={buttonStyles("secondary", "sm")}>
-                      Open public contact form
+                      Open contact form
                       <ArrowUpRight className="size-3.5" aria-hidden="true" />
                     </Link>
                   }
@@ -245,12 +248,11 @@ export default function AdminDashboardPage() {
                 <ArrowUpRight className="size-3.5 text-muted transition-colors group-hover:text-paper" aria-hidden="true" />
               </div>
               <p className="mt-5 font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                Work system
+                Projects
               </p>
               <p className="mt-1.5 text-lg font-medium text-paper">Manage projects</p>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
-                Create, edit, preview, publish, archive, duplicate, and reorder project
-                records.
+                Add, edit and publish the projects shown on your website.
               </p>
             </Link>
             <Link
@@ -264,9 +266,9 @@ export default function AdminDashboardPage() {
               <p className="mt-5 font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
                 Case studies
               </p>
-              <p className="mt-1.5 text-lg font-medium text-paper">Write the engineering story</p>
+              <p className="mt-1.5 text-lg font-medium text-paper">Write a case study</p>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
-                Edit every section, hide what is not ready, and publish only real content.
+                Explain how a project was planned, built and tested. Publish only what is ready.
               </p>
             </Link>
           </section>
@@ -278,25 +280,35 @@ export default function AdminDashboardPage() {
                   id="modules-heading"
                   className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted"
                 >
-                  Next modules
+                  Manage content
                 </h2>
                 <p className="mt-1.5 text-xs text-muted">
-                  These editors are planned for expansion.
+                  Edit the content that appears on your website.
                 </p>
               </div>
               <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-                {PLANNED_MODULES.length} planned
+                {WORKSPACES.length} sections
               </span>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {PLANNED_MODULES.map((module) => (
-                <div key={module.name} className="flex items-center justify-between gap-3 border border-line bg-surface px-4 py-3">
-                  <span className="text-xs text-paper-dim">{module.name}</span>
-                  <span className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-faint">
-                    {module.phase}
+              {WORKSPACES.map((module) => (
+                <Link
+                  key={module.name}
+                  to={module.to}
+                  className="group flex items-center justify-between gap-3 border border-line bg-surface px-4 py-3 transition-colors hover:border-paper"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-xs text-paper">{module.name}</span>
+                    <span className="mt-0.5 block truncate font-mono text-[0.5rem] uppercase tracking-[0.1em] text-faint">
+                      {module.note}
+                    </span>
                   </span>
-                </div>
+                  <ArrowUpRight
+                    className="size-3.5 shrink-0 text-muted transition-colors group-hover:text-paper"
+                    aria-hidden="true"
+                  />
+                </Link>
               ))}
             </div>
           </section>

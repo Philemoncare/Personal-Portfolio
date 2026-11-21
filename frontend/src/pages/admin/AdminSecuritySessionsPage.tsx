@@ -70,7 +70,7 @@ export default function AdminSecuritySessionsPage() {
       sessions.reload();
     } catch (cause) {
       setError(
-        cause instanceof ApiError ? cause.detail : "The session could not be revoked.",
+        cause instanceof ApiError ? cause.detail : "We couldn't end this session. Please try again.",
       );
     } finally {
       setBusy(null);
@@ -88,7 +88,7 @@ export default function AdminSecuritySessionsPage() {
       sessions.reload();
     } catch (cause) {
       setError(
-        cause instanceof ApiError ? cause.detail : "The other sessions could not be revoked.",
+        cause instanceof ApiError ? cause.detail : "We couldn't end the other sessions. Please try again.",
       );
     } finally {
       setBusy(null);
@@ -100,7 +100,12 @@ export default function AdminSecuritySessionsPage() {
   }
 
   if (sessions.error && !sessions.data) {
-    return <ErrorState message={sessions.error.detail} onRetry={sessions.reload} />;
+    return (
+      <ErrorState
+        message="We couldn't load your sessions. Please try again."
+        onRetry={sessions.reload}
+      />
+    );
   }
 
   const items = sessions.data ?? [];
@@ -116,15 +121,15 @@ export default function AdminSecuritySessionsPage() {
             className="inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
           >
             <ArrowLeft className="size-3.5" aria-hidden="true" />
-            Security overview
+            Security
           </Link>
           <h1 className="mt-3 text-2xl font-medium tracking-[-0.02em] text-paper">
-            Session management
+            Sessions
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
             {admin ? `${admin.email}. ` : ""}
-            Sessions are opaque server-side records. Only a hash of each browser token is stored;
-            the token itself is never returned by the API.
+            Each browser where you are signed in appears here. You can end any session except the
+            one you are using now.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -191,7 +196,7 @@ export default function AdminSecuritySessionsPage() {
                 disabled={busy === "all"}
                 className={buttonStyles("secondary", "sm", "border-signal text-signal")}
               >
-                {busy === "all" ? "Revoking" : "Confirm revoke all others"}
+                {busy === "all" ? "Ending..." : "Yes, end all other sessions"}
               </button>
               <button
                 type="button"
@@ -209,7 +214,7 @@ export default function AdminSecuritySessionsPage() {
               className={buttonStyles("ghost", "sm", "border border-line disabled:opacity-30")}
             >
               <Trash2 className="size-3.5" aria-hidden="true" />
-              Revoke all other sessions
+              End all other sessions
             </button>
           )}
         </div>
@@ -218,7 +223,7 @@ export default function AdminSecuritySessionsPage() {
           <table className="w-full min-w-[52rem] border-collapse text-left">
             <thead>
               <tr className="border-b border-line">
-                {["Device", "IP address", "Status", "Created", "Last active", "Expires", ""].map(
+                {["Device", "IP address", "Status", "Started", "Last active", "Expires", ""].map(
                   (label) => (
                     <th
                       key={label || "actions"}
@@ -250,7 +255,7 @@ export default function AdminSecuritySessionsPage() {
                       className="mt-1 max-w-[18rem] truncate font-mono text-[0.52rem] text-faint"
                       title={session.user_agent ?? undefined}
                     >
-                      {session.user_agent || "No user agent recorded"}
+                      {session.user_agent || "Browser details not recorded"}
                     </p>
                   </td>
                   <td className="py-3 pr-4 font-mono text-[0.6rem] text-paper-dim">
@@ -262,7 +267,11 @@ export default function AdminSecuritySessionsPage() {
                         session.status,
                       )}`}
                     >
-                      {session.status}
+                      {session.status === "active"
+                        ? "Active"
+                        : session.status === "revoked"
+                          ? "Ended"
+                          : "Expired"}
                     </span>
                     {session.revoked_at ? (
                       <p className="mt-1 font-mono text-[0.5rem] uppercase tracking-[0.1em] text-faint">
@@ -296,7 +305,7 @@ export default function AdminSecuritySessionsPage() {
                         )}
                       >
                         <Trash2 className="size-3.5" aria-hidden="true" />
-                        {busy === session.id ? "Revoking" : "Revoke"}
+                        {busy === session.id ? "Ending..." : "End session"}
                       </button>
                     ) : (
                       <span className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-faint">
@@ -309,7 +318,7 @@ export default function AdminSecuritySessionsPage() {
               {items.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-sm text-muted">
-                    No sessions are recorded for this account.
+                    No sessions yet.
                   </td>
                 </tr>
               ) : null}
@@ -318,8 +327,8 @@ export default function AdminSecuritySessionsPage() {
         </div>
 
         <p className="mt-4 text-xs leading-relaxed text-faint">
-          Revoking a session invalidates that browser immediately. The current session can only be
-          ended with sign out, so the dashboard cannot accidentally lock you out.
+          Ending a session signs that browser out straight away. To end this session, sign out
+          instead, so you don't lock yourself out by accident.
         </p>
       </section>
     </div>

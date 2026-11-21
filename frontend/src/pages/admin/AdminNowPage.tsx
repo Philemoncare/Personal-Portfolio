@@ -166,7 +166,7 @@ export default function AdminNowPage() {
 
   const save = async () => {
     if (!form.title.trim()) {
-      setNotice({ tone: "error", text: "A title is required." });
+      setNotice({ tone: "error", text: "Please add a title." });
       return;
     }
     setBusy(true);
@@ -179,11 +179,11 @@ export default function AdminNowPage() {
       }
       items.reload();
       cancel();
-      setNotice({ tone: "ok", text: editing ? "Now item updated." : "Now item created." });
+      setNotice({ tone: "ok", text: editing ? "Update saved." : "Update added." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The item could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -191,18 +191,18 @@ export default function AdminNowPage() {
   };
 
   const remove = async (item: NowAdminItem) => {
-    if (!window.confirm(`Delete “${item.title}” permanently?`)) return;
+    if (!window.confirm(`Delete “${item.title}”? This cannot be undone.`)) return;
     setBusy(true);
     setNotice(null);
     try {
       await adminContentService.deleteNow(item.id);
       items.reload();
       if (editing?.id === item.id) cancel();
-      setNotice({ tone: "ok", text: "Now item deleted." });
+      setNotice({ tone: "ok", text: "Update deleted." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The item could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this update. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -213,23 +213,23 @@ export default function AdminNowPage() {
     <>
       <div className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Now</p>
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Updates</p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Current focus
+            Now
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Category-based updates with lifecycle status, priority, ordering, and optional links
-            to existing projects, Build Lab builds, and leadership records.
+            Short updates about what you're working on now. You can link an update to a project
+            or leadership entry.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/now" target="_blank" rel="noreferrer" className={buttonStyles("secondary", "sm")}>
-            View Now page
+            View page
             <ExternalLink className="size-3.5" aria-hidden="true" />
           </Link>
           <button type="button" onClick={startCreate} className={buttonStyles("primary", "sm")}>
             <Plus className="size-3.5" aria-hidden="true" />
-            New item
+            Add update
           </button>
         </div>
       </div>
@@ -250,8 +250,8 @@ export default function AdminNowPage() {
       {(creating || editing) ? (
         <div className="mt-6">
           <AdminPanel
-            title={editing ? "Edit Now item" : "New Now item"}
-            description="Draft items stay private. Published items appear on /now only when active."
+            title={editing ? "Edit update" : "Add update"}
+            description="Drafts stay private. A published update appears on your Now page when it is active."
             actions={
               <button type="button" onClick={cancel} className={buttonStyles("ghost", "sm")}>
                 <X className="size-3.5" aria-hidden="true" />
@@ -277,7 +277,7 @@ export default function AdminNowPage() {
                   }
                 />
               </Field>
-              <Field label="Lifecycle status" htmlFor="now-status">
+              <Field label="Status" htmlFor="now-status">
                 <Select
                   id="now-status"
                   value={form.status}
@@ -285,7 +285,7 @@ export default function AdminNowPage() {
                   onChange={(event) => setForm({ ...form, status: event.target.value as NowStatus })}
                 />
               </Field>
-              <Field label="Publish status" htmlFor="now-publish">
+              <Field label="Visibility" htmlFor="now-publish">
                 <Select
                   id="now-publish"
                   value={form.publish_status}
@@ -295,11 +295,11 @@ export default function AdminNowPage() {
                   }
                 />
               </Field>
-              <Field label="External URL" htmlFor="now-external">
+              <Field label="Link" htmlFor="now-external">
                 <TextInput
                   id="now-external"
                   value={form.external_url}
-                  placeholder="https://…"
+                  placeholder="https://example.com"
                   onChange={(event) => setForm({ ...form, external_url: event.target.value })}
                 />
               </Field>
@@ -323,7 +323,7 @@ export default function AdminNowPage() {
                   onChange={(event) => setForm({ ...form, related_project_id: event.target.value })}
                 />
               </Field>
-              <Field label="Related Build Lab build" htmlFor="now-build-lab">
+              <Field label="Related Build Lab project" htmlFor="now-build-lab">
                 <Select
                   id="now-build-lab"
                   value={form.related_build_lab_id}
@@ -346,7 +346,7 @@ export default function AdminNowPage() {
             </Field>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Priority" htmlFor="now-priority" hint="Higher numbers sort first within a category.">
+              <Field label="Priority" htmlFor="now-priority" hint="Higher numbers appear first within a category.">
                 <TextInput
                   id="now-priority"
                   type="number"
@@ -369,13 +369,13 @@ export default function AdminNowPage() {
                 checked={form.active}
                 onChange={(checked) => setForm({ ...form, active: checked })}
                 label="Active"
-                hint="Inactive items remain stored but are hidden from the public Now page."
+                hint="Inactive updates stay saved but are hidden from your Now page."
               />
               <Checkbox
                 checked={form.is_placeholder}
                 onChange={(checked) => setForm({ ...form, is_placeholder: checked })}
-                label="Placeholder content"
-                hint="Shows an honest placeholder label on the public page."
+                label="This update is not finished yet"
+                hint="Your website will show a note until it is final."
               />
             </div>
 
@@ -387,7 +387,7 @@ export default function AdminNowPage() {
                 className={buttonStyles("primary", "md")}
               >
                 <Save className="size-4" aria-hidden="true" />
-                {busy ? "Saving…" : "Save item"}
+                {busy ? "Saving..." : "Save update"}
               </button>
               <button type="button" onClick={cancel} className={buttonStyles("ghost", "md")}>
                 Cancel
@@ -398,18 +398,18 @@ export default function AdminNowPage() {
       ) : null}
 
       <div className="mt-8">
-        {items.loading ? <LoadingState rows={4} label="Loading Now items" /> : null}
+        {items.loading ? <LoadingState rows={4} label="Loading updates" /> : null}
         {!items.loading && items.error ? (
-          <ErrorState message="Now items could not be loaded." onRetry={items.reload} />
+          <ErrorState message="We couldn't load your updates. Please try again." onRetry={items.reload} />
         ) : null}
         {!items.loading && !items.error && (items.data?.length ?? 0) === 0 ? (
           <EmptyState
-            title="No Now items yet"
-            description="Create the first update. It starts as a private draft."
+            title="No updates yet"
+            description="Add your first update. It starts as a private draft."
             action={
               <button type="button" onClick={startCreate} className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />
-                New item
+                Add update
               </button>
             }
           />
@@ -427,7 +427,7 @@ export default function AdminNowPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="truncate text-sm font-medium text-paper">{item.title}</p>
                       <StatusBadge status={item.publish_status} />
-                      {item.is_placeholder ? <Badge tone="placeholder">Placeholder</Badge> : null}
+                      {item.is_placeholder ? <Badge tone="placeholder">Not finished</Badge> : null}
                       {!item.active ? <Badge tone="muted">Inactive</Badge> : null}
                     </div>
                     <p className="mt-1 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">

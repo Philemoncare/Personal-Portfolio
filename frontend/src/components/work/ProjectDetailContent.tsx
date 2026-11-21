@@ -21,6 +21,7 @@ import { PageIntro } from "@/components/layout/PageIntro";
 import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { HomepagePreview, hasHomepagePreview } from "@/components/work/HomepagePreview";
 import { LiveProjectPreview } from "@/components/work/LiveProjectPreview";
 import { ProjectCard } from "@/components/work/project-card";
 import { ProjectGallery } from "@/components/work/ProjectGallery";
@@ -235,6 +236,8 @@ export function ProjectDetailContent({
   const study = data.case_study;
   const actions = projectActions(data);
   const previewUrl = data.deployment_url || data.demo_url || data.live_url || null;
+  const hasPreviewImage = hasHomepagePreview(data);
+  const verifiedHomepage = data.preview_source_url || previewUrl;
   const narrative = narrativeSections(study);
   const overview = (hasText(study?.overview) ? study?.overview : data.body) ?? null;
   const architectureText = hasText(study?.architecture) ? study?.architecture : null;
@@ -290,7 +293,11 @@ export function ProjectDetailContent({
         </Link>
 
         <article className="mt-8">
-          {data.cover_image_url ? (
+          {hasPreviewImage ? (
+            <HomepagePreview project={data} priority />
+          ) : verifiedHomepage ? (
+            <HomepagePreview project={data} />
+          ) : data.cover_image_url ? (
             <figure className="overflow-hidden border border-line bg-surface">
               <PortfolioImage
                 src={data.cover_image_url}
@@ -363,10 +370,10 @@ export function ProjectDetailContent({
               </Section>
             ) : null}
 
-            {previewUrl ? (
+            {previewUrl && data.embed_enabled && !hasPreviewImage ? (
               <Section
                 id="live-preview"
-                label="Live preview"
+                label="Interactive preview"
                 meta={
                   data.last_verified_at ? (
                     <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">

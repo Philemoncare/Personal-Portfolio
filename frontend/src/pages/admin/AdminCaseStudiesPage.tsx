@@ -30,7 +30,7 @@ export default function AdminCaseStudiesPage() {
 
   const remove = async (study: AdminCaseStudy) => {
     const confirmed = window.confirm(
-      `Delete "${study.title}" permanently? The project itself is not deleted.`,
+      `Delete "${study.title}"? The project itself will not be deleted.`,
     );
     if (!confirmed) return;
     setBusy(`${study.id}:delete`);
@@ -40,7 +40,7 @@ export default function AdminCaseStudiesPage() {
       studies.reload();
       setNotice(`"${study.title}" was deleted.`);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The case study could not be deleted.");
+      setNotice(error instanceof Error ? error.message : "We couldn't delete this case study. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -51,20 +51,19 @@ export default function AdminCaseStudiesPage() {
       <div className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">
-            Work system
+            Work
           </p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
             Case studies
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            The long-form engineering record behind a project. Each section renders only when
-            it contains real content, and you can hide individual sections without deleting
-            them.
+            A longer write-up about a project: the problem, the decisions you made, how you
+            built it and what changed. Sections with no content are hidden.
           </p>
         </div>
         <Link to="/admin/case-studies/new" className={buttonStyles("primary", "md")}>
           <Plus className="size-4" aria-hidden="true" />
-          New case study
+          Write case study
         </Link>
       </div>
 
@@ -77,16 +76,16 @@ export default function AdminCaseStudiesPage() {
       <div className="mt-6">
         {studies.loading ? <LoadingState rows={4} label="Loading case studies" /> : null}
         {!studies.loading && studies.error ? (
-          <ErrorState message="The case-study list could not be loaded." onRetry={studies.reload} />
+          <ErrorState message="We couldn't load your case studies. Please try again." onRetry={studies.reload} />
         ) : null}
         {!studies.loading && !studies.error && (studies.data?.length ?? 0) === 0 ? (
           <EmptyState
             title="No case studies yet"
-            description="A case study turns a project into an engineering narrative: problem, context, decisions, implementation, and what changed."
+            description="A case study explains a project in more detail: the problem, the context, the decisions you made and what changed."
             action={
               <Link to="/admin/case-studies/new" className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />
-                Write the first case study
+                Write case study
               </Link>
             }
           />
@@ -188,9 +187,9 @@ export default function AdminCaseStudiesPage() {
       </div>
 
       <p className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
-        <span>{studies.data?.length ?? 0} case studies in the database</span>
+        <span>{studies.data?.length ?? 0} case studies</span>
         <Link to="/work" className="inline-flex items-center gap-1.5 hover:text-paper">
-          Public work index
+          View work page
           <ArrowUpRight className="size-3" aria-hidden="true" />
         </Link>
       </p>

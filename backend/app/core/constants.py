@@ -49,6 +49,22 @@ DATA_PROJECT_TYPE_LABELS = {
 WORK_MODES = ("build", "data", "lead", "explore")
 MESSAGE_STATUSES = ("new", "read", "replied", "archived", "spam")
 PROJECT_MEDIA_TYPES = ("image", "diagram", "video")
+PROJECT_PREVIEW_STATUSES = (
+    "not_discovered",
+    "awaiting_verification",
+    "verified",
+    "generated",
+    "unavailable",
+    "unreachable",
+)
+PROJECT_PREVIEW_SOURCES = (
+    "github_homepage",
+    "github_pages",
+    "package_json",
+    "cname",
+    "readme",
+    "manual",
+)
 TIMELINE_KINDS = (
     "education",
     "project",
@@ -199,6 +215,7 @@ PAGE_KEYS = (
     "build-lab",
     "leadership",
     "experience",
+    "articles",
     "about",
     "now",
     "timeline",
@@ -212,6 +229,7 @@ PAGE_KEY_LABELS = {
     "build-lab": "Build Lab",
     "leadership": "Leadership",
     "experience": "Experience",
+    "articles": "Articles",
     "about": "About",
     "now": "Now",
     "timeline": "Timeline",
@@ -225,6 +243,7 @@ PAGE_KEY_PATHS = {
     "build-lab": "/build-lab",
     "leadership": "/leadership",
     "experience": "/experience",
+    "articles": "/articles",
     "about": "/about",
     "now": "/now",
     "timeline": "/timeline",
@@ -237,8 +256,12 @@ MEDIA_FOLDERS = (
     "projects",
     "data-lab",
     "build-lab",
+    "case-studies",
     "leadership",
     "experience",
+    "timeline",
+    "articles",
+    "pages",
     "social",
     "blog",
     "documents",

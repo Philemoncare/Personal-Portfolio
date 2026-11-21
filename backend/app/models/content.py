@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     Date,
@@ -35,6 +36,7 @@ class ExperienceEntry(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Bas
     )
     location: Mapped[str | None] = mapped_column(String(120), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    logo_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     started_on: Mapped[date] = mapped_column(Date, nullable=False)
     ended_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_current: Mapped[bool] = mapped_column(
@@ -60,6 +62,7 @@ class LeadershipEntry(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Bas
     started_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     ended_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     sort_order: Mapped[int] = mapped_column(
         Integer, default=0, server_default="0", nullable=False
     )
@@ -126,6 +129,13 @@ class Article(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base):
     body: Mapped[str | None] = mapped_column(Text, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     external_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    category: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    featured: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False, index=True
+    )
+    seo_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    seo_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(
         Integer, default=0, server_default="0", nullable=False
     )
@@ -183,6 +193,7 @@ class TimelineEntry(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base)
         index=True,
     )
     external_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     featured: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="0", nullable=False, index=True
     )

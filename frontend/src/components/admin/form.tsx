@@ -89,7 +89,7 @@ export function TextArea(
     <textarea
       {...props}
       rows={props.rows ?? 4}
-      className={cn(inputClass, "h-auto py-2.5 leading-relaxed", props.className)}
+      className={cn(inputClass, "h-auto resize-none py-2.5 leading-relaxed", props.className)}
     />
   );
 }

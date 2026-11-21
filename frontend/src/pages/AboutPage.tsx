@@ -240,14 +240,15 @@ export default function AboutPage() {
           <aside className="h-fit space-y-6 lg:sticky lg:top-24">
             <figure className="group border border-line">
               <PortfolioImage
-                assetId="profile.portrait.square"
+                assetId={person.profile_image ? undefined : "profile.portrait.square"}
+                src={person.profile_image ?? undefined}
                 aspect="square"
                 sizes="(max-width: 1024px) 40vw, 320px"
                 imageClassName="grayscale-[0.25] transition-transform duration-700 ease-out group-hover:scale-[1.02]"
               />
               <figcaption className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
                 <span className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                  Philemon Melabah
+                  {person.name || person.display_name}
                 </span>
                 <span className="type-meta text-faint">{person.location || "Ghana"}</span>
               </figcaption>

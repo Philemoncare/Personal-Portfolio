@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { hasHomepagePreview } from "@/components/work/HomepagePreview";
 import { projectAssetId } from "@/components/work/project-assets";
 import { ProjectVisual } from "@/components/work/project-visual";
 import type { ProjectSummary } from "@/types/api";
@@ -86,8 +87,16 @@ export function FeaturedProject({
         <ProjectVisual
           title={project.title}
           index={index}
-          imageUrl={project.cover_image_url}
-          imageAlt={`${project.title} project visual`}
+          imageUrl={
+            hasHomepagePreview(project)
+              ? project.preview_image
+              : project.cover_image_url
+          }
+          imageAlt={
+            hasHomepagePreview(project)
+              ? `Captured homepage of ${project.title}`
+              : `${project.title} project visual`
+          }
           assetId={projectAssetId(project.slug)}
           aspect="landscape"
           className="h-full"

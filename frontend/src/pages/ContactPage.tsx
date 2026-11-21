@@ -452,7 +452,7 @@ export default function ContactPage() {
                     aria-describedby={
                       errors.message ? "message-error message-help" : "message-help"
                     }
-                    className="mt-2 w-full resize-y border border-line bg-ink-800/40 px-4 py-3 text-base leading-relaxed text-paper outline-none transition-colors placeholder:text-faint focus:border-paper aria-[invalid=true]:border-signal"
+                    className="mt-2 w-full resize-none border border-line bg-ink-800/40 px-4 py-3 text-base leading-relaxed text-paper outline-none transition-colors placeholder:text-faint focus:border-paper aria-[invalid=true]:border-signal"
                     placeholder="What are you working on? Include the context that would help."
                   />
                   <div className="mt-2 flex items-start justify-between gap-4">

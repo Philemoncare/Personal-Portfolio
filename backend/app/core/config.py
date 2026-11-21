@@ -83,6 +83,24 @@ class Settings(BaseSettings):
     media_max_bytes: int = 8 * 1024 * 1024
     media_max_dimension: int = 8000
 
+    # --- Deployed homepage previews ---------------------------------------
+    # Screenshots are captured by a controlled local headless browser. The
+    # URL is validated and resolved to a public address before the browser is
+    # launched; no repository image is ever used as a substitute.
+    preview_screenshot_enabled: bool = True
+    preview_browser_path: str | None = None
+    preview_screenshot_timeout_seconds: float = 45.0
+    preview_viewport_width: int = 1440
+    preview_viewport_height: int = 900
+    preview_max_image_width: int = 1440
+    preview_image_quality: int = 82
+    preview_probe_timeout_seconds: float = 12.0
+    preview_max_redirects: int = 5
+    preview_user_agent: str = "phill-portfolio-preview/1.0"
+    # Localhost/private hosts are always rejected. This exists for automated
+    # tests that inspect the rejection path without sending real traffic.
+    preview_allow_private_hosts: bool = False
+
     resume_storage_dir: str = "storage/resumes"
     resume_max_bytes: int = 5 * 1024 * 1024
 

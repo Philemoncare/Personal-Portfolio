@@ -52,7 +52,7 @@ export default function AdminSocialLinksPage() {
 
   const save = async () => {
     if (!form.label.trim() || !form.url.trim()) {
-      setNotice({ tone: "error", text: "A label and URL are required." });
+      setNotice({ tone: "error", text: "Please add a name and a link." });
       return;
     }
     setSaving(true);
@@ -76,7 +76,7 @@ export default function AdminSocialLinksPage() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The social link could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save this link. Please try again.",
       });
     } finally {
       setSaving(false);
@@ -84,7 +84,7 @@ export default function AdminSocialLinksPage() {
   };
 
   const remove = async (link: SocialLinkAdmin) => {
-    if (!window.confirm(`Delete the ${link.label} link? It disappears from the public site.`)) {
+    if (!window.confirm(`Delete the ${link.label} link? It will be removed from your website.`)) {
       return;
     }
     setSaving(true);
@@ -96,7 +96,7 @@ export default function AdminSocialLinksPage() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The link could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this link. Please try again.",
       });
     } finally {
       setSaving(false);
@@ -107,13 +107,13 @@ export default function AdminSocialLinksPage() {
     <>
       <div className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Identity</p>
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Profile</p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
             Social links
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Real channels shown in the header, footer, and contact page. Only add handles that
-            exist — the public site never invents a destination.
+            Links to your profiles on other websites. They appear in your header, footer and
+            contact page.
           </p>
         </div>
         <button type="button" onClick={startNew} className={buttonStyles("primary", "md")}>
@@ -139,7 +139,7 @@ export default function AdminSocialLinksPage() {
         <section className="mt-6 border border-line-strong bg-ink-900/40 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
             <h2 className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-              {editing === "new" ? "New social link" : "Edit social link"}
+              {editing === "new" ? "Add social link" : "Edit social link"}
             </h2>
             <button
               type="button"
@@ -161,7 +161,7 @@ export default function AdminSocialLinksPage() {
                 }))}
               />
             </Field>
-            <Field label="Label" htmlFor="label" required>
+            <Field label="Name" htmlFor="label" required>
               <TextInput
                 id="label"
                 value={form.label}
@@ -170,10 +170,10 @@ export default function AdminSocialLinksPage() {
               />
             </Field>
             <Field
-              label="URL"
+              label="Link"
               htmlFor="url"
               required
-              hint="Full http(s) URL. Email and phone use mailto:/tel: or a plain address."
+              hint="The full web address, starting with https://"
               className="sm:col-span-2"
             >
               <TextInput
@@ -183,14 +183,14 @@ export default function AdminSocialLinksPage() {
                 placeholder="https://github.com/username"
               />
             </Field>
-            <Field label="Handle" htmlFor="handle" hint="Optional, e.g. @username">
+            <Field label="Handle" htmlFor="handle" hint="Optional, for example @username">
               <TextInput
                 id="handle"
                 value={form.handle ?? ""}
                 onChange={(event) => setForm({ ...form, handle: event.target.value })}
               />
             </Field>
-            <Field label="Sort order" htmlFor="sort">
+            <Field label="Display order" htmlFor="sort">
               <TextInput
                 id="sort"
                 type="number"
@@ -202,7 +202,7 @@ export default function AdminSocialLinksPage() {
             </Field>
             <div className="sm:col-span-2">
               <Checkbox
-                label="Visible on the public site"
+                label="Show on my website"
                 checked={form.is_visible}
                 onChange={(next) => setForm({ ...form, is_visible: next })}
               />
@@ -215,7 +215,7 @@ export default function AdminSocialLinksPage() {
             className={buttonStyles("primary", "sm", "mt-5")}
           >
             <Save className="size-3.5" aria-hidden="true" />
-            {saving ? "Saving…" : "Save link"}
+            {saving ? "Saving..." : "Save link"}
           </button>
         </section>
       ) : null}
@@ -223,16 +223,19 @@ export default function AdminSocialLinksPage() {
       <div className="mt-6">
         {links.loading ? <LoadingState rows={3} label="Loading social links" /> : null}
         {!links.loading && links.error ? (
-          <ErrorState message={links.error.detail} onRetry={links.reload} />
+          <ErrorState
+            message="We couldn't load your social links. Please try again."
+            onRetry={links.reload}
+          />
         ) : null}
         {!links.loading && !links.error && items.length === 0 ? (
           <EmptyState
             title="No social links yet"
-            description="Add a GitHub, LinkedIn, email, or WhatsApp destination. The footer and contact page fall back to profile settings until a link exists here."
+            description="Add a link to GitHub, LinkedIn, email or WhatsApp. If you leave this empty, the links in your profile are used instead."
             action={
               <button type="button" onClick={startNew} className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />
-                Add the first link
+                Add link
               </button>
             }
           />
@@ -284,7 +287,7 @@ export default function AdminSocialLinksPage() {
               },
               {
                 key: "visibility",
-                header: "Public",
+                header: "Shown",
                 mobileLabel: "Public",
                 render: (link) => (
                   <span
@@ -332,7 +335,7 @@ export default function AdminSocialLinksPage() {
 
       <AdminTableToolbar className="mt-6 border-b-0 pt-2" status={`${items.length} links`}>
         <p className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
-          Public endpoint: /api/v1/social-links
+          These links appear in the header, footer and contact page.
         </p>
       </AdminTableToolbar>
     </>

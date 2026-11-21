@@ -25,11 +25,11 @@ export default function ChangePasswordPage() {
   if (status === "initializing") {
     return (
       <AuthLayout
-        eyebrow="Account security"
+        eyebrow="Account"
         title="Change password"
-        description="Confirming your session."
+        description="Checking your session."
       >
-        <LoadingState label="Confirming session" rows={2} />
+        <LoadingState label="Checking your session" rows={2} />
       </AuthLayout>
     );
   }
@@ -41,11 +41,11 @@ export default function ChangePasswordPage() {
   if (status === "error") {
     return (
       <AuthLayout
-        eyebrow="Account security"
-        title="Session unavailable"
-        description="The account could not be loaded. Sign in again to continue."
+        eyebrow="Account"
+        title="We couldn't load your account"
+        description="Please sign in again to continue."
       >
-        <FormMessage>{sessionError ?? "The account could not be loaded."}</FormMessage>
+        <FormMessage>{sessionError ?? "We couldn't load your account."}</FormMessage>
       </AuthLayout>
     );
   }
@@ -60,11 +60,11 @@ export default function ChangePasswordPage() {
       return;
     }
     if (password !== confirm) {
-      setError("The two passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
     if (password === current) {
-      setError("Choose a password different from the current one.");
+      setError("Choose a password that is different from your current one.");
       return;
     }
 
@@ -77,7 +77,7 @@ export default function ChangePasswordPage() {
       navigate("/admin", { replace: true });
     } catch (cause) {
       setError(
-        cause instanceof ApiError ? cause.detail : "The password could not be changed.",
+        cause instanceof ApiError ? cause.detail : "We couldn't update your password. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -86,12 +86,12 @@ export default function ChangePasswordPage() {
 
   return (
     <AuthLayout
-      eyebrow="Account security"
-      title={forced ? "Choose a new password to continue." : "Change your password."}
+      eyebrow="Account"
+      title={forced ? "Choose a new password" : "Change your password"}
       description={
         forced
-          ? "The account was provisioned with a temporary password. The private area stays locked until it is replaced."
-          : "Changing the password signs out every other session."
+          ? "Your account is using a temporary password. Choose a new one to continue."
+          : "Changing your password will sign you out of all other sessions."
       }
       meta={
         <dl className="space-y-3">
@@ -112,7 +112,7 @@ export default function ChangePasswordPage() {
       footer={
         <p className="inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
           <ShieldCheck className="size-3.5" aria-hidden="true" />
-          Argon2id password hashing
+          Your password is stored securely
         </p>
       }
     >
@@ -127,6 +127,7 @@ export default function ChangePasswordPage() {
             value={current}
             onChange={(event) => setCurrent(event.target.value)}
             className={inputClassName}
+            placeholder="Enter your current password"
             disabled={submitting}
           />
         </Field>
@@ -134,7 +135,7 @@ export default function ChangePasswordPage() {
         <Field
           id="password"
           label="New password"
-          hint={`At least ${MIN_LENGTH} characters. Do not reuse the temporary password.`}
+          hint={`Use at least ${MIN_LENGTH} characters.`}
         >
           <input
             id="password"
@@ -146,6 +147,7 @@ export default function ChangePasswordPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className={inputClassName}
+            placeholder="Enter your new password"
             disabled={submitting}
           />
         </Field>
@@ -160,6 +162,7 @@ export default function ChangePasswordPage() {
             value={confirm}
             onChange={(event) => setConfirm(event.target.value)}
             className={inputClassName}
+            placeholder="Enter your new password again"
             disabled={submitting}
           />
         </Field>

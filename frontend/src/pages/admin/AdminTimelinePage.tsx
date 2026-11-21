@@ -11,11 +11,13 @@ import {
   TextArea,
   TextInput,
 } from "@/components/admin/form";
+import { MediaField } from "@/components/admin/MediaField";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { adminContentService } from "@/services/adminContent.service";
+import { listMedia } from "@/services/auth.service";
 import type {
   PublishStatus,
   TimelineAdminEntry,
@@ -35,6 +37,7 @@ interface TimelineFormState {
   start_date: string;
   end_date: string;
   external_url: string;
+  image_url: string;
   related_project_id: string;
   related_experience_id: string;
   related_leadership_id: string;
@@ -55,6 +58,7 @@ const BLANK: TimelineFormState = {
   start_date: "",
   end_date: "",
   external_url: "",
+  image_url: "",
   related_project_id: "",
   related_experience_id: "",
   related_leadership_id: "",
@@ -76,6 +80,7 @@ function toForm(entry: TimelineAdminEntry): TimelineFormState {
     start_date: entry.start_date ?? "",
     end_date: entry.end_date ?? "",
     external_url: entry.external_url ?? "",
+    image_url: entry.image_url ?? "",
     related_project_id: entry.related_project_id ?? "",
     related_experience_id: entry.related_experience_id ?? "",
     related_leadership_id: entry.related_leadership_id ?? "",
@@ -99,6 +104,7 @@ function toInput(form: TimelineFormState): TimelineInput {
     start_date: form.start_date,
     end_date: form.end_date || null,
     external_url: optional(form.external_url),
+    image_url: optional(form.image_url),
     related_project_id: form.related_project_id || null,
     related_experience_id: form.related_experience_id || null,
     related_leadership_id: form.related_leadership_id || null,
@@ -123,6 +129,7 @@ const PUBLISH_OPTIONS = [
 export default function AdminTimelinePage() {
   const entries = useApiQuery((signal) => adminContentService.listTimeline(signal), []);
   const reference = useApiQuery((signal) => adminContentService.getReference(signal), []);
+  const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
   const [editing, setEditing] = useState<TimelineAdminEntry | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<TimelineFormState>(BLANK);
@@ -186,11 +193,11 @@ export default function AdminTimelinePage() {
 
   const save = async () => {
     if (!form.title.trim()) {
-      setNotice({ tone: "error", text: "A title is required." });
+      setNotice({ tone: "error", text: "Please add a title." });
       return;
     }
     if (!form.start_date) {
-      setNotice({ tone: "error", text: "A start date is required for a timeline entry." });
+      setNotice({ tone: "error", text: "Please add a start date." });
       return;
     }
     setBusy(true);
@@ -204,13 +211,13 @@ export default function AdminTimelinePage() {
       entries.reload();
       setNotice({
         tone: "ok",
-        text: editing ? "Timeline entry updated." : "Timeline entry created.",
+        text: editing ? "Entry saved." : "Entry added.",
       });
       cancel();
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The entry could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -218,18 +225,18 @@ export default function AdminTimelinePage() {
   };
 
   const remove = async (entry: TimelineAdminEntry) => {
-    if (!window.confirm(`Delete “${entry.title}” permanently?`)) return;
+    if (!window.confirm(`Delete “${entry.title}”? This cannot be undone.`)) return;
     setBusy(true);
     setNotice(null);
     try {
       await adminContentService.deleteTimeline(entry.id);
       entries.reload();
       if (editing?.id === entry.id) cancel();
-      setNotice({ tone: "ok", text: "Timeline entry deleted." });
+      setNotice({ tone: "ok", text: "Entry deleted." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The entry could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this entry. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -244,12 +251,11 @@ export default function AdminTimelinePage() {
             Timeline
           </p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Chronology
+            Timeline
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Editorial milestones grouped by date. Entries link to projects, experience, and
-            leadership records instead of repeating their content. Placeholder years stay clearly
-            labelled until real dates are confirmed.
+            Key dates and milestones from your work and study. You can link an entry to a
+            project, a role or a leadership entry instead of repeating the same text.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -268,7 +274,6 @@ export default function AdminTimelinePage() {
           </button>
         </div>
       </div>
-
       {notice ? (
         <p
           role={notice.tone === "error" ? "alert" : "status"}
@@ -285,8 +290,8 @@ export default function AdminTimelinePage() {
       {creating || editing ? (
         <div className="mt-6">
           <AdminPanel
-            title={editing ? "Edit timeline entry" : "New timeline entry"}
-            description="Draft entries stay private. A start date is required; the year used for grouping is derived from it."
+            title={editing ? "Edit entry" : "Add entry"}
+            description="Drafts stay private. A start date is required."
             actions={
               <button type="button" onClick={cancel} className={buttonStyles("ghost", "sm")}>
                 <X className="size-3.5" aria-hidden="true" />
@@ -303,7 +308,7 @@ export default function AdminTimelinePage() {
                   placeholder="What happened"
                 />
               </Field>
-              <Field label="Kind" htmlFor="tl-kind">
+              <Field label="Type" htmlFor="tl-kind">
                 <Select
                   id="tl-kind"
                   value={form.kind}
@@ -318,10 +323,10 @@ export default function AdminTimelinePage() {
                   id="tl-organization"
                   value={form.organization}
                   onChange={(event) => setForm({ ...form, organization: event.target.value })}
-                  placeholder="Only if it applies"
+                  placeholder="Optional"
                 />
               </Field>
-              <Field label="Start date" htmlFor="tl-start" required hint="Used for the year grouping.">
+              <Field label="Start date" htmlFor="tl-start" required hint="The year is taken from this date.">
                 <TextInput
                   id="tl-start"
                   type="date"
@@ -329,7 +334,7 @@ export default function AdminTimelinePage() {
                   onChange={(event) => setForm({ ...form, start_date: event.target.value })}
                 />
               </Field>
-              <Field label="End date" htmlFor="tl-end" hint="Leave empty if ongoing or a single point in time.">
+              <Field label="End date" htmlFor="tl-end" hint="Leave empty if ongoing.">
                 <TextInput
                   id="tl-end"
                   type="date"
@@ -342,10 +347,10 @@ export default function AdminTimelinePage() {
                   id="tl-location"
                   value={form.location}
                   onChange={(event) => setForm({ ...form, location: event.target.value })}
-                  placeholder="Only if it matters"
+                  placeholder="Optional"
                 />
               </Field>
-              <Field label="Slug" htmlFor="tl-slug" hint="Optional. Generated from the title when empty.">
+              <Field label="Web address" htmlFor="tl-slug" hint="Optional. Created from the title if left empty.">
                 <TextInput
                   id="tl-slug"
                   value={form.slug}
@@ -354,7 +359,7 @@ export default function AdminTimelinePage() {
               </Field>
             </div>
 
-            <Field label="Summary" htmlFor="tl-summary" className="mt-4" hint="One line used in compact views.">
+            <Field label="Summary" htmlFor="tl-summary" className="mt-4" hint="A short one-line summary.">
               <TextArea
                 id="tl-summary"
                 rows={2}
@@ -370,17 +375,30 @@ export default function AdminTimelinePage() {
                 onChange={(event) => setForm({ ...form, description: event.target.value })}
               />
             </Field>
+            <Field label="Image" className="mt-4">
+              <MediaField
+                value={form.image_url}
+                onChange={(value) => setForm({ ...form, image_url: value })}
+                assets={media.data?.items ?? []}
+                loading={media.loading}
+                onUploaded={() => media.reload()}
+                folder="timeline"
+                title={form.title ? `${form.title} image` : "Timeline image"}
+                altText={form.title ? `${form.title} illustration` : "Timeline image"}
+                emptyLabel="No image uploaded."
+              />
+            </Field>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="External URL" htmlFor="tl-external" hint="Must start with http:// or https://">
+              <Field label="Link" htmlFor="tl-external" hint="Must start with http:// or https://">
                 <TextInput
                   id="tl-external"
                   value={form.external_url}
-                  placeholder="https://…"
+                  placeholder="https://example.com"
                   onChange={(event) => setForm({ ...form, external_url: event.target.value })}
                 />
               </Field>
-              <Field label="Display order" htmlFor="tl-order" hint="Lower numbers sort first within a year.">
+              <Field label="Display order" htmlFor="tl-order" hint="Lower numbers appear first within a year.">
                 <TextInput
                   id="tl-order"
                   type="number"
@@ -424,7 +442,7 @@ export default function AdminTimelinePage() {
             </div>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Publish status" htmlFor="tl-publish">
+              <Field label="Visibility" htmlFor="tl-publish">
                 <Select
                   id="tl-publish"
                   value={form.publish_status}
@@ -439,13 +457,13 @@ export default function AdminTimelinePage() {
                   checked={form.featured}
                   onChange={(checked) => setForm({ ...form, featured: checked })}
                   label="Featured"
-                  hint="Featured entries can be surfaced in compact previews."
+                  hint="Featured entries can be shown in previews."
                 />
                 <Checkbox
                   checked={form.is_placeholder}
                   onChange={(checked) => setForm({ ...form, is_placeholder: checked })}
-                  label="Placeholder content"
-                  hint="Only a grouping year is shown; no month or day is invented."
+                  label="This entry is not finished yet"
+                  hint="Only the year is shown; no month or day is invented."
                 />
               </div>
             </div>
@@ -458,7 +476,7 @@ export default function AdminTimelinePage() {
                 className={buttonStyles("primary", "md")}
               >
                 <Save className="size-4" aria-hidden="true" />
-                {busy ? "Saving…" : "Save entry"}
+                {busy ? "Saving..." : "Save entry"}
               </button>
               <button type="button" onClick={cancel} className={buttonStyles("ghost", "md")}>
                 Cancel
@@ -469,14 +487,17 @@ export default function AdminTimelinePage() {
       ) : null}
 
       <div className="mt-8">
-        {entries.loading ? <LoadingState rows={4} label="Loading timeline entries" /> : null}
+        {entries.loading ? <LoadingState rows={4} label="Loading timeline" /> : null}
         {!entries.loading && entries.error ? (
-          <ErrorState message="Timeline entries could not be loaded." onRetry={entries.reload} />
+          <ErrorState
+            message="We couldn't load your timeline. Please try again."
+            onRetry={entries.reload}
+          />
         ) : null}
         {!entries.loading && !entries.error && (entries.data?.length ?? 0) === 0 ? (
           <EmptyState
             title="No timeline entries yet"
-            description="Create the first milestone. It starts as a private draft and is grouped by its start year."
+            description="Add your first entry. It starts as a private draft and is grouped by its start year."
             action={
               <button type="button" onClick={startCreate} className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />
@@ -500,7 +521,7 @@ export default function AdminTimelinePage() {
                       <StatusBadge status={entry.publish_status} />
                       <Badge tone="muted">{TIMELINE_KIND_LABELS[entry.kind]}</Badge>
                       {entry.featured ? <Badge tone="outline">Featured</Badge> : null}
-                      {entry.is_placeholder ? <Badge tone="placeholder">Placeholder</Badge> : null}
+                      {entry.is_placeholder ? <Badge tone="placeholder">Not finished</Badge> : null}
                     </div>
                     <p className="mt-1 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
                       {entry.start_date ?? `Year ${entry.year}`}

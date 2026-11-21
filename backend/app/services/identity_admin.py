@@ -179,6 +179,7 @@ def _apply_now(item: NowItem, payload: NowInput) -> None:
     item.priority = payload.priority
     item.sort_order = payload.display_order
     item.external_url = payload.external_url
+    item.image_url = payload.image_url
     item.related_project_id = payload.related_project_id
     item.related_build_lab_id = payload.related_build_lab_id
     item.related_leadership_id = payload.related_leadership_id
@@ -251,6 +252,7 @@ def _apply_timeline(item: TimelineEntry, payload: TimelineInput, db: Session) ->
     item.year = payload.start_date.year
     item.month = payload.start_date.month
     item.external_url = payload.external_url
+    item.image_url = payload.image_url
     item.related_project_id = payload.related_project_id
     item.related_experience_id = payload.related_experience_id
     item.related_leadership_id = payload.related_leadership_id

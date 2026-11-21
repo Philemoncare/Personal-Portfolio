@@ -2,23 +2,14 @@ import { ArrowUpRight, FileText, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import {
-  AdminPanel,
-  Field,
-  TextArea,
-  TextInput,
-} from "@/components/admin/form";
-import {
-  ProfileFields,
-  formToProfileInput,
-  profileToForm,
-  type ProfileFormState,
-} from "@/components/admin/profile-fields";
+import { AdminPanel, Field, TextArea, TextInput } from "@/components/admin/form";
+import { MediaField } from "@/components/admin/MediaField";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { adminContentService } from "@/services/adminContent.service";
+import { listMedia } from "@/services/auth.service";
 import type { AdminSettings, AdminSettingsInput, SiteSettingsAdmin } from "@/types/api";
 import { formatDate } from "@/utils/format";
 import { formatFileSize } from "@/utils/identity";
@@ -73,23 +64,18 @@ function siteToInput(form: SiteFormState): AdminSettingsInput["site"] {
 
 export default function AdminSettingsPage() {
   const settings = useApiQuery((signal) => adminContentService.getSettings(signal), []);
-  const [profileForm, setProfileForm] = useState<ProfileFormState | null>(null);
+  const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
   const [siteForm, setSiteForm] = useState<SiteFormState | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (!settings.data) return;
-    setProfileForm(profileToForm(settings.data.profile));
     setSiteForm(siteToForm(settings.data.site));
   }, [settings.data]);
 
   const save = async () => {
-    if (!profileForm || !siteForm) return;
-    if (!profileForm.name.trim() || !profileForm.display_name.trim()) {
-      setNotice({ tone: "error", text: "Name and display name are required." });
-      return;
-    }
+    if (!settings.data || !siteForm) return;
     if (!siteForm.site_name.trim() || !siteForm.wordmark.trim()) {
       setNotice({ tone: "error", text: "Site name and wordmark are required." });
       return;
@@ -98,17 +84,17 @@ export default function AdminSettingsPage() {
     setNotice(null);
     try {
       const updated: AdminSettings = await adminContentService.updateSettings({
-        profile: formToProfileInput(profileForm),
+        // Identity lives on the Profile page; send the current record unchanged.
+        profile: settings.data.profile,
         site: siteToInput(siteForm),
       });
-      setProfileForm(profileToForm(updated.profile));
       setSiteForm(siteToForm(updated.site));
       settings.reload();
-      setNotice({ tone: "ok", text: "Global settings saved." });
+      setNotice({ tone: "ok", text: "Settings updated." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The settings could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -116,35 +102,35 @@ export default function AdminSettingsPage() {
   };
 
   const data = settings.data;
+  const mediaAssets = media.data?.items ?? [];
 
   return (
     <>
       <div className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">
-            Configuration
+            Settings
           </p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Global settings
+            Settings
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            One central place for identity, SEO, appearance, and footer copy. Social links and
-            contact details come from the profile record; secrets stay in environment variables.
+            Manage your website name, search information, branding and footer text here.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/" target="_blank" rel="noreferrer" className={buttonStyles("secondary", "sm")}>
-            View site
+            View website
             <ArrowUpRight className="size-3.5" aria-hidden="true" />
           </Link>
           <button
             type="button"
             onClick={save}
-            disabled={busy || !profileForm || !siteForm}
+            disabled={busy || !siteForm}
             className={buttonStyles("primary", "sm")}
           >
             <Save className="size-3.5" aria-hidden="true" />
-            {busy ? "Saving…" : "Save settings"}
+            {busy ? "Saving..." : "Save settings"}
           </button>
         </div>
       </div>
@@ -173,33 +159,44 @@ export default function AdminSettingsPage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="space-y-6">
             <AdminPanel
-              title="Site identity"
-              description="These values drive the document title, metadata, wordmark, accent, and footer defaults."
+              title="Website details"
+              description="These settings control how your website appears in the browser, search results and footer."
             >
               {siteForm ? (
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Site name" htmlFor="site-name" required>
+                    <Field label="Website name" htmlFor="site-name" required>
                       <TextInput
                         id="site-name"
                         value={siteForm.site_name}
                         onChange={(event) =>
                           setSiteForm({ ...siteForm, site_name: event.target.value })
                         }
+                        placeholder="Enter your website name"
                       />
                     </Field>
-                    <Field label="Wordmark" htmlFor="site-wordmark" required>
+                    <Field
+                      label="Short name"
+                      htmlFor="site-wordmark"
+                      required
+                      hint="The short name shown in the header, such as PHILL."
+                    >
                       <TextInput
                         id="site-wordmark"
                         value={siteForm.wordmark}
                         onChange={(event) =>
                           setSiteForm({ ...siteForm, wordmark: event.target.value })
                         }
+                        placeholder="Enter a short name"
                       />
                     </Field>
                   </div>
 
-                  <Field label="Site description" htmlFor="site-description">
+                  <Field
+                    label="Website description"
+                    htmlFor="site-description"
+                    hint="A short description of your website."
+                  >
                     <TextArea
                       id="site-description"
                       rows={3}
@@ -207,59 +204,76 @@ export default function AdminSettingsPage() {
                       onChange={(event) =>
                         setSiteForm({ ...siteForm, site_description: event.target.value })
                       }
+                      placeholder="Write a short description"
                     />
                   </Field>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field
-                      label="Accent token"
-                      htmlFor="site-accent"
-                      hint="The theme accent name, normally signal."
-                    >
-                      <TextInput
-                        id="site-accent"
-                        value={siteForm.accent}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, accent: event.target.value })
-                        }
-                      />
-                    </Field>
-                    <Field label="Favicon" htmlFor="site-favicon" hint="A URL or site-relative path.">
-                      <TextInput
-                        id="site-favicon"
-                        value={siteForm.favicon}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, favicon: event.target.value })
-                        }
-                      />
-                    </Field>
-                  </div>
-
                   <Field
-                    label="Social image"
-                    htmlFor="site-social"
-                    hint="Used for Open Graph and Twitter cards. A URL or site-relative path."
+                    label="Accent colour"
+                    htmlFor="site-accent"
+                    hint="The theme colour used for highlights. The default is signal."
                   >
                     <TextInput
-                      id="site-social"
-                      value={siteForm.social_image}
+                      id="site-accent"
+                      value={siteForm.accent}
                       onChange={(event) =>
-                        setSiteForm({ ...siteForm, social_image: event.target.value })
+                        setSiteForm({ ...siteForm, accent: event.target.value })
                       }
                     />
                   </Field>
 
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Favicon" hint="The small icon shown in browser tabs.">
+                      <MediaField
+                        value={siteForm.favicon}
+                        onChange={(value) => setSiteForm({ ...siteForm, favicon: value })}
+                        assets={mediaAssets}
+                        loading={media.loading}
+                        onUploaded={() => media.reload()}
+                        folder="ui"
+                        title="Website favicon"
+                        altText="Website favicon"
+                        emptyLabel="No favicon uploaded."
+                      />
+                    </Field>
+                    <Field
+                      label="Social share image"
+                      hint="The image shown when your website is shared on social media."
+                    >
+                      <MediaField
+                        value={siteForm.social_image}
+                        onChange={(value) => setSiteForm({ ...siteForm, social_image: value })}
+                        assets={mediaAssets}
+                        loading={media.loading}
+                        onUploaded={() => media.reload()}
+                        folder="social"
+                        title="Social share image"
+                        altText="Social share image"
+                        emptyLabel="No social share image uploaded."
+                      />
+                    </Field>
+                  </div>
+
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="SEO title" htmlFor="site-seo-title">
+                    <Field
+                      label="Search title"
+                      htmlFor="site-seo-title"
+                      hint="The title that may appear in search results and browser tabs."
+                    >
                       <TextInput
                         id="site-seo-title"
                         value={siteForm.seo_title}
                         onChange={(event) =>
                           setSiteForm({ ...siteForm, seo_title: event.target.value })
                         }
+                        placeholder="Enter a search title"
                       />
                     </Field>
-                    <Field label="SEO description" htmlFor="site-seo-description">
+                    <Field
+                      label="Search description"
+                      htmlFor="site-seo-description"
+                      hint="A short description that may appear in search results."
+                    >
                       <TextArea
                         id="site-seo-description"
                         rows={2}
@@ -267,6 +281,7 @@ export default function AdminSettingsPage() {
                         onChange={(event) =>
                           setSiteForm({ ...siteForm, seo_description: event.target.value })
                         }
+                        placeholder="Write a short description"
                       />
                     </Field>
                   </div>
@@ -280,6 +295,7 @@ export default function AdminSettingsPage() {
                         onChange={(event) =>
                           setSiteForm({ ...siteForm, footer_text: event.target.value })
                         }
+                        placeholder="Text shown in the footer"
                       />
                     </Field>
                     <Field label="Copyright text" htmlFor="site-copyright">
@@ -290,6 +306,7 @@ export default function AdminSettingsPage() {
                         onChange={(event) =>
                           setSiteForm({ ...siteForm, copyright_text: event.target.value })
                         }
+                        placeholder="Copyright line"
                       />
                     </Field>
                   </div>
@@ -298,17 +315,45 @@ export default function AdminSettingsPage() {
             </AdminPanel>
 
             <AdminPanel
-              title="Identity and contact"
-              description="Shared with the Profile page and the public header, footer, About page, and resume."
+              title="Profile"
+              description="Your name, role and contact details. Edit them on the Profile page."
               actions={
                 <Link to="/admin/profile" className={buttonStyles("ghost", "sm")}>
-                  Open profile
+                  Edit profile
+                  <ArrowUpRight className="size-3.5" aria-hidden="true" />
                 </Link>
               }
             >
-              {profileForm ? (
-                <ProfileFields form={profileForm} onChange={setProfileForm} idPrefix="settings" />
-              ) : null}
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className="font-mono text-[0.54rem] uppercase tracking-[0.13em] text-faint">
+                    Display name
+                  </dt>
+                  <dd className="mt-1 text-sm text-paper">{data.profile.display_name}</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.54rem] uppercase tracking-[0.13em] text-faint">
+                    Professional title
+                  </dt>
+                  <dd className="mt-1 text-sm text-paper">
+                    {data.profile.professional_title || "Not set"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.54rem] uppercase tracking-[0.13em] text-faint">
+                    Email address
+                  </dt>
+                  <dd className="mt-1 break-words text-sm text-paper">
+                    {data.profile.email || "Not set"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.54rem] uppercase tracking-[0.13em] text-faint">
+                    Location
+                  </dt>
+                  <dd className="mt-1 text-sm text-paper">{data.profile.location || "Not set"}</dd>
+                </div>
+              </dl>
             </AdminPanel>
 
             <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
@@ -319,10 +364,10 @@ export default function AdminSettingsPage() {
                 className={buttonStyles("primary", "md")}
               >
                 <Save className="size-4" aria-hidden="true" />
-                {busy ? "Saving…" : "Save settings"}
+                {busy ? "Saving..." : "Save settings"}
               </button>
               <Link to="/admin/profile" className={buttonStyles("ghost", "md")}>
-                Edit profile only
+                Edit profile
               </Link>
             </div>
           </div>
@@ -330,17 +375,17 @@ export default function AdminSettingsPage() {
           <aside className="h-fit space-y-6 lg:sticky lg:top-24">
             <div className="border border-line bg-ink-900/60 p-5">
               <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                Delivery status
+                Message delivery
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Badge tone={data.email_delivery_configured ? "signal" : "placeholder"}>
-                  {data.email_delivery_configured ? "Email configured" : "Stored only"}
+                  {data.email_delivery_configured ? "Email notifications on" : "Saved in inbox"}
                 </Badge>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-muted">
                 {data.email_delivery_configured
-                  ? "Contact notifications are attempted after each message is stored."
-                  : "Messages are always stored in the database. Email delivery requires SMTP environment variables; until then, review the inbox."}
+                  ? "Email notifications are sent after each message is saved."
+                  : "Messages are always saved in your inbox. Add email settings to receive them by email."}
               </p>
               {data.notification_email ? (
                 <p className="mt-3 break-words font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
@@ -351,14 +396,14 @@ export default function AdminSettingsPage() {
                 to="/admin/messages"
                 className="mt-4 inline-flex items-center gap-1.5 font-mono text-[0.56rem] uppercase tracking-[0.13em] text-paper hover:text-signal"
               >
-                Open messages
+                View messages
                 <ArrowUpRight className="size-3" aria-hidden="true" />
               </Link>
             </div>
 
             <div className="border border-line bg-ink-900/60 p-5">
               <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                Current resume
+                Resume
               </p>
               {data.resume ? (
                 <>
@@ -377,7 +422,7 @@ export default function AdminSettingsPage() {
                 </>
               ) : (
                 <p className="mt-3 text-xs leading-relaxed text-muted">
-                  No current PDF. The online resume remains available.
+                  No resume uploaded. The online resume is still available.
                 </p>
               )}
               <Link
@@ -397,8 +442,7 @@ export default function AdminSettingsPage() {
                 {formatDate(data.site.updated_at, { withDay: true })}
               </p>
               <p className="mt-2 text-xs leading-relaxed text-muted">
-                Reflects the last change to these records. Settings are stored as explicit typed
-                fields, not a free-form JSON blob.
+                The last time these settings were changed.
               </p>
             </div>
           </aside>

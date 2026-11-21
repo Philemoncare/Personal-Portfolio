@@ -48,7 +48,7 @@ export default function VerifyOtpPage() {
   const challengeId = state.challengeId;
 
   const maskedPhone = useMemo(
-    () => state.phoneMasked ?? "the number on the administrator record",
+    () => state.phoneMasked ?? "your phone",
     [state.phoneMasked],
   );
 
@@ -57,7 +57,7 @@ export default function VerifyOtpPage() {
       <Navigate
         to="/login"
         replace
-        state={{ message: "Start again with your password to receive a code." }}
+        state={{ message: "Sign in again to receive a new code." }}
       />
     );
   }
@@ -65,7 +65,7 @@ export default function VerifyOtpPage() {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!/^\d{6}$/.test(code)) {
-      setError("Enter the six-digit code.");
+      setError("Enter the 6-digit code.");
       return;
     }
 
@@ -80,10 +80,10 @@ export default function VerifyOtpPage() {
         navigate(destinationFor(result.admin, state.from), { replace: true });
         return;
       }
-      setError("That code could not be verified. Request a new one.");
+      setError("That code is incorrect or has expired.");
     } catch (cause) {
       setError(
-        cause instanceof ApiError ? cause.detail : "Verification failed. Please try again.",
+        cause instanceof ApiError ? cause.detail : "We couldn't verify that code. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -98,7 +98,7 @@ export default function VerifyOtpPage() {
     try {
       const result = await resendOtp(challengeId);
       if (result.status === "otp_required") {
-        setNotice(`A new code was sent to ${result.phone_masked ?? maskedPhone}.`);
+        setNotice(`We've sent a new code to ${result.phone_masked ?? maskedPhone}.`);
         setDevOtp(result.dev_otp);
         setExpiresIn(result.expires_in);
         setCooldown(60);
@@ -111,7 +111,7 @@ export default function VerifyOtpPage() {
         if (seconds) setCooldown(Number(seconds[1]));
       }
       setError(
-        cause instanceof ApiError ? cause.detail : "A new code could not be sent yet.",
+        cause instanceof ApiError ? cause.detail : "We couldn't send a new code yet.",
       );
     } finally {
       setResending(false);
@@ -120,27 +120,27 @@ export default function VerifyOtpPage() {
 
   return (
     <AuthLayout
-      eyebrow="Step two of two"
-      title="Enter the verification code."
+      eyebrow="Verify your sign-in"
+      title="Enter the verification code"
       description={
         devOtp
-          ? `No SMS was sent. Arkesel is not configured on this server; use the development code below for ${maskedPhone}.`
-          : `A six-digit code was sent to ${maskedPhone}. It expires in five minutes and can be used once.`
+          ? `No SMS was sent because the SMS provider is not set up on this server. Use the development code below for ${maskedPhone}.`
+          : `We sent a 6-digit code to ${maskedPhone}. It expires in five minutes and can be used once.`
       }
       meta={
         <dl className="space-y-3">
           <div className="flex items-baseline justify-between gap-4">
             <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-              Code expires
+              Code expires in
             </dt>
             <dd className="font-mono text-xs text-paper-dim">{formatSeconds(expiresIn)}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4">
             <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-              Delivery
+              Sent by
             </dt>
             <dd className="text-xs text-paper-dim">
-              {devOtp ? "Local transport — no SMS sent" : "Transactional SMS"}
+              {devOtp ? "Development code" : "SMS"}
             </dd>
           </div>
         </dl>
@@ -151,7 +151,7 @@ export default function VerifyOtpPage() {
           className="inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted transition-colors hover:text-paper"
         >
           <ArrowLeft className="size-3.5" aria-hidden="true" />
-          Start over
+          Back to sign in
         </Link>
       }
     >
@@ -162,13 +162,12 @@ export default function VerifyOtpPage() {
               Development only
             </span>
             <span className="mt-1 block">
-              No SMS provider is configured. The code for this local session is{" "}
+              No SMS provider is set up. The code for this local session is{" "}
               <span className="font-mono tracking-[0.2em] text-paper">{devOtp}</span>.
             </span>
             <span className="mt-2 block text-xs leading-relaxed text-muted">
-              To send real SMS, set <span className="font-mono text-paper">ARKESEL_API_KEY</span>{" "}
-              and <span className="font-mono text-paper">ARKESEL_SENDER_ID</span> in{" "}
-              <span className="font-mono text-paper">backend/.env</span>, then restart the API.
+              To send real SMS, add the Arkesel API key and sender ID to{" "}
+              <span className="font-mono text-paper">backend/.env</span>, then restart the server.
             </span>
             <button
               type="button"
@@ -188,8 +187,8 @@ export default function VerifyOtpPage() {
 
         <Field
           id="code"
-          label="Six-digit code"
-          hint="Digits only. Leading zeros matter."
+          label="Verification code"
+          hint="Enter the 6-digit code we sent to your phone."
         >
           <input
             ref={inputRef}
@@ -203,7 +202,7 @@ export default function VerifyOtpPage() {
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             className={`${inputClassName} font-mono text-lg tracking-[0.5em]`}
-            placeholder="6-digit code"
+            placeholder="Enter the 6-digit code"
             disabled={submitting}
             aria-describedby="code-hint"
           />
@@ -216,7 +215,7 @@ export default function VerifyOtpPage() {
           className={buttonStyles("primary", "md", "w-full")}
           disabled={submitting || code.length !== 6}
         >
-          {submitting ? <InlineLoading label="Verifying" /> : "Verify and sign in"}
+          {submitting ? <InlineLoading label="Verifying" /> : "Verify code"}
           {!submitting ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
         </button>
 
@@ -231,7 +230,7 @@ export default function VerifyOtpPage() {
             {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
           </button>
           <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-            Max 5 attempts
+            5 attempts allowed
           </span>
         </div>
       </form>

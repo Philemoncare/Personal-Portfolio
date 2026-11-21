@@ -25,7 +25,7 @@ import { AdminPanel, Checkbox, Field, Select, TextArea, TextInput } from "@/comp
 import { buttonStyles } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
-import { apiPath } from "@/services/api";
+import { ApiError, apiPath } from "@/services/api";
 import { adminProjectsService } from "@/services/adminProjects.service";
 import { githubService } from "@/services/github.service";
 import type {
@@ -70,7 +70,7 @@ function RepositoryOverview({ repository }: { repository: GitHubRepository }) {
               <span className="border border-warning/40 bg-warning/10 px-2 py-1 text-warning">Archived</span>
             ) : null}
             {repository.fork ? (
-              <span className="border border-line px-2 py-1 text-muted">Fork</span>
+              <span className="border border-warning/40 bg-warning/10 px-2 py-1 text-warning">Fork</span>
             ) : null}
             {repository.linked_project_id ? (
               <span className="border border-signal/40 bg-signal/10 px-2 py-1 text-signal">
@@ -80,6 +80,18 @@ function RepositoryOverview({ repository }: { repository: GitHubRepository }) {
               <span className="border border-line px-2 py-1 text-muted">Not imported</span>
             )}
           </div>
+          {repository.fork ? (
+            <p className="mt-3 max-w-2xl border border-warning/40 bg-warning/10 px-3 py-2 text-xs leading-relaxed text-paper-dim">
+              This repository is a fork. Credit the original repository and do not present forked
+              work as your own.
+            </p>
+          ) : null}
+          {repository.private ? (
+            <p className="mt-3 max-w-2xl border border-line bg-ink-800/40 px-3 py-2 text-xs leading-relaxed text-paper-dim">
+              Private repository. The draft starts without a public source link, and imported
+              screenshots and README content must be reviewed before publishing.
+            </p>
+          ) : null}
         </div>
         <a
           href={repository.html_url}
@@ -351,8 +363,8 @@ function ImagePicker({
   if (inspection.images.items.length === 0) {
     return (
       <p className="text-sm text-muted">
-        No supported repository images were referenced by the README. External images and badges are
-        not imported.
+        No supported repository images were found in the README or in common asset folders.
+        External images and badges are not imported.
       </p>
     );
   }
@@ -374,6 +386,11 @@ function ImagePicker({
               <p className="truncate font-mono text-[0.58rem] text-paper-dim" title={image.path}>
                 {image.path}
               </p>
+              {!image.markdown ? (
+                <p className="font-mono text-[0.5rem] uppercase tracking-[0.1em] text-faint">
+                  From repository assets
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
@@ -489,6 +506,7 @@ export default function AdminGitHubRepositoryPage() {
   const [primaryMode, setPrimaryMode] = useState<WorkMode>("build");
   const [projectStatus, setProjectStatus] = useState<ProjectStage>("in_progress");
   const [featured, setFeatured] = useState(false);
+  const [generatePreview, setGeneratePreview] = useState(true);
   const [createCaseStudy, setCreateCaseStudy] = useState(false);
   const [useReadmeSections, setUseReadmeSections] = useState<Set<string>>(new Set());
   const [selectedTechnologies, setSelectedTechnologies] = useState<Set<string>>(new Set());
@@ -594,6 +612,7 @@ export default function AdminGitHubRepositoryPage() {
       primary_mode: primaryMode,
       project_status: projectStatus,
       import_images: true,
+      generate_preview: generatePreview,
     };
     setBusy(true);
     try {
@@ -604,6 +623,11 @@ export default function AdminGitHubRepositoryPage() {
         },
       });
     } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 409) {
+        // The repository was linked in another tab/session. Refresh the
+        // inspection so the page stops offering a duplicate import.
+        inspection.reload();
+      }
       setError(caught instanceof Error ? caught.message : "The draft could not be created.");
     } finally {
       setBusy(false);
@@ -856,6 +880,70 @@ export default function AdminGitHubRepositoryPage() {
             title="Create draft project"
             description="Importing never publishes. Review the generated draft in the project editor before making it public."
           >
+            <div className="mb-5 border border-line bg-ink-800/30 p-4">
+              <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
+                Draft preview
+              </p>
+              <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Title</dt>
+                  <dd className="mt-1 text-paper-dim">{title || "—"}</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Category</dt>
+                  <dd className="mt-1 text-paper-dim">
+                    {reference.data?.categories.find((category) => category.id === categoryId)?.name ??
+                      "Not selected"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Technologies</dt>
+                  <dd className="mt-1 text-paper-dim">{selectedTechnologies.size} selected</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">README sections</dt>
+                  <dd className="mt-1 text-paper-dim">
+                    {useReadmeSections.size} documented section(s)
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Repository</dt>
+                  <dd className="mt-1 truncate text-paper-dim" title={data.repository.full_name}>
+                    {data.repository.full_name}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Live URL</dt>
+                  <dd className="mt-1 truncate text-paper-dim" title={liveUrl}>
+                    {liveUrl || "No deployment URL detected."}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Images</dt>
+                  <dd className="mt-1 text-paper-dim">
+                    {coverImage ? "1 cover" : "No cover"} · {galleryImages.length} gallery
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">
+                    Detected architecture
+                  </dt>
+                  <dd className="mt-1 text-paper-dim">
+                    {data.architecture.length > 0
+                      ? data.architecture.map((layer) => layer.layer).join(", ")
+                      : "No architecture signals detected."}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Status</dt>
+                  <dd className="mt-1 text-paper-dim">
+                    {data.repository.private
+                      ? "Draft · hidden from public until you enable visibility"
+                      : "Draft · never published automatically"}
+                  </dd>
+                </div>
+              </dl>
+            </div>
             <div className="grid gap-5 lg:grid-cols-2">
               <Field label="Project title" htmlFor="github-title" required>
                 <TextInput id="github-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} />
@@ -913,6 +1001,12 @@ export default function AdminGitHubRepositoryPage() {
                   label="Feature this project on the portfolio once published"
                   checked={featured}
                   onChange={setFeatured}
+                />
+                <Checkbox
+                  label="Capture a homepage preview from the deployed site"
+                  checked={generatePreview}
+                  onChange={setGeneratePreview}
+                  hint="Only runs when a live URL was discovered. The project stays a draft."
                 />
                 <p className="text-xs leading-relaxed text-muted">
                   {coverImage ? `Cover: ${coverImage}. ` : "No cover image selected. "}

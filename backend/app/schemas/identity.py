@@ -153,6 +153,7 @@ class TimelineOut(BaseModel):
     year: int
     month: int | None
     external_url: str | None
+    image_url: str | None
     featured: bool
     display_order: int
     related_project: ContentLink | None
@@ -317,6 +318,7 @@ class TimelineInput(BaseModel):
     start_date: date
     end_date: date | None = None
     external_url: str | None = None
+    image_url: str | None = None
     related_project_id: uuid.UUID | None = None
     related_experience_id: uuid.UUID | None = None
     related_leadership_id: uuid.UUID | None = None

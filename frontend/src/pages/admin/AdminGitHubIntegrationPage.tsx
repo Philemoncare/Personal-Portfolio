@@ -118,7 +118,17 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
         </div>
       </div>
 
-      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div>
+          <dt className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
+            Repositories
+          </dt>
+          <dd className="mt-1 text-sm text-paper">
+            {connection.repository_count === null
+              ? "Not counted yet"
+              : connection.repository_count.toLocaleString()}
+          </dd>
+        </div>
         <div>
           <dt className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
             Repository access
@@ -135,6 +145,14 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
           </dt>
           <dd className="mt-1 text-sm text-paper">
             {connection.connected_at ? relativeTime(connection.connected_at) : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
+            Last activity
+          </dt>
+          <dd className="mt-1 text-sm text-paper">
+            {connection.updated_at ? relativeTime(connection.updated_at) : "—"}
           </dd>
         </div>
         <div>
@@ -221,6 +239,11 @@ function ImportHistory() {
                   <span className="truncate font-mono text-[0.58rem] text-muted">
                     {entry.repository_full_name}
                   </span>
+                  {entry.user_email ? (
+                    <span className="truncate font-mono text-[0.54rem] text-faint">
+                      by {entry.user_email}
+                    </span>
+                  ) : null}
                 </div>
                 {entry.summary ? (
                   <p className="mt-1 text-xs leading-relaxed text-paper-dim">{entry.summary}</p>
@@ -393,6 +416,19 @@ export default function AdminGitHubIntegrationPage() {
               <div className="flex flex-wrap items-center gap-2">
                 {connected ? (
                   <>
+                    <button
+                      type="button"
+                      onClick={() => void connect()}
+                      disabled={busy !== null}
+                      className={buttonStyles("outline", "sm")}
+                    >
+                      {busy === "connect" ? (
+                        <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <KeyRound className="size-3.5" aria-hidden="true" />
+                      )}
+                      Reauthorize
+                    </button>
                     <button
                       type="button"
                       onClick={refresh}

@@ -141,6 +141,7 @@ def timeline_public(entry: TimelineEntry) -> TimelineOut:
         year=entry.year,
         month=entry.month,
         external_url=entry.external_url,
+        image_url=entry.image_url,
         featured=entry.featured,
         display_order=entry.display_order,
         related_project=project_link(entry.related_project, "project", "Project"),

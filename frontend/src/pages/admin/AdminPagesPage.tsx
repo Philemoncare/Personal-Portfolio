@@ -2,9 +2,11 @@ import { ArrowUpRight, Save } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Checkbox, Field, TextArea, TextInput } from "@/components/admin/form";
+import { MediaField } from "@/components/admin/MediaField";
 import { buttonStyles } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
+import { listMedia } from "@/services/auth.service";
 import { PAGE_KEYS, siteService } from "@/services/site.service";
 import type { PageContentAdmin, PageContentInput } from "@/types/api";
 import { cn } from "@/utils/cn";
@@ -42,6 +44,7 @@ function fromSaved(page: PageContentAdmin | undefined, path: string): PageConten
 
 export default function AdminPagesPage() {
   const pages = useApiQuery((signal) => siteService.listPagesAdmin(signal), []);
+  const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
   const [selectedKey, setSelectedKey] = useState("home");
   const [form, setForm] = useState<PageContentInput>(EMPTY);
   const [contentJson, setContentJson] = useState("");
@@ -74,16 +77,13 @@ export default function AdminPagesPage() {
       try {
         const parsed = JSON.parse(contentJson) as unknown;
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          throw new Error("Extra content must be a JSON object.");
+          throw new Error("The extra content must be a JSON object.");
         }
         parsedContent = parsed as Record<string, unknown>;
       } catch (error) {
         setNotice({
           tone: "error",
-          text:
-            error instanceof Error
-              ? `Extra content is not valid JSON: ${error.message}`
-              : "Extra content is not valid JSON.",
+          text: "The advanced content is not valid JSON. Check it and try again.",
         });
         return;
       }
@@ -93,11 +93,11 @@ export default function AdminPagesPage() {
     try {
       await siteService.savePage(selectedKey, { ...form, content: parsedContent });
       pages.reload();
-      setNotice({ tone: "ok", text: `${meta.label} content saved.` });
+      setNotice({ tone: "ok", text: "Changes saved." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The page could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setSaving(false);
@@ -109,20 +109,25 @@ export default function AdminPagesPage() {
   }
 
   if (pages.error) {
-    return <ErrorState message={pages.error.detail} onRetry={pages.reload} />;
+    return (
+      <ErrorState
+        message="We couldn't load your pages. Please try again."
+        onRetry={pages.reload}
+      />
+    );
   }
 
   return (
     <>
       <div className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">CMS</p>
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Pages</p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
             Pages &amp; SEO
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Every public page reads its heading, intro, and metadata from here. Empty fields fall
-            back to the designed defaults, so nothing breaks while a page is being written.
+            Change the headings, descriptions and search information for each page. Leave a field
+            empty to use the default text.
           </p>
         </div>
         <a
@@ -197,7 +202,7 @@ export default function AdminPagesPage() {
               <p className="mt-1 font-mono text-[0.54rem] uppercase tracking-[0.1em] text-faint">
                 {saved
                   ? `Updated ${new Date(saved.updated_at).toLocaleString()}`
-                  : "No saved override — using designed defaults"}
+                  : "Using the default content"}
               </p>
             </div>
             <button
@@ -207,34 +212,34 @@ export default function AdminPagesPage() {
               className={buttonStyles("primary", "sm")}
             >
               <Save className="size-3.5" aria-hidden="true" />
-              {saving ? "Saving…" : "Save page"}
+              {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
 
           <div className="grid gap-6 p-5">
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Eyebrow" htmlFor="eyebrow" hint="Small label above the heading.">
+              <Field label="Small label" htmlFor="eyebrow" hint="Shown above the page heading.">
                 <TextInput
                   id="eyebrow"
                   value={form.eyebrow ?? ""}
                   onChange={(event) => update("eyebrow", event.target.value || null)}
                 />
               </Field>
-              <Field label="Canonical path" htmlFor="canonical" hint="Used for the canonical URL and Open Graph URL.">
+              <Field label="Page address" htmlFor="canonical" hint="The web address for this page.">
                 <TextInput
                   id="canonical"
                   value={form.canonical_path ?? ""}
                   onChange={(event) => update("canonical_path", event.target.value || null)}
                 />
               </Field>
-              <Field label="Heading" htmlFor="title" className="sm:col-span-2">
+              <Field label="Page heading" htmlFor="title" className="sm:col-span-2">
                 <TextInput
                   id="title"
                   value={form.title ?? ""}
                   onChange={(event) => update("title", event.target.value || null)}
                 />
               </Field>
-              <Field label="Description" htmlFor="description" hint="Shown under the heading." className="sm:col-span-2">
+              <Field label="Short description" htmlFor="description" hint="Shown under the heading." className="sm:col-span-2">
                 <TextArea
                   id="description"
                   rows={3}
@@ -242,7 +247,7 @@ export default function AdminPagesPage() {
                   onChange={(event) => update("description", event.target.value || null)}
                 />
               </Field>
-              <Field label="Intro" htmlFor="intro" hint="Longer supporting copy, where a page has room for it." className="sm:col-span-2">
+              <Field label="Supporting text" htmlFor="intro" hint="Longer text for pages that have room for it." className="sm:col-span-2">
                 <TextArea
                   id="intro"
                   rows={4}
@@ -250,37 +255,42 @@ export default function AdminPagesPage() {
                   onChange={(event) => update("intro", event.target.value || null)}
                 />
               </Field>
-              <Field label="Hero image URL" htmlFor="hero-image">
-                <TextInput
-                  id="hero-image"
+              <Field label="Page image">
+                <MediaField
                   value={form.hero_image ?? ""}
-                  onChange={(event) => update("hero_image", event.target.value || null)}
-                  placeholder="/media/ui/page-hero.webp"
+                  onChange={(value) => update("hero_image", value || null)}
+                  assets={media.data?.items ?? []}
+                  loading={media.loading}
+                  onUploaded={() => media.reload()}
+                  folder="pages"
+                  title={`${meta.label} page image`}
+                  altText={`${meta.label} page image`}
+                  emptyLabel="No page image uploaded."
                 />
               </Field>
               <div className="flex items-end pb-1">
                 <Checkbox
-                  label="Publish this page content"
+                  label="Show this content on your website"
                   checked={form.is_published}
                   onChange={(next) => update("is_published", next)}
-                  hint="Unpublished overrides stay saved but are not served publicly."
+                  hint="If you turn this off, your website shows the default content instead."
                 />
               </div>
             </div>
 
             <div className="border-t border-line pt-5">
               <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                Search and social
+                Search and sharing
               </p>
               <div className="mt-4 grid gap-5">
-                <Field label="SEO title" htmlFor="seo-title" hint="Falls back to the heading.">
+                <Field label="Search title" htmlFor="seo-title" hint="Shown in search results and browser tabs. Defaults to the page heading.">
                   <TextInput
                     id="seo-title"
                     value={form.seo_title ?? ""}
                     onChange={(event) => update("seo_title", event.target.value || null)}
                   />
                 </Field>
-                <Field label="SEO description" htmlFor="seo-description" hint="Falls back to the description.">
+                <Field label="Search description" htmlFor="seo-description" hint="Shown in search results. Defaults to the short description.">
                   <TextArea
                     id="seo-description"
                     rows={3}
@@ -288,12 +298,17 @@ export default function AdminPagesPage() {
                     onChange={(event) => update("seo_description", event.target.value || null)}
                   />
                 </Field>
-                <Field label="Open Graph image" htmlFor="og-image">
-                  <TextInput
-                    id="og-image"
+                <Field label="Social share image">
+                  <MediaField
                     value={form.og_image ?? ""}
-                    onChange={(event) => update("og_image", event.target.value || null)}
-                    placeholder="/media/social/page-preview.webp"
+                    onChange={(value) => update("og_image", value || null)}
+                    assets={media.data?.items ?? []}
+                    loading={media.loading}
+                    onUploaded={() => media.reload()}
+                    folder="social"
+                    title={`${meta.label} social share image`}
+                    altText={`${meta.label} social share image`}
+                    emptyLabel="No social share image uploaded."
                   />
                 </Field>
               </div>
@@ -301,14 +316,14 @@ export default function AdminPagesPage() {
 
             <details className="border-t border-line pt-5">
               <summary className="cursor-pointer font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                Advanced structured content
+                Advanced content
               </summary>
               <p className="mt-3 text-xs leading-relaxed text-muted">
-                Optional JSON object for page-specific blocks. Invalid JSON is rejected before
-                saving; leave empty when the page does not use structured content.
+                Optional JSON for page-specific blocks. Invalid JSON will not be saved. Leave it
+                empty if you don't need it.
               </p>
               <TextArea
-                aria-label="Structured page content JSON"
+                aria-label="Advanced page content (JSON)"
                 rows={8}
                 value={contentJson}
                 onChange={(event) => setContentJson(event.target.value)}

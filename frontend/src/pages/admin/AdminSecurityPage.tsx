@@ -86,8 +86,28 @@ const SMS_STATUS_OPTIONS: SmsStatus[] = [
 ];
 
 const PURPOSE_LABELS: Record<string, string> = {
-  LOGIN_OTP: "Login OTP",
+  LOGIN_OTP: "Sign-in code",
   PASSWORD_RESET_OTP: "Password reset",
+};
+
+const SMS_STATUS_LABELS: Record<string, string> = {
+  QUEUED: "Queued",
+  SENT: "Sent",
+  DELIVERED: "Delivered",
+  FAILED: "Failed",
+  EXPIRED: "Expired",
+  CANCELLED: "Cancelled",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  SUCCESS: "Success",
+  FAILURE: "Failed",
+  FAILED: "Failed",
+  DELIVERED: "Delivered",
+  EXPIRED: "Expired",
+  CANCELLED: "Cancelled",
+  QUEUED: "Queued",
+  SENT: "Sent",
 };
 
 const inputClass =
@@ -119,7 +139,7 @@ function StatusBadge({ status }: { status: string }) {
       }
     >
       <Icon className="size-3" aria-hidden="true" />
-      {normalized}
+      {STATUS_LABELS[normalized] ?? normalized}
     </span>
   );
 }
@@ -287,11 +307,16 @@ export default function AdminSecurityPage() {
   };
 
   if (overview.loading && !overview.data) {
-    return <LoadingState label="Loading security overview" rows={4} />;
+    return <LoadingState label="Loading security" rows={4} />;
   }
 
   if (overview.error && !overview.data) {
-    return <ErrorState message={overview.error.detail} onRetry={overview.reload} />;
+    return (
+      <ErrorState
+        message="We couldn't load security details. Please try again."
+        onRetry={overview.reload}
+      />
+    );
   }
 
   const data = overview.data;
@@ -305,13 +330,13 @@ export default function AdminSecurityPage() {
     <div className="space-y-10">
       <header className="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="type-meta text-signal">Security</p>
+          <p className="type-meta text-signal">Account</p>
           <h1 className="mt-3 text-2xl font-medium tracking-[-0.02em] text-paper">
-            Authentication health
+            Security
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-            Live database records for sign-ins, one-time codes, SMS delivery and sessions. The
-            page refreshes every {POLL_MS / 1000} seconds; it never invents statistics.
+            Sign-ins, verification codes, text message delivery and active sessions. This page
+            updates every {POLL_MS / 1000} seconds.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -345,12 +370,11 @@ export default function AdminSecurityPage() {
       {data.sms_provider === "development" ? (
         <div className="border border-signal/40 bg-signal/5 px-5 py-4 text-sm leading-relaxed text-paper-dim">
           <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-signal">
-            Development transport
+            Text messages are not set up
           </span>
           <p className="mt-2">
-            No SMS provider is configured. Messages are accepted by the local transport only and
-            are not delivered to a phone. Configure the Arkesel credentials on the backend to
-            exercise real delivery.
+            No text message provider is set up, so codes are not sent to a phone. To send real
+            codes, add your Arkesel details in the server settings.
           </p>
         </div>
       ) : null}
@@ -361,7 +385,7 @@ export default function AdminSecurityPage() {
             id="health-heading"
             className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted"
           >
-            Authentication health
+            Overview
           </h2>
           <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
             Last 24 hours
@@ -371,40 +395,40 @@ export default function AdminSecurityPage() {
           <Stat
             label="Active sessions"
             value={String(data.active_sessions)}
-            note={`${data.revoked_sessions} revoked in total`}
+            note={`${data.revoked_sessions} ended in total`}
           />
           <Stat
-            label="Successful logins"
+            label="Successful sign-ins"
             value={String(data.successful_logins_24h)}
-            note="Completed authentication"
+            note="Signed in successfully"
           />
           <Stat
-            label="Failed logins"
+            label="Failed sign-ins"
             value={String(data.failed_logins_24h)}
-            note="Rejected credentials or lockouts"
+            note="Wrong details or too many attempts"
           />
           <Stat
-            label="OTP success rate"
+            label="Code success rate"
             value={data.otp_success_rate === null ? "—" : `${data.otp_success_rate}%`}
             note={
               data.otp_success_rate === null
-                ? "No verification attempts recorded"
-                : `${data.otp_failures_24h} failed verification(s)`
+                ? "No codes checked yet"
+                : `${data.otp_failures_24h} failed attempts`
             }
           />
           <Stat
-            label="SMS delivery rate"
+            label="Text delivery rate"
             value={data.sms_success_rate === null ? "—" : `${data.sms_success_rate}%`}
             note={
               data.sms_success_rate === null
-                ? "No delivery callbacks recorded"
-                : "Delivered ÷ accepted by provider"
+                ? "No delivery confirmations yet"
+                : "Delivered out of accepted"
             }
           />
           <Stat
             label="Password age"
-            value={data.password_age_days === null ? "Unknown" : `${data.password_age_days} days`}
-            note={`${data.password_changes_24h} change(s) in 24 hours`}
+            value={data.password_age_days === null ? "Not known" : `${data.password_age_days} days`}
+            note={`${data.password_changes_24h} changes in the last 24 hours`}
           />
         </div>
       </section>
@@ -417,20 +441,20 @@ export default function AdminSecurityPage() {
               className="inline-flex items-center gap-2 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted"
             >
               <MessageSquare className="size-3.5" aria-hidden="true" />
-              SMS delivery
+              Text messages
             </h2>
             <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-              {sms.data?.total ?? 0} record{(sms.data?.total ?? 0) === 1 ? "" : "s"}
+              {sms.data?.total ?? 0} message{(sms.data?.total ?? 0) === 1 ? "" : "s"}
             </span>
           </div>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-4">
             {(
               [
-                ["Accepted", delivery.SENT ?? 0, "Provider accepted"],
-                ["Delivered", delivery.DELIVERED ?? 0, "Webhook confirmed"],
-                ["Failed", delivery.FAILED ?? 0, "Provider failure"],
-                ["Queued", delivery.QUEUED ?? 0, "Awaiting response"],
+                ["Accepted", delivery.SENT ?? 0, "Accepted by provider"],
+                ["Delivered", delivery.DELIVERED ?? 0, "Delivery confirmed"],
+                ["Failed", delivery.FAILED ?? 0, "Not delivered"],
+                ["Queued", delivery.QUEUED ?? 0, "Waiting to send"],
               ] as const
             ).map(([label, value, note]) => (
               <div key={label} className="border border-line px-3 py-2.5">
@@ -443,10 +467,10 @@ export default function AdminSecurityPage() {
             ))}
           </div>
           <p className="mt-2 text-xs leading-relaxed text-faint">
-            <strong className="font-medium text-paper-dim">SENT</strong> means the provider
-            accepted the request. <strong className="font-medium text-paper-dim">DELIVERED</strong>{" "}
-            is only set by a verified delivery webhook. Provider:{" "}
-            {data.sms_provider === "arkesel" ? "Arkesel" : "development transport"}.
+            <strong className="font-medium text-paper-dim">Accepted</strong> means the provider has
+            taken the message. <strong className="font-medium text-paper-dim">Delivered</strong> is
+            only set when the provider confirms it reached the phone. Provider:{" "}
+            {data.sms_provider === "arkesel" ? "Arkesel" : "not set up"}.
           </p>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -454,19 +478,19 @@ export default function AdminSecurityPage() {
               value={smsSearch}
               onChange={(e) => setSmsSearch(e.target.value)}
               className={inputClass}
-              placeholder="Search recipient or reference"
-              aria-label="Search SMS records"
+              placeholder="Search messages"
+              aria-label="Search text messages"
             />
             <select
               value={smsStatus}
               onChange={(e) => setSmsStatus(e.target.value)}
               className={inputClass}
-              aria-label="Filter SMS by status"
+              aria-label="Filter messages by status"
             >
               <option value="">All statuses</option>
               {SMS_STATUS_OPTIONS.map((value) => (
                 <option key={value} value={value}>
-                  {value}
+                  {SMS_STATUS_LABELS[value] ?? value}
                 </option>
               ))}
             </select>
@@ -474,21 +498,24 @@ export default function AdminSecurityPage() {
               value={smsPurpose}
               onChange={(e) => setSmsPurpose(e.target.value)}
               className={inputClass}
-              aria-label="Filter SMS by purpose"
+              aria-label="Filter messages by type"
             >
-              <option value="">All purposes</option>
-              <option value="LOGIN_OTP">Login OTP</option>
+              <option value="">All types</option>
+              <option value="LOGIN_OTP">Sign-in code</option>
               <option value="PASSWORD_RESET_OTP">Password reset</option>
             </select>
           </div>
 
           {sms.error && !sms.data ? (
             <div className="mt-4">
-              <ErrorState message={sms.error.detail} onRetry={sms.reload} />
+              <ErrorState
+                message="We couldn't load text messages. Please try again."
+                onRetry={sms.reload}
+              />
             </div>
           ) : sms.loading && !sms.data ? (
             <div className="mt-4">
-              <LoadingState label="Loading SMS delivery log" rows={3} />
+              <LoadingState label="Loading text messages" rows={3} />
             </div>
           ) : (
             <div className="mt-4 overflow-x-auto">
@@ -496,10 +523,10 @@ export default function AdminSecurityPage() {
                 <thead>
                   <tr className="border-b border-line">
                     <th className="py-2 pr-4 text-left font-mono text-[0.54rem] font-normal uppercase tracking-[0.14em] text-faint">
-                      Purpose
+                      Type
                     </th>
                     <th className="py-2 pr-4 text-left font-mono text-[0.54rem] font-normal uppercase tracking-[0.14em] text-faint">
-                      Recipient
+                      Phone
                     </th>
                     <th className="py-2 pr-4 text-left font-mono text-[0.54rem] font-normal uppercase tracking-[0.14em] text-faint">
                       Provider
@@ -508,10 +535,10 @@ export default function AdminSecurityPage() {
                       Status
                     </th>
                     <th className="py-2 pr-4 text-left font-mono text-[0.54rem] font-normal uppercase tracking-[0.14em] text-faint">
-                      Reference
+                      Message ID
                     </th>
                     <th className="py-2 text-left font-mono text-[0.54rem] font-normal uppercase tracking-[0.14em] text-faint">
-                      Created
+                      When
                     </th>
                   </tr>
                 </thead>
@@ -544,8 +571,7 @@ export default function AdminSecurityPage() {
                   {(sms.data?.items.length ?? 0) === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-6 text-sm text-muted">
-                        No SMS records match this view. Codes are only logged after a
-                        verification request reaches the transport.
+                        No messages match this view.
                       </td>
                     </tr>
                   ) : null}
@@ -587,7 +613,7 @@ export default function AdminSecurityPage() {
                     ) : null}
                   </p>
                   <p className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.1em] text-faint">
-                    {session.ip_address || "Unknown IP"} · {relativeTime(session.created_at)}
+                    {session.ip_address || "IP not recorded"} · {relativeTime(session.created_at)}
                   </p>
                 </li>
               ))}
@@ -599,13 +625,13 @@ export default function AdminSecurityPage() {
               to="/admin/security/sessions"
               className={buttonStyles("secondary", "sm", "mt-4 w-full")}
             >
-              Review sessions
+              View sessions
             </Link>
           </div>
 
           <div className="border border-line p-5">
             <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-              Security actions
+              Quick actions
             </p>
             <div className="mt-3 space-y-2">
               <Link
@@ -620,21 +646,21 @@ export default function AdminSecurityPage() {
                 className={buttonStyles("ghost", "sm", "w-full border border-line")}
               >
                 <ShieldAlert className="size-3.5" aria-hidden="true" />
-                Revoke sessions
+                Manage sessions
               </Link>
               <a
                 href="#activity-heading"
                 className={buttonStyles("ghost", "sm", "w-full border border-line")}
               >
                 <Activity className="size-3.5" aria-hidden="true" />
-                Review activity
+                View activity
               </a>
               <a
                 href="#sms-heading"
                 className={buttonStyles("ghost", "sm", "w-full border border-line")}
               >
                 <Send className="size-3.5" aria-hidden="true" />
-                Review SMS logs
+                View text messages
               </a>
             </div>
           </div>
@@ -647,10 +673,10 @@ export default function AdminSecurityPage() {
             id="activity-heading"
             className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted"
           >
-            Authentication and security activity
+            Recent activity
           </h2>
           <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-            {activity.data?.total ?? 0} record{(activity.data?.total ?? 0) === 1 ? "" : "s"}
+            {activity.data?.total ?? 0} event{(activity.data?.total ?? 0) === 1 ? "" : "s"}
           </span>
         </div>
 
@@ -659,7 +685,7 @@ export default function AdminSecurityPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={`${inputClass} xl:col-span-2`}
-            placeholder="Search user, event or IP"
+            placeholder="Search activity"
             aria-label="Search activity"
           />
           <select
@@ -682,8 +708,8 @@ export default function AdminSecurityPage() {
             aria-label="Filter activity by status"
           >
             <option value="">All statuses</option>
-            <option value="success">Success</option>
-            <option value="failure">Failure</option>
+            <option value="success">Successful</option>
+            <option value="failure">Failed</option>
           </select>
           <input
             type="date"
@@ -703,7 +729,10 @@ export default function AdminSecurityPage() {
 
         {activity.error && !activity.data ? (
           <div className="mt-4">
-            <ErrorState message={activity.error.detail} onRetry={activity.reload} />
+            <ErrorState
+              message="We couldn't load activity. Please try again."
+              onRetry={activity.reload}
+            />
           </div>
         ) : activity.loading && !activity.data ? (
           <div className="mt-4">
@@ -736,7 +765,7 @@ export default function AdminSecurityPage() {
                     User
                   </th>
                   <th className="py-2 pr-4 text-left font-mono text-[0.54rem] font-normal uppercase tracking-[0.14em] text-faint">
-                    Detail
+                    Details
                   </th>
                   <th className="py-2 pr-4 text-left font-mono text-[0.54rem] font-normal uppercase tracking-[0.14em] text-faint">
                     IP
@@ -762,7 +791,7 @@ export default function AdminSecurityPage() {
                       <StatusBadge status={entry.status} />
                     </td>
                     <td className="max-w-[12rem] truncate py-3 pr-4 text-xs text-paper-dim">
-                      {entry.identifier || "Unknown"}
+                      {entry.identifier || "Not recorded"}
                     </td>
                     <td className="max-w-[16rem] py-3 pr-4 text-xs leading-relaxed text-muted">
                       {entry.detail || "—"}
@@ -786,7 +815,7 @@ export default function AdminSecurityPage() {
                         No activity matches these filters.
                       </p>
                       <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted">
-                        Clear the search or date range to see the full audit trail.
+                        Try clearing the search or the dates.
                       </p>
                     </td>
                   </tr>
@@ -805,8 +834,8 @@ export default function AdminSecurityPage() {
         )}
 
         <p className="mt-4 text-xs leading-relaxed text-faint">
-          The audit log never stores passwords, verification codes, API keys or session tokens.
-          Recipient numbers in the SMS log are masked.
+          This log never stores passwords, verification codes or session tokens. Phone numbers in
+          the message log are partly hidden.
         </p>
       </section>
     </div>

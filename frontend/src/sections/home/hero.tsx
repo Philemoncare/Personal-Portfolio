@@ -8,6 +8,7 @@ import { PortfolioImage } from "@/components/media/PortfolioImage";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { ErrorState } from "@/components/ui/states";
+import { useProfile } from "@/hooks/useContent";
 import { InfoStrip } from "@/sections/home/info-strip";
 
 const DISCIPLINES = [
@@ -30,26 +31,38 @@ const DISCIPLINES = [
 
 export function Hero() {
   const { settings, error, reload } = useSiteSettings();
+  const profile = useProfile();
   const page = usePageContent("home");
   const reduceMotion = useReducedMotion();
+
+  const person = profile.data;
+  const displayName = person?.display_name || settings?.display_name || "Phill";
+  const fullName = person?.name || "Philemon Melabah";
+  // Only show the secondary name line when it adds information.
+  const showFullName = fullName.trim().toLowerCase() !== displayName.trim().toLowerCase();
 
   const intro =
     page?.intro ||
     page?.description ||
+    person?.short_bio ||
     settings?.hero_intro ||
     "I build software products, work with data, and turn ideas into working systems.";
 
-  const location = settings?.location || "Ghana";
-  const role = settings?.role_title || "Full-Stack Developer";
+  const location = person?.location || settings?.location || "Ghana";
+  const role = person?.professional_title || settings?.role_title || "Full-Stack Developer";
 
   return (
     <section className="relative border-b border-line" aria-labelledby="hero-heading">
       <Container>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line py-4">
           <p className="type-meta flex items-center gap-2 text-muted">
-            <span className="text-signal">PHILL</span>
-            <span className="text-faint">/</span>
-            <span>Philemon Melabah</span>
+            <span className="text-signal">{settings?.wordmark || "PHILL"}</span>
+            {showFullName ? (
+              <>
+                <span className="text-faint">/</span>
+                <span>{fullName}</span>
+              </>
+            ) : null}
           </p>
           <p className="type-meta hidden items-center gap-2 text-faint sm:flex">
             <span className="size-1.5 bg-signal" aria-hidden="true" />
@@ -81,14 +94,16 @@ export function Hero() {
                 className="mt-5 text-paper lg:mt-8"
               >
                 <span className="type-display block font-medium uppercase">
-                  {settings?.display_name || "Phill"}
+                  {displayName}
                 </span>
-                <span className="mt-2 flex items-baseline gap-3 sm:mt-3">
-                  <span className="display-serif text-[clamp(1.9rem,4.6vw,3.6rem)] leading-[0.95] text-signal">
-                    Philemon Melabah
+                {showFullName ? (
+                  <span className="mt-2 flex items-baseline gap-3 sm:mt-3">
+                    <span className="display-serif text-[clamp(1.9rem,4.6vw,3.6rem)] leading-[0.95] text-signal">
+                      {fullName}
+                    </span>
+                    <span className="hidden h-px flex-1 bg-line-strong sm:block" aria-hidden="true" />
                   </span>
-                  <span className="hidden h-px flex-1 bg-line-strong sm:block" aria-hidden="true" />
-                </span>
+                ) : null}
               </motion.h1>
 
               <motion.p
@@ -163,7 +178,8 @@ export function Hero() {
           >
             <figure className="relative">
               <PortfolioImage
-                assetId="profile.portrait"
+                assetId={person?.profile_image ? undefined : "profile.portrait"}
+                src={person?.profile_image ?? undefined}
                 priority
                 aspect="portrait"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 34vw"
@@ -196,7 +212,7 @@ export function Hero() {
                     Studio portrait
                   </p>
                   <p className="mt-1 text-xs text-paper-dim">
-                    Philemon Melabah, {location}
+                    {fullName}, {location}
                   </p>
                 </div>
                 <span className="type-meta shrink-0 text-faint">2026</span>

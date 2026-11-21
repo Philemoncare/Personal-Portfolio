@@ -422,6 +422,32 @@ def test_admin_creates_taxonomy_and_uses_extra_values(
     assert reference_body["chart_types"]
 
 
+def test_admin_creates_project_with_brand_new_category(
+    admin_client: TestClient, db_session: Session
+) -> None:
+    """A project may introduce a category that does not exist yet.
+
+    Creating the category flushes the session; the project row must not be
+    inserted before its category is attached.
+    """
+
+    _seed(db_session)
+
+    created = admin_client.post(
+        "/api/v1/admin/data-projects",
+        json={
+            "title": "Fresh Category Study",
+            "extra_category": "Never Seen Category",
+            "project_type": "eda",
+            "status": "draft",
+        },
+    )
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["category"]["slug"] == "never-seen-category"
+    assert body["title"] == "Fresh Category Study"
+
+
 def test_invalid_chart_configuration_is_rejected(
     admin_client: TestClient, db_session: Session
 ) -> None:

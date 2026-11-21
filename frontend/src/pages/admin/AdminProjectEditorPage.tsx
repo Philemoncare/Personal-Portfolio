@@ -5,19 +5,21 @@ import {
   Eye,
   FileText,
   GitBranch,
+  Globe,
   Image as ImageIcon,
   LoaderCircle,
   Plus,
   RefreshCw,
   Save,
+  ShieldCheck,
   Trash2,
   Unlink,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { AdminPanel, Checkbox, Field, Select, StatusBadge, TextArea, TextInput } from "@/components/admin/form";
-import { PortfolioImage } from "@/components/media/PortfolioImage";
+import { MediaField } from "@/components/admin/MediaField";
 import { buttonStyles } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
@@ -30,9 +32,10 @@ import type {
   AdminProject,
   AdminReference,
   DeploymentStatus,
-  MediaAsset,
   MediaType,
+  PreviewStatus,
   ProjectInput,
+  ProjectPreview,
   PublishStatus,
 } from "@/types/api";
 import { cn } from "@/utils/cn";
@@ -42,13 +45,57 @@ import { PROJECT_STAGE_LABELS, PROJECT_STAGE_ORDER } from "@/utils/projects";
 type SectionKey = "basic" | "media" | "deployment" | "case-study" | "seo" | "publishing";
 
 const SECTIONS: Array<{ key: SectionKey; label: string; hint: string }> = [
-  { key: "basic", label: "Basic", hint: "Identity, story, classification" },
-  { key: "media", label: "Media", hint: "Cover and gallery" },
-  { key: "deployment", label: "Deployment", hint: "Links, hosting, GitHub" },
-  { key: "case-study", label: "Case study", hint: "Long-form narrative" },
-  { key: "seo", label: "SEO", hint: "Search and social preview" },
-  { key: "publishing", label: "Publishing", hint: "Visibility and status" },
+  { key: "basic", label: "Overview", hint: "Name, description and category" },
+  { key: "media", label: "Media", hint: "Cover image and gallery" },
+  { key: "deployment", label: "Links", hint: "Links, hosting and GitHub" },
+  { key: "case-study", label: "Case study", hint: "The full write-up" },
+  { key: "seo", label: "Search", hint: "Search and sharing" },
+  { key: "publishing", label: "Publishing", hint: "Visibility and ordering" },
 ];
+
+const PREVIEW_LABELS: Record<PreviewStatus, string> = {
+  not_discovered: "Not checked yet",
+  awaiting_verification: "Waiting to be checked",
+  verified: "Website verified",
+  generated: "Preview ready",
+  unavailable: "No preview yet",
+  unreachable: "Website not reachable",
+};
+
+const PREVIEW_TONES: Record<PreviewStatus, string> = {
+  not_discovered: "border-line bg-surface-raised text-faint",
+  awaiting_verification: "border-warning/50 bg-warning/10 text-warning",
+  verified: "border-signal/50 bg-signal/10 text-signal",
+  generated: "border-success/50 bg-success/10 text-success",
+  unavailable: "border-line bg-surface-raised text-faint",
+  unreachable: "border-error/50 bg-error/10 text-error",
+};
+
+const PREVIEW_SOURCE_LABELS: Record<string, string> = {
+  github_homepage: "GitHub repository",
+  github_pages: "GitHub Pages",
+  package_json: "Package file",
+  cname: "Custom domain file",
+  readme: "README file",
+  manual: "Added by you",
+};
+
+function previewFromProject(project: AdminProject): ProjectPreview {
+  return {
+    project_id: project.id,
+    live_url: project.live_url,
+    preview_image: project.preview_image,
+    preview_status: project.preview_status,
+    preview_source: project.preview_source,
+    preview_source_url: project.preview_source_url,
+    preview_checked_at: project.preview_checked_at,
+    preview_error: project.preview_error,
+    verified:
+      project.preview_status === "verified" || project.preview_status === "generated",
+    final_url: project.preview_source_url,
+    message: null,
+  };
+}
 
 interface MediaRow {
   url: string;
@@ -318,6 +365,7 @@ function newCaseStudy(projectId: string, title: string, slug: string): AdminCase
     title: `${title || "Project"} case study`,
     slug: `${slug || "project"}-case-study`,
     summary: null,
+    cover_image_url: null,
     overview: null,
     problem: null,
     context: null,
@@ -353,6 +401,7 @@ function caseStudyToInput(study: AdminCaseStudy): AdminCaseStudyInput {
     title: study.title,
     slug: study.slug,
     summary: study.summary,
+    cover_image_url: study.cover_image_url,
     overview: study.overview,
     problem: study.problem,
     context: study.context,
@@ -382,66 +431,6 @@ function caseStudyToInput(study: AdminCaseStudy): AdminCaseStudyInput {
   };
 }
 
-function MediaLibraryPicker({
-  assets,
-  loading,
-  onSelect,
-  label,
-}: {
-  assets: MediaAsset[];
-  loading: boolean;
-  onSelect: (url: string) => void;
-  label: string;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className={buttonStyles("secondary", "sm")}
-        aria-expanded={open}
-      >
-        <ImageIcon className="size-3.5" aria-hidden="true" />
-        {open ? "Hide media library" : label}
-      </button>
-      {open ? (
-        <div className="mt-3 border border-line bg-ink-950/60 p-3">
-          {loading ? (
-            <p className="p-3 text-sm text-muted">Loading media library…</p>
-          ) : assets.length === 0 ? (
-            <p className="p-3 text-sm text-muted">
-              No uploaded media yet.{" "}
-              <Link to="/admin/media" className="text-paper underline underline-offset-4">
-                Open the media library
-              </Link>
-              .
-            </p>
-          ) : (
-            <ul className="grid max-h-72 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-4">
-              {assets.map((asset) => (
-                <li key={asset.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelect(asset.url)}
-                    className="block w-full border border-line text-left transition-colors hover:border-paper"
-                    title={`${asset.title} · ${asset.folder}`}
-                  >
-                    <PortfolioImage src={asset.url} alt={asset.alt_text} aspect="wide" sizes="160px" />
-                    <span className="block truncate border-t border-line px-2 py-1.5 font-mono text-[0.5rem] uppercase tracking-[0.08em] text-muted">
-                      {asset.folder}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export default function AdminProjectEditorPage() {
   const { id } = useParams<{ id: string }>();
   const isNew = !id;
@@ -452,7 +441,17 @@ export default function AdminProjectEditorPage() {
   );
   const [form, setForm] = useState<ProjectFormState | null>(null);
   const [section, setSection] = useState<SectionKey>("basic");
-  const [saving, setSaving] = useState(false);
+  const [savingMode, setSavingMode] = useState<
+    "keep" | "draft" | "publish" | "delete" | null
+  >(null);
+  const saving = savingMode !== null;
+  const noticeRef = useRef<HTMLParagraphElement | null>(null);
+
+  useEffect(() => {
+    if (notice && noticeRef.current) {
+      noticeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [notice]);
 
   const reference = useApiResource<AdminReference>("/api/v1/admin/reference");
   const project = useApiResource<AdminProject>(
@@ -469,6 +468,12 @@ export default function AdminProjectEditorPage() {
   const [caseStudyNotice, setCaseStudyNotice] = useState<string | null>(null);
   const [githubMeta, setGithubMeta] = useState<AdminProject | null>(null);
   const [githubBusy, setGithubBusy] = useState(false);
+  const [preview, setPreview] = useState<ProjectPreview | null>(null);
+  const [previewBusy, setPreviewBusy] = useState<"verify" | "generate" | null>(
+    null,
+  );
+  const [previewNotice, setPreviewNotice] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const githubLink = useApiQuery(
     (signal) =>
       id ? githubService.projectLink(id, signal) : Promise.resolve(null),
@@ -480,6 +485,7 @@ export default function AdminProjectEditorPage() {
       if (project.data) {
         setForm(fromProject(project.data));
         setGithubMeta(project.data);
+        setPreview(previewFromProject(project.data));
       }
       return;
     }
@@ -502,52 +508,124 @@ export default function AdminProjectEditorPage() {
   };
 
   const save = async (mode: "keep" | "draft" | "publish") => {
-    if (!form) return;
+    if (saving) return;
+    if (!form) {
+      setNotice("The editor is still loading. Try again in a moment.");
+      return;
+    }
     if (!form.title.trim()) {
-      setNotice("A project title is required.");
+      setNotice("Please add a project title.");
       setSection("basic");
       return;
     }
     if (!form.category_id) {
-      setNotice("Choose a primary category before saving.");
+      setNotice("Please choose a category before saving.");
       setSection("basic");
       return;
     }
     const status: PublishStatus =
       mode === "keep" ? form.status : mode === "publish" ? "published" : "draft";
     const payload = toPayload(form, status);
-    setSaving(true);
+    setSavingMode(mode);
     setNotice(null);
     try {
       if (isNew) {
         const created = await adminProjectsService.createProject(payload);
         navigate(`/admin/projects/${created.id}`, {
           replace: true,
-          state: { notice: "Project created as a draft." },
+          state: {
+            notice:
+              status === "published"
+                ? "Project added and published."
+                : "Project added as a draft.",
+          },
         });
       } else if (id) {
         const updated = await adminProjectsService.updateProject(id, payload);
         setForm(fromProject(updated));
         setGithubMeta(updated);
+        setPreview(previewFromProject(updated));
         setNotice(
-          status === "published"
-            ? "Project saved and published."
-            : status === "draft"
-              ? "Project saved as a draft."
-              : "Project saved.",
+          status === "published" && form.status !== "published"
+            ? "Project published."
+            : status === "published"
+              ? "Project saved and published."
+              : status === "draft"
+                ? "Project saved as a draft."
+                : "Project saved.",
         );
       }
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The project could not be saved.");
+      setNotice(error instanceof Error ? error.message : "We couldn't save this project. Please try again.");
     } finally {
-      setSaving(false);
+      setSavingMode(null);
+    }
+  };
+
+  const runPreview = async (mode: "verify" | "generate") => {
+    if (!id || !form) return;
+    setPreviewBusy(mode);
+    setPreviewNotice(null);
+    setPreviewError(null);
+    try {
+      const result =
+        mode === "verify"
+          ? await adminProjectsService.verifyPreview(id, form.live_url)
+          : await adminProjectsService.generatePreview(id, form.live_url);
+      setPreview(result);
+      if (result.live_url) {
+        const live = result.live_url;
+        setForm((current) =>
+          current ? { ...current, live_url: live } : current,
+        );
+      }
+      setGithubMeta((current) =>
+        current
+          ? {
+              ...current,
+              live_url: result.live_url ?? current.live_url,
+              last_verified_at: result.verified
+                ? (result.preview_checked_at ?? current.last_verified_at)
+                : current.last_verified_at,
+              preview_image: result.preview_image,
+              preview_status: result.preview_status,
+              preview_source: result.preview_source,
+              preview_source_url: result.preview_source_url,
+              preview_checked_at: result.preview_checked_at,
+              preview_error: result.preview_error,
+            }
+          : current,
+      );
+      if (result.preview_status === "generated") {
+        setPreviewNotice(
+          result.message ?? "Preview created from your live website.",
+        );
+      } else if (result.preview_status === "verified") {
+        setPreviewNotice(
+          result.message ?? "Website verified. You can create a preview image next.",
+        );
+      } else {
+        setPreviewError(
+          result.preview_error ??
+            result.message ??
+            "We couldn't create a preview.",
+        );
+      }
+    } catch (error) {
+      setPreviewError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't check this website. Please try again.",
+      );
+    } finally {
+      setPreviewBusy(null);
     }
   };
 
   const saveCaseStudy = async () => {
     if (!caseStudyForm || !id) return;
     if (!caseStudyForm.title.trim()) {
-      setCaseStudyNotice("A case study title is required.");
+      setCaseStudyNotice("Please add a case study title.");
       return;
     }
     setCaseStudySaving(true);
@@ -565,7 +643,7 @@ export default function AdminProjectEditorPage() {
       );
     } catch (error) {
       setCaseStudyNotice(
-        error instanceof Error ? error.message : "The case study could not be saved.",
+        error instanceof Error ? error.message : "We couldn't save this case study. Please try again.",
       );
     } finally {
       setCaseStudySaving(false);
@@ -579,12 +657,12 @@ export default function AdminProjectEditorPage() {
     try {
       const updated = await adminProjectsService.refreshGitHub(id);
       setGithubMeta(updated);
-      setNotice("GitHub metadata refreshed from the public API.");
+      setNotice("GitHub details updated.");
     } catch (error) {
       setNotice(
         error instanceof Error
-          ? `GitHub refresh failed: ${error.message}`
-          : "GitHub metadata could not be refreshed.",
+          ? `We couldn't update GitHub details. ${error.message}`
+          : "We couldn't update GitHub details. Please try again.",
       );
     } finally {
       setGithubBusy(false);
@@ -603,8 +681,8 @@ export default function AdminProjectEditorPage() {
     } catch (error) {
       setNotice(
         error instanceof Error
-          ? `GitHub sync failed: ${error.message}`
-          : "GitHub metadata could not be synchronized.",
+          ? `We couldn't sync with GitHub. ${error.message}`
+          : "We couldn't sync with GitHub. Please try again.",
       );
     } finally {
       setGithubBusy(false);
@@ -614,7 +692,7 @@ export default function AdminProjectEditorPage() {
   const disconnectLinkedGithub = async () => {
     if (!id) return;
     const confirmed = window.confirm(
-      "Remove the GitHub repository link from this project? The project and its editorial content are kept. The repository can be linked again later.",
+      "Remove the GitHub repository link? The project and your content are kept, and you can link it again later.",
     );
     if (!confirmed) return;
     setGithubBusy(true);
@@ -622,12 +700,12 @@ export default function AdminProjectEditorPage() {
     try {
       await githubService.disconnectProject(id);
       githubLink.reload();
-      setNotice("GitHub repository link removed. The project was kept.");
+      setNotice("GitHub link removed. The project was kept.");
     } catch (error) {
       setNotice(
         error instanceof Error
-          ? `GitHub link could not be removed: ${error.message}`
-          : "GitHub link could not be removed.",
+          ? `We couldn't remove the GitHub link. ${error.message}`
+          : "We couldn't remove the GitHub link. Please try again.",
       );
     } finally {
       setGithubBusy(false);
@@ -637,16 +715,16 @@ export default function AdminProjectEditorPage() {
   const remove = async () => {
     if (!id || !form) return;
     const confirmed = window.confirm(
-      `Delete ${form.title || "this project"} permanently? Media rows and the project's case study are affected and this cannot be undone.`,
+      `Delete "${form.title || "this project"}"? Its images and case study will also be removed. This cannot be undone.`,
     );
     if (!confirmed) return;
-    setSaving(true);
+    setSavingMode("delete");
     try {
       await adminProjectsService.deleteProject(id);
       navigate("/admin/projects", { replace: true });
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The project could not be deleted.");
-      setSaving(false);
+      setNotice(error instanceof Error ? error.message : "We couldn't delete this project. Please try again.");
+      setSavingMode(null);
     }
   };
 
@@ -656,7 +734,10 @@ export default function AdminProjectEditorPage() {
         {project.error.status === 404 ? (
           <ErrorState message="This project no longer exists." />
         ) : (
-          <ErrorState message={project.error.detail} onRetry={project.reload} />
+          <ErrorState
+            message="We couldn't load this project. Please try again."
+            onRetry={project.reload}
+          />
         )}
         <Link to="/admin/projects" className={`${buttonStyles("secondary", "sm")} mt-4`}>
           Back to projects
@@ -668,7 +749,10 @@ export default function AdminProjectEditorPage() {
   if (reference.error) {
     return (
       <div className="mt-6">
-        <ErrorState message={reference.error.detail} onRetry={reference.reload} />
+        <ErrorState
+          message="We couldn't load the project options. Please try again."
+          onRetry={reference.reload}
+        />
       </div>
     );
   }
@@ -676,7 +760,7 @@ export default function AdminProjectEditorPage() {
   if ((!isNew && project.loading) || !reference.data || !form) {
     return (
       <div className="mt-6">
-        <LoadingState rows={6} label="Loading project editor" />
+        <LoadingState rows={6} label="Loading project" />
       </div>
     );
   }
@@ -701,7 +785,7 @@ export default function AdminProjectEditorPage() {
             Projects
           </Link>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            {isNew ? "New project" : form.title || "Untitled project"}
+            {isNew ? "Add project" : form.title || "Untitled project"}
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <StatusBadge status={form.status} />
@@ -711,7 +795,7 @@ export default function AdminProjectEditorPage() {
               </span>
             ) : (
               <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
-                Draft will be created
+                Will be saved as a draft
               </span>
             )}
             {form.public_visibility ? null : (
@@ -742,7 +826,7 @@ export default function AdminProjectEditorPage() {
               className={buttonStyles("secondary", "sm")}
             >
               <Eye className="size-3.5" aria-hidden="true" />
-              Public page
+              View website
               <ArrowUpRight className="size-3" aria-hidden="true" />
             </a>
           ) : null}
@@ -753,7 +837,7 @@ export default function AdminProjectEditorPage() {
             className={buttonStyles("secondary", "sm")}
           >
             <Save className="size-3.5" aria-hidden="true" />
-            Save draft
+            {savingMode === "draft" ? "Saving..." : "Save draft"}
           </button>
           <button
             type="button"
@@ -761,13 +845,18 @@ export default function AdminProjectEditorPage() {
             disabled={saving}
             className={buttonStyles("primary", "sm")}
           >
-            {saving ? "Saving…" : "Publish"}
+            {savingMode === "publish" ? "Publishing..." : "Publish"}
           </button>
         </div>
       </div>
 
       {notice ? (
-        <p role="status" className="mt-4 border border-line bg-ink-800/60 px-4 py-3 text-sm text-paper-dim">
+        <p
+          ref={noticeRef}
+          role="status"
+          tabIndex={-1}
+          className="mt-4 border border-line bg-ink-800/60 px-4 py-3 text-sm text-paper-dim"
+        >
           {notice}
         </p>
       ) : null}
@@ -776,7 +865,7 @@ export default function AdminProjectEditorPage() {
         <div className="mt-4">
           {githubLink.loading ? (
             <p className="border border-line bg-ink-800/40 px-4 py-3 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
-              Checking GitHub link…
+              Checking GitHub link...
             </p>
           ) : githubLink.error ? (
             <div className="flex flex-wrap items-center justify-between gap-3 border border-error/40 bg-error/10 px-4 py-3 text-xs text-error">
@@ -797,15 +886,15 @@ export default function AdminProjectEditorPage() {
                     {linkedGithub.repository_full_name || linkedGithub.repository_id}
                   </p>
                   <p className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
-                    <span>{linkedGithub.visibility || "visibility unknown"}</span>
+                    <span>{linkedGithub.visibility || "Visibility unknown"}</span>
                     <span className="inline-flex items-center gap-1">
                       <GitBranch className="size-3" aria-hidden="true" />
-                      {linkedGithub.default_branch || "branch unknown"}
+                      {linkedGithub.default_branch || "Branch unknown"}
                     </span>
                     <span>
                       {linkedGithub.last_synced_at
                         ? `Synced ${relativeTime(linkedGithub.last_synced_at)}`
-                        : "Not synchronized yet"}
+                        : "Not synced yet"}
                     </span>
                     {linkedGithub.is_archived ? (
                       <span className="text-warning">Archived on GitHub</span>
@@ -850,10 +939,9 @@ export default function AdminProjectEditorPage() {
                 </div>
               </div>
               <p className="mt-3 border-t border-signal/20 pt-3 text-xs leading-relaxed text-muted">
-                Sync updates GitHub-owned fields only: repository metadata, visibility, default
-                branch, stars, forks, issues, and cached activity. Title, description, category,
-                role, year, featured state, status, case study, lessons, results, images, order,
-                SEO, and public visibility are never overwritten.
+                Syncing updates only the details that come from GitHub, such as the repository
+                name, visibility, branch and stars. Your title, description, images and other
+                content are never overwritten.
               </p>
             </div>
           ) : (
@@ -895,28 +983,28 @@ export default function AdminProjectEditorPage() {
           {section === "basic" ? (
             <>
               <AdminPanel
-                title="Identity"
-                description="The name, URL, and copy that introduce the project. The summary is used in cards and search; the body is the overview on the project page."
+                title="Overview"
+                description="The name, web address and introduction."
               >
                 <div className="grid gap-5">
-                  <Field label="Title" htmlFor="title" required>
+                  <Field label="Project title" htmlFor="title" required>
                     <TextInput
                       id="title"
                       value={form.title}
                       onChange={(event) => update("title", event.target.value)}
-                      placeholder="SchooMA"
+                      placeholder="Project name"
                     />
                   </Field>
                   <Field
-                    label="Slug"
+                    label="Web address"
                     htmlFor="slug"
-                    hint="Leave blank to generate one from the title. The public URL is /work/{slug}."
+                    hint="Leave blank to create one from the title."
                   >
                     <TextInput
                       id="slug"
                       value={form.slug}
                       onChange={(event) => update("slug", event.target.value)}
-                      placeholder="schooma"
+                      placeholder="your-project"
                     />
                   </Field>
                   <Field label="Short description" htmlFor="summary" hint={`${form.summary.length}/400 characters`}>
@@ -928,7 +1016,7 @@ export default function AdminProjectEditorPage() {
                       placeholder="One or two sentences explaining what the project is and who it is for."
                     />
                   </Field>
-                  <Field label="Overview body" htmlFor="body" hint={`${form.body.length} characters. Separate paragraphs with a blank line.`}>
+                  <Field label="Full description" htmlFor="body" hint={`${form.body.length} characters. Separate paragraphs with a blank line.`}>
                     <TextArea
                       id="body"
                       rows={8}
@@ -941,11 +1029,11 @@ export default function AdminProjectEditorPage() {
               </AdminPanel>
 
               <AdminPanel
-                title="Classification"
-                description="One primary discipline, optional secondary categories, and the technologies shown on cards, filters, and the stack panel."
+                title="Category and tools"
+                description="How the project is grouped and what it was built with."
               >
                 <div className="grid gap-5">
-                  <Field label="Primary category" htmlFor="category" required>
+                  <Field label="Main category" htmlFor="category" required>
                     <Select
                       id="category"
                       value={form.category_id}
@@ -961,7 +1049,7 @@ export default function AdminProjectEditorPage() {
                     />
                   </Field>
 
-                  <Field label="Secondary categories" hint="Optional. Used for filtering and related-project matching.">
+                  <Field label="Secondary categories" hint="Optional. Used for filtering.">
                     <div className="grid gap-2 sm:grid-cols-2">
                       {ref.categories
                         .filter((item) => item.id !== form.category_id)
@@ -983,7 +1071,7 @@ export default function AdminProjectEditorPage() {
                     </div>
                   </Field>
 
-                  <Field label="Technologies" hint="Select every tool used. New tools can be added below, comma-separated.">
+                  <Field label="Tools used" hint="Select every tool used.">
                     <div className="space-y-4 border border-line bg-ink-950/50 p-4">
                       {technologyGroups.map((kind) => (
                         <div key={kind}>
@@ -1014,7 +1102,7 @@ export default function AdminProjectEditorPage() {
                     </div>
                   </Field>
 
-                  <Field label="Add technologies" htmlFor="extra-technologies" hint="Comma-separated names, for example: Docker, Redis">
+                  <Field label="Other tools" htmlFor="extra-technologies" hint="Separate each tool with a comma.">
                     <TextInput
                       id="extra-technologies"
                       value={form.extra_technologies}
@@ -1026,8 +1114,8 @@ export default function AdminProjectEditorPage() {
               </AdminPanel>
 
               <AdminPanel
-                title="Project details"
-                description="Metadata shown in the project header and used for ordering and related work."
+                title="Role and dates"
+                description="Your role, when the work happened and its stage."
               >
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field label="Role" htmlFor="role" hint="For example: Full-stack developer">
@@ -1043,7 +1131,7 @@ export default function AdminProjectEditorPage() {
                       onChange={(event) => update("year", event.target.value)}
                     />
                   </Field>
-                  <Field label="Started" htmlFor="started">
+                  <Field label="Start date" htmlFor="started">
                     <TextInput
                       id="started"
                       type="date"
@@ -1051,7 +1139,7 @@ export default function AdminProjectEditorPage() {
                       onChange={(event) => update("started_on", event.target.value)}
                     />
                   </Field>
-                  <Field label="Completed" htmlFor="completed">
+                  <Field label="End date" htmlFor="completed">
                     <TextInput
                       id="completed"
                       type="date"
@@ -1059,7 +1147,7 @@ export default function AdminProjectEditorPage() {
                       onChange={(event) => update("completed_on", event.target.value)}
                     />
                   </Field>
-                  <Field label="Mode" htmlFor="mode">
+                  <Field label="Type" htmlFor="mode">
                     <Select
                       id="mode"
                       value={form.primary_mode}
@@ -1086,7 +1174,7 @@ export default function AdminProjectEditorPage() {
           {section === "media" ? (
             <AdminPanel
               title="Cover and gallery"
-              description="The cover appears on cards and at the top of the project page. Gallery images are lazy-loaded; diagrams appear in the architecture block."
+              description="The cover image appears on cards. The gallery appears on the project page."
               actions={
                 <button
                   type="button"
@@ -1094,36 +1182,28 @@ export default function AdminProjectEditorPage() {
                   className={buttonStyles("secondary", "sm")}
                 >
                   <Plus className="size-3.5" aria-hidden="true" />
-                  Add media
+                  Add item
                 </button>
               }
             >
               <div className="grid gap-5">
-                <Field
-                  label="Cover image URL"
-                  htmlFor="cover"
-                  hint="Use an optimized image. If left blank, the first gallery image becomes the cover."
-                >
-                  <div className="space-y-3">
-                    <TextInput
-                      id="cover"
-                      value={form.cover_image}
-                      onChange={(event) => update("cover_image", event.target.value)}
-                      placeholder="/media/projects/schooma-cover.webp"
-                    />
-                    <MediaLibraryPicker
-                      assets={mediaAssets}
-                      loading={media.loading}
-                      label="Choose cover"
-                      onSelect={(url) => update("cover_image", url)}
-                    />
-                  </div>
+                <Field label="Cover image" hint="Used on cards and the project header.">
+                  <MediaField
+                    value={form.cover_image}
+                    onChange={(url) => update("cover_image", url)}
+                    assets={mediaAssets}
+                    loading={media.loading}
+                    onUploaded={() => media.reload()}
+                    title={form.title}
+                    altText={`${form.title} cover image`}
+                    emptyLabel="No cover selected."
+                  />
                 </Field>
 
                 {form.media.length === 0 ? (
                   <div className="flex items-center gap-3 border border-dashed border-line-strong px-4 py-5 text-sm text-muted">
                     <ImageIcon className="size-4" aria-hidden="true" />
-                    No gallery media yet. Add a screenshot, diagram, or video when one exists.
+                    No gallery items yet. Add a screenshot, diagram or video when you have one.
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1131,7 +1211,7 @@ export default function AdminProjectEditorPage() {
                       <div key={index} className="border border-line bg-ink-950/40 p-4">
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
-                            Media {String(index + 1).padStart(2, "0")}
+                            Item {String(index + 1).padStart(2, "0")}
                           </span>
                           <button
                             type="button"
@@ -1142,28 +1222,54 @@ export default function AdminProjectEditorPage() {
                               )
                             }
                             className="text-muted transition-colors hover:text-signal"
-                            aria-label={`Remove media ${index + 1}`}
+                            aria-label={`Remove item ${index + 1}`}
                           >
                             <Trash2 className="size-3.5" aria-hidden="true" />
                           </button>
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                          <Field label="URL" htmlFor={`media-url-${index}`}>
-                            <TextInput
-                              id={`media-url-${index}`}
-                              value={item.url}
-                              onChange={(event) =>
-                                update(
-                                  "media",
-                                  form.media.map((entry, itemIndex) =>
-                                    itemIndex === index ? { ...entry, url: event.target.value } : entry,
-                                  ),
-                                )
-                              }
-                              placeholder="/media/projects/schooma-dashboard.webp"
-                            />
-                          </Field>
-                          <Field label="Alt text" htmlFor={`media-alt-${index}`} hint="Describe what the image shows.">
+                          <div className="sm:col-span-2">
+                            {item.media_type === "video" ? (
+                              <Field label="Video link" htmlFor={`media-url-${index}`}>
+                                <TextInput
+                                  id={`media-url-${index}`}
+                                  value={item.url}
+                                  onChange={(event) =>
+                                    update(
+                                      "media",
+                                      form.media.map((entry, itemIndex) =>
+                                        itemIndex === index
+                                          ? { ...entry, url: event.target.value }
+                                          : entry,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="https://…"
+                                />
+                              </Field>
+                            ) : (
+                              <Field label="Image">
+                                <MediaField
+                                  value={item.url}
+                                  onChange={(url) =>
+                                    update(
+                                      "media",
+                                      form.media.map((entry, itemIndex) =>
+                                        itemIndex === index ? { ...entry, url } : entry,
+                                      ),
+                                    )
+                                  }
+                                  assets={mediaAssets}
+                                  loading={media.loading}
+                                  onUploaded={() => media.reload()}
+                                  title={form.title}
+                                  altText={item.alt_text || `${form.title} gallery image`}
+                                  emptyLabel="No image selected."
+                                />
+                              </Field>
+                            )}
+                          </div>
+                          <Field label="Description" htmlFor={`media-alt-${index}`} hint="Describe what the image shows.">
                             <TextInput
                               id={`media-alt-${index}`}
                               value={item.alt_text}
@@ -1207,26 +1313,11 @@ export default function AdminProjectEditorPage() {
                               }
                               options={[
                                 { value: "image", label: "Image / screenshot" },
-                                { value: "diagram", label: "Architecture diagram" },
+                                { value: "diagram", label: "Diagram" },
                                 { value: "video", label: "Video" },
                               ]}
                             />
                           </Field>
-                        </div>
-                        <div className="mt-3">
-                          <MediaLibraryPicker
-                            assets={mediaAssets}
-                            loading={media.loading}
-                            label="Choose from library"
-                            onSelect={(url) =>
-                              update(
-                                "media",
-                                form.media.map((entry, itemIndex) =>
-                                  itemIndex === index ? { ...entry, url } : entry,
-                                ),
-                              )
-                            }
-                          />
                         </div>
                       </div>
                     ))}
@@ -1240,45 +1331,203 @@ export default function AdminProjectEditorPage() {
             <>
               <AdminPanel
                 title="Project links"
-                description="Only links with a value are rendered publicly. External links open in a new tab."
+                description="Only the links you fill in are shown."
               >
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Live / deployment URL" htmlFor="live" hint="Shown as the primary action and used for the live preview.">
-                    <TextInput id="live" type="url" value={form.live_url} onChange={(event) => update("live_url", event.target.value)} placeholder="https://…" />
+                  <Field label="Live website" htmlFor="live" hint="Used for the main link and preview.">
+                    <TextInput id="live" type="url" value={form.live_url} onChange={(event) => update("live_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
-                  <Field label="Deployment URL" htmlFor="deployment-url" hint="Optional hosting-specific URL if it differs from the live URL.">
-                    <TextInput id="deployment-url" type="url" value={form.deployment_url} onChange={(event) => update("deployment_url", event.target.value)} placeholder="https://…" />
+                  <Field label="Hosting link" htmlFor="deployment-url" hint="Only if it differs from the live website.">
+                    <TextInput id="deployment-url" type="url" value={form.deployment_url} onChange={(event) => update("deployment_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
-                  <Field label="GitHub URL" htmlFor="github" hint="Used for the source action and optional metadata refresh.">
-                    <TextInput id="github" type="url" value={form.github_url} onChange={(event) => update("github_url", event.target.value)} placeholder="https://github.com/…" />
+                  <Field label="GitHub link" htmlFor="github" hint="Link to the source code.">
+                    <TextInput id="github" type="url" value={form.github_url} onChange={(event) => update("github_url", event.target.value)} placeholder="https://github.com/username/project" />
                   </Field>
-                  <Field label="Repository URL" htmlFor="repo">
-                    <TextInput id="repo" type="url" value={form.repository_url} onChange={(event) => update("repository_url", event.target.value)} placeholder="https://…" />
+                  <Field label="Code repository" htmlFor="repo">
+                    <TextInput id="repo" type="url" value={form.repository_url} onChange={(event) => update("repository_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
                   <Field label="Documentation" htmlFor="docs">
-                    <TextInput id="docs" type="url" value={form.documentation_url} onChange={(event) => update("documentation_url", event.target.value)} placeholder="https://…" />
+                    <TextInput id="docs" type="url" value={form.documentation_url} onChange={(event) => update("documentation_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
-                  <Field label="Demo / walkthrough" htmlFor="demo">
-                    <TextInput id="demo" type="url" value={form.demo_url} onChange={(event) => update("demo_url", event.target.value)} placeholder="https://…" />
+                  <Field label="Demo or walkthrough" htmlFor="demo">
+                    <TextInput id="demo" type="url" value={form.demo_url} onChange={(event) => update("demo_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
                   <Field label="Video" htmlFor="video">
-                    <TextInput id="video" type="url" value={form.video_url} onChange={(event) => update("video_url", event.target.value)} placeholder="https://…" />
+                    <TextInput id="video" type="url" value={form.video_url} onChange={(event) => update("video_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
                   <Field label="Download" htmlFor="download">
-                    <TextInput id="download" type="url" value={form.download_url} onChange={(event) => update("download_url", event.target.value)} placeholder="https://…" />
+                    <TextInput id="download" type="url" value={form.download_url} onChange={(event) => update("download_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
-                  <Field label="External project URL" htmlFor="external-project">
-                    <TextInput id="external-project" type="url" value={form.external_project_url} onChange={(event) => update("external_project_url", event.target.value)} placeholder="https://…" />
+                  <Field label="Other project link" htmlFor="external-project">
+                    <TextInput id="external-project" type="url" value={form.external_project_url} onChange={(event) => update("external_project_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
-                  <Field label="External resource" htmlFor="external">
-                    <TextInput id="external" type="url" value={form.external_url} onChange={(event) => update("external_url", event.target.value)} placeholder="https://…" />
+                  <Field label="Other link" htmlFor="external">
+                    <TextInput id="external" type="url" value={form.external_url} onChange={(event) => update("external_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
                 </div>
               </AdminPanel>
 
               <AdminPanel
-                title="Deployment record"
-                description="The deployment state is what you know to be true. It is not a health check."
+                title="Homepage preview"
+                description="A real screenshot of your live website."
+              >
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span
+                        className={cn(
+                          "inline-flex w-fit items-center gap-1 border px-2 py-0.5 font-mono text-[0.54rem] uppercase leading-none tracking-[0.14em]",
+                          PREVIEW_TONES[preview?.preview_status ?? "not_discovered"],
+                        )}
+                      >
+                        {PREVIEW_LABELS[preview?.preview_status ?? "not_discovered"]}
+                      </span>
+                      {preview?.preview_checked_at ? (
+                        <span className="text-xs text-muted">
+                          Checked {relativeTime(preview.preview_checked_at)}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <p className="type-meta text-faint">Website address</p>
+                      <p className="mt-1 break-all text-sm text-paper">
+                        {preview?.preview_source_url ||
+                          form.live_url ||
+                          "No live website added yet."}
+                      </p>
+                      {preview?.preview_source ? (
+                        <p className="mt-1 text-xs text-muted">
+                          Found in:{" "}
+                          {PREVIEW_SOURCE_LABELS[preview.preview_source] ??
+                            preview.preview_source}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => runPreview("verify")}
+                        disabled={
+                          !id || previewBusy !== null || !form.live_url.trim()
+                        }
+                        className={buttonStyles("secondary", "sm")}
+                      >
+                        {previewBusy === "verify" ? (
+                          <LoaderCircle
+                            className="size-3.5 animate-spin"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <ShieldCheck className="size-3.5" aria-hidden="true" />
+                        )}
+                        Check website
+                      </button>                      <button
+                        type="button"
+                        onClick={() => runPreview("generate")}
+                        disabled={
+                          !id || previewBusy !== null || !form.live_url.trim()
+                        }
+                        className={buttonStyles("primary", "sm")}
+                      >
+                        {previewBusy === "generate" ? (
+                          <LoaderCircle
+                            className="size-3.5 animate-spin"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <RefreshCw className="size-3.5" aria-hidden="true" />
+                        )}
+                        {preview?.preview_status === "generated"
+                          ? "Refresh preview"
+                          : "Create preview"}
+                      </button>
+                      {preview?.preview_source_url || form.live_url ? (
+                        <a
+                          href={preview?.preview_source_url || form.live_url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className={buttonStyles("outline", "sm")}
+                        >
+                          <ArrowUpRight
+                            className="size-3.5"
+                            aria-hidden="true"
+                          />
+                          Open site
+                        </a>
+                      ) : null}
+                    </div>
+
+                    {!id ? (
+                      <p className="text-xs text-muted">
+                        Save this project as a draft before checking its website.
+                      </p>
+                    ) : null}
+                    {previewError ? (
+                      <p
+                        role="alert"
+                        className="border border-error/40 bg-error/10 px-3 py-2 text-sm text-error"
+                      >
+                        {previewError}
+                      </p>
+                    ) : null}
+                    {previewNotice ? (
+                      <p
+                        role="status"
+                        className="border border-success/40 bg-success/10 px-3 py-2 text-sm text-success"
+                      >
+                        {previewNotice}
+                      </p>
+                    ) : null}
+                    <p className="text-xs leading-relaxed text-muted">
+                      Fix the live website address above, check it, then create the preview.
+                      Nothing is published automatically.
+                    </p>
+                  </div>
+
+                  <div>
+                    {preview?.preview_image &&
+                    preview.preview_status === "generated" ? (
+                      <a
+                        href={
+                          preview.preview_source_url ||
+                          preview.live_url ||
+                          form.live_url
+                        }
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="block overflow-hidden border border-line bg-ink transition-colors hover:border-line-strong"
+                      >
+                        <img
+                          src={preview.preview_image}
+                          alt={`Captured homepage of ${form.title || "this project"}`}
+                          className="aspect-[16/10] w-full object-cover object-top"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <div className="flex aspect-[16/10] w-full flex-col items-center justify-center border border-dashed border-line bg-ink/60 px-6 text-center">
+                        <Globe
+                          className="size-5 text-faint"
+                          aria-hidden="true"
+                        />
+                        <p className="mt-3 text-sm text-paper">
+                          No preview yet.
+                        </p>
+                        <p className="mt-1 max-w-xs text-xs leading-relaxed text-muted">
+                          Check the website address, then create a screenshot. If there is no live
+                          site, this stays empty.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </AdminPanel>
+
+              <AdminPanel
+                title="Hosting"
+                description="Where the project is hosted."
               >
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field label="Provider" htmlFor="provider">
@@ -1295,7 +1544,7 @@ export default function AdminProjectEditorPage() {
                       ]}
                     />
                   </Field>
-                  <Field label="Deployment status" htmlFor="deployment-status">
+                  <Field label="Hosting status" htmlFor="deployment-status">
                     <Select
                       id="deployment-status"
                       value={form.deployment_status}
@@ -1308,7 +1557,7 @@ export default function AdminProjectEditorPage() {
                       }))}
                     />
                   </Field>
-                  <Field label="Last verified" htmlFor="verified" hint="When you last checked the live deployment yourself.">
+                  <Field label="Last checked" htmlFor="verified" hint="When you last checked the live website yourself.">
                     <TextInput
                       id="verified"
                       type="datetime-local"
@@ -1318,24 +1567,24 @@ export default function AdminProjectEditorPage() {
                   </Field>
                   <div className="flex flex-col justify-end gap-3 pb-1">
                     <Checkbox
-                      label="Allow embedded preview attempts"
+                      label="Allow embedded preview"
                       checked={form.embed_enabled}
                       onChange={(next) => update("embed_enabled", next)}
-                      hint="Permission only. The project host can still refuse framing; the site shows an honest fallback."
+                      hint="Some websites do not allow this."
                     />
                     <Checkbox
                       label="Visible on the public site"
                       checked={form.public_visibility}
                       onChange={(next) => update("public_visibility", next)}
-                      hint="Turn off to keep a published record reachable only through admin preview."
+                      hint="Turn off to hide it from your website."
                     />
                   </div>
                 </div>
               </AdminPanel>
 
               <AdminPanel
-                title="GitHub metadata"
-                description="Fetched from the public GitHub API only when you ask. Nothing is estimated or invented."
+                title="GitHub details"
+                description="Only updated when you ask."
                 actions={
                   <button
                     type="button"
@@ -1348,7 +1597,7 @@ export default function AdminProjectEditorPage() {
                     ) : (
                       <GitBranch className="size-3.5" aria-hidden="true" />
                     )}
-                    {githubBusy ? "Checking…" : "Refresh from GitHub"}
+                    {githubBusy ? "Updating..." : "Update from GitHub"}
                   </button>
                 }
               >
@@ -1375,9 +1624,9 @@ export default function AdminProjectEditorPage() {
                   </div>
                 ) : (
                   <p className="text-sm leading-relaxed text-muted">
-                    No GitHub metadata has been cached yet. Add a GitHub URL, save the project,
-                    then refresh. If the repository is private or the API is unavailable, the
-                    refresh fails and existing values are kept.
+                    No GitHub details yet. Add a GitHub link, save the project, then update. If the
+                    repository is private or GitHub can't be reached, the update fails and your
+                    existing details are kept.
                   </p>
                 )}
               </AdminPanel>
@@ -1387,24 +1636,24 @@ export default function AdminProjectEditorPage() {
           {section === "case-study" ? (
             <AdminPanel
               title="Linked case study"
-              description="Narrative sections rendered inside this project's page. Empty sections are hidden publicly — no N/A placeholders."
+              description="Shown on the project page."
               actions={
                 caseStudyForm ? (
                   <span className="font-mono text-[0.52rem] uppercase tracking-[0.1em] text-faint">
-                    {linkedCaseStudy ? "Linked record" : "Not saved yet"}
+                    {linkedCaseStudy ? "Saved" : "Not saved yet"}
                   </span>
                 ) : null
               }
             >
               {!id ? (
                 <p className="text-sm leading-relaxed text-muted">
-                  Save the project first, then return here to write the linked case study.
+                  Save the project first, then come back to write the case study.
                 </p>
               ) : !caseStudyForm ? (
                 <div className="space-y-4">
                   <p className="text-sm leading-relaxed text-muted">
-                    No case study is linked to this project. Create one to publish the problem,
-                    decisions, implementation, testing, and results in context.
+                    No case study yet. Add one to explain the problem, the decisions you made and
+                    the result.
                   </p>
                   <button
                     type="button"
@@ -1414,7 +1663,7 @@ export default function AdminProjectEditorPage() {
                     className={buttonStyles("secondary", "sm")}
                   >
                     <Plus className="size-3.5" aria-hidden="true" />
-                    Create linked case study
+                    Add case study
                   </button>
                 </div>
               ) : (
@@ -1429,7 +1678,7 @@ export default function AdminProjectEditorPage() {
                         }
                       />
                     </Field>
-                    <Field label="Slug" htmlFor="cs-slug" hint="Standalone URL: /case-studies/{slug}">
+                    <Field label="Web address" htmlFor="cs-slug" hint="The address for the full case study.">
                       <TextInput
                         id="cs-slug"
                         value={caseStudyForm.slug ?? ""}
@@ -1466,7 +1715,7 @@ export default function AdminProjectEditorPage() {
                   </div>
 
                   <div className="grid gap-5 border-t border-line pt-5 sm:grid-cols-2">
-                    <Field label="Result type" htmlFor="cs-result-type" hint="Optional label, e.g. outcome or metric type.">
+                    <Field label="Result type" htmlFor="cs-result-type" hint="Optional label, such as outcome or metric.">
                       <TextInput
                         id="cs-result-type"
                         value={caseStudyForm.result_type ?? ""}
@@ -1486,8 +1735,8 @@ export default function AdminProjectEditorPage() {
                           })
                         }
                         options={[
-                          { value: "draft", label: "Draft — not public" },
-                          { value: "published", label: "Published — public" },
+                          { value: "draft", label: "Draft (private)" },
+                          { value: "published", label: "Published (visible on your website)" },
                           { value: "archived", label: "Archived" },
                         ]}
                       />
@@ -1499,7 +1748,7 @@ export default function AdminProjectEditorPage() {
                         onChange={(next) => setCaseStudyForm({ ...caseStudyForm, featured: next })}
                       />
                       <Checkbox
-                        label="Mark as placeholder"
+                        label="This case study is not finished yet"
                         checked={caseStudyForm.is_placeholder}
                         onChange={(next) =>
                           setCaseStudyForm({ ...caseStudyForm, is_placeholder: next })
@@ -1510,7 +1759,7 @@ export default function AdminProjectEditorPage() {
 
                   <Field
                     label="Hidden sections"
-                    hint="Checked sections are omitted from the public project page even if they contain text."
+                    hint="Tick any sections you want to hide."
                   >
                     <div className="grid gap-2 border border-line bg-ink-950/40 p-4 sm:grid-cols-2">
                       {ref.case_study_sections.map((item) => {
@@ -1550,7 +1799,7 @@ export default function AdminProjectEditorPage() {
                       className={buttonStyles("primary", "sm")}
                     >
                       <Save className="size-3.5" aria-hidden="true" />
-                      {caseStudySaving ? "Saving…" : "Save case study"}
+                      {caseStudySaving ? "Saving..." : "Save case study"}
                     </button>
                     {linkedCaseStudy ? (
                       <Link
@@ -1558,7 +1807,7 @@ export default function AdminProjectEditorPage() {
                         className={buttonStyles("secondary", "sm")}
                       >
                         <FileText className="size-3.5" aria-hidden="true" />
-                        Open full editor
+                        Open full case study
                       </Link>
                     ) : null}
                   </div>
@@ -1570,7 +1819,7 @@ export default function AdminProjectEditorPage() {
           {section === "seo" ? (
             <AdminPanel
               title="Search and social preview"
-              description="Overrides the default page metadata. Leave blank to use the project title and summary."
+              description="Optional overrides for page metadata."
             >
               <div className="grid gap-5">
                 <Field label="SEO title" htmlFor="seo-title" hint={`${form.seo_title.length}/200 characters`}>
@@ -1590,21 +1839,17 @@ export default function AdminProjectEditorPage() {
                     placeholder="A concise description for search results and link previews."
                   />
                 </Field>
-                <Field label="Open Graph image" htmlFor="og-image">
-                  <div className="space-y-3">
-                    <TextInput
-                      id="og-image"
-                      value={form.og_image}
-                      onChange={(event) => update("og_image", event.target.value)}
-                      placeholder="/media/projects/schooma-og.webp"
-                    />
-                    <MediaLibraryPicker
-                      assets={mediaAssets}
-                      loading={media.loading}
-                      label="Choose social image"
-                      onSelect={(url) => update("og_image", url)}
-                    />
-                  </div>
+                <Field label="Open Graph image">
+                  <MediaField
+                    value={form.og_image}
+                    onChange={(url) => update("og_image", url)}
+                    assets={mediaAssets}
+                    loading={media.loading}
+                    onUploaded={() => media.reload()}
+                    title={form.title}
+                    altText={`${form.title} social preview`}
+                    emptyLabel="No social image selected."
+                  />
                 </Field>
                 <div className="border border-line bg-ink-950/40 p-4">
                   <p className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-faint">
@@ -1629,7 +1874,7 @@ export default function AdminProjectEditorPage() {
           {section === "publishing" ? (
             <AdminPanel
               title="Publishing"
-              description="Publishing and visibility are separate. A published project can still be hidden from the public site."
+              description="Publish and visibility are separate."
             >
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Status" htmlFor="status">
@@ -1662,7 +1907,7 @@ export default function AdminProjectEditorPage() {
                     label="Mark as placeholder"
                     checked={form.is_placeholder}
                     onChange={(next) => update("is_placeholder", next)}
-                    hint="Shows a visible pending-content note instead of pretending the record is complete."
+                    hint="Shows a pending-content note."
                   />
                   <Checkbox
                     label="Visible on the public site"
@@ -1685,7 +1930,7 @@ export default function AdminProjectEditorPage() {
                 className={buttonStyles("secondary", "md", "w-full")}
               >
                 <Save className="size-3.5" aria-hidden="true" />
-                {saving ? "Saving…" : "Save changes"}
+                {savingMode === "keep" ? "Saving…" : "Save changes"}
               </button>
               <button
                 type="button"
@@ -1694,11 +1939,10 @@ export default function AdminProjectEditorPage() {
                 className={buttonStyles("primary", "md", "w-full")}
               >
                 <Check className="size-3.5" aria-hidden="true" />
-                Publish project
+                {savingMode === "publish" ? "Publishing…" : "Publish project"}
               </button>
               <p className="text-[0.68rem] leading-relaxed text-faint">
-                Draft records are never served publicly. Public visibility is checked again by
-                the API before any project is returned.
+                Drafts are never public.
               </p>
             </div>
           </AdminPanel>

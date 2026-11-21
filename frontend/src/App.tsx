@@ -21,6 +21,8 @@ const LeadershipPage = lazy(() => import("@/pages/LeadershipPage"));
 const LeadershipDetailPage = lazy(() => import("@/pages/LeadershipDetailPage"));
 const ExperiencePage = lazy(() => import("@/pages/ExperiencePage"));
 const ExperienceDetailPage = lazy(() => import("@/pages/ExperienceDetailPage"));
+const ArticlesPage = lazy(() => import("@/pages/ArticlesPage"));
+const ArticleDetailPage = lazy(() => import("@/pages/ArticleDetailPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const NowPage = lazy(() => import("@/pages/NowPage"));
 const TimelinePage = lazy(() => import("@/pages/TimelinePage"));
@@ -71,6 +73,8 @@ const AdminDataPreviewPage = lazy(
   () => import("@/pages/admin/AdminDataPreviewPage"),
 );
 const AdminPagesPage = lazy(() => import("@/pages/admin/AdminPagesPage"));
+const AdminArticlesPage = lazy(() => import("@/pages/admin/AdminArticlesPage"));
+const AdminArticleEditorPage = lazy(() => import("@/pages/admin/AdminArticleEditorPage"));
 const AdminSocialLinksPage = lazy(() => import("@/pages/admin/AdminSocialLinksPage"));
 const AdminExperiencePage = lazy(() => import("@/pages/admin/AdminExperiencePage"));
 const AdminLeadershipPage = lazy(() => import("@/pages/admin/AdminLeadershipPage"));
@@ -113,6 +117,8 @@ export default function App() {
             <Route path="leadership/:slug" element={<LeadershipDetailPage />} />
             <Route path="experience" element={<ExperiencePage />} />
             <Route path="experience/:slug" element={<ExperienceDetailPage />} />
+            <Route path="articles" element={<ArticlesPage />} />
+            <Route path="articles/:slug" element={<ArticleDetailPage />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="now" element={<NowPage />} />
             <Route path="timeline" element={<TimelinePage />} />
@@ -148,6 +154,9 @@ export default function App() {
               <Route path="projects/new" element={<AdminProjectEditorPage />} />
               <Route path="projects/:id" element={<AdminProjectEditorPage />} />
               <Route path="pages" element={<AdminPagesPage />} />
+              <Route path="articles" element={<AdminArticlesPage />} />
+              <Route path="articles/new" element={<AdminArticleEditorPage />} />
+              <Route path="articles/:id" element={<AdminArticleEditorPage />} />
               <Route path="social-links" element={<AdminSocialLinksPage />} />
               <Route path="experience" element={<AdminExperiencePage />} />
               <Route path="leadership" element={<AdminLeadershipPage />} />

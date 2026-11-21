@@ -19,10 +19,13 @@ import {
   TextArea,
   TextInput,
 } from "@/components/admin/form";
+import { MediaField } from "@/components/admin/MediaField";
 import { buttonStyles } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiResource } from "@/hooks/useApiResource";
+import { useApiQuery } from "@/hooks/useApiQuery";
 import { adminDataService } from "@/services/adminData.service";
+import { listMedia } from "@/services/auth.service";
 import type {
   AdminDataProject,
   DataChartType,
@@ -425,6 +428,7 @@ export default function AdminDataEditorPage() {
   const [taxonomyBusy, setTaxonomyBusy] = useState(false);
 
   const reference = useApiResource<DataReference>("/api/v1/admin/data/reference");
+  const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
   const project = useApiResource<AdminDataProject>(
     id ? `/api/v1/admin/data-projects/${id}` : null,
   );
@@ -857,16 +861,17 @@ export default function AdminDataEditorPage() {
                 </Field>
               </div>
 
-              <Field
-                label="Cover image URL"
-                htmlFor="cover"
-                hint="Optional optimized image used on cards and the detail header."
-              >
-                <TextInput
-                  id="cover"
+              <Field label="Cover image">
+                <MediaField
                   value={form.cover_image}
-                  onChange={(event) => update("cover_image", event.target.value)}
-                  placeholder="/media/data/retail-cover.webp"
+                  onChange={(value) => update("cover_image", value)}
+                  assets={media.data?.items ?? []}
+                  loading={media.loading}
+                  onUploaded={() => media.reload()}
+                  folder="data-lab"
+                  title={form.title ? `${form.title} cover` : "Data project cover"}
+                  altText={form.title ? `${form.title} cover image` : "Data project cover image"}
+                  emptyLabel="No cover image uploaded."
                 />
               </Field>
 

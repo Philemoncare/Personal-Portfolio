@@ -1,9 +1,10 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import type { ReactNode } from "react";
 
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { settingsService } from "@/services/settings.service";
 import type { SiteSettings } from "@/types/api";
+import { setSeoSiteDefaults } from "@/utils/seo";
 
 interface SiteSettingsContextValue {
   settings: SiteSettings | null;
@@ -19,6 +20,15 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     (signal) => settingsService.getPublic(signal),
     [],
   );
+
+  useEffect(() => {
+    if (!data) return;
+    setSeoSiteDefaults({
+      wordmark: data.wordmark,
+      socialImage: data.social_image,
+      favicon: data.favicon,
+    });
+  }, [data]);
 
   return (
     <SiteSettingsContext.Provider

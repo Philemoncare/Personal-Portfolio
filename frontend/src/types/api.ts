@@ -34,6 +34,28 @@ export type DeploymentStatus =
   | "failed"
   | "offline";
 
+export type PreviewStatus =
+  | "not_discovered"
+  | "awaiting_verification"
+  | "verified"
+  | "generated"
+  | "unavailable"
+  | "unreachable";
+
+export interface ProjectPreview {
+  project_id: string;
+  live_url: string | null;
+  preview_image: string | null;
+  preview_status: PreviewStatus;
+  preview_source: string | null;
+  preview_source_url: string | null;
+  preview_checked_at: string | null;
+  preview_error: string | null;
+  verified: boolean;
+  final_url: string | null;
+  message: string | null;
+}
+
 export interface ProjectSummary {
   id: string;
   title: string;
@@ -62,6 +84,11 @@ export interface ProjectSummary {
   embed_enabled: boolean;
   last_verified_at: string | null;
   public_visibility: boolean;
+  preview_image: string | null;
+  preview_status: PreviewStatus;
+  preview_source: string | null;
+  preview_source_url: string | null;
+  preview_checked_at: string | null;
   github_stars: number | null;
   github_forks: number | null;
   github_language: string | null;
@@ -98,6 +125,7 @@ export interface CaseStudySummary {
   title: string;
   slug: string;
   summary: string | null;
+  cover_image_url: string | null;
   featured: boolean;
   is_placeholder: boolean;
   published_at: string | null;
@@ -136,6 +164,7 @@ export interface ExperienceEntry {
   slug: string | null;
   location: string | null;
   description: string | null;
+  logo_url: string | null;
   started_on: string;
   ended_on: string | null;
   is_current: boolean;
@@ -152,6 +181,7 @@ export interface LeadershipEntry {
   started_on: string | null;
   ended_on: string | null;
   url: string | null;
+  image_url: string | null;
   is_placeholder: boolean;
 }
 
@@ -177,6 +207,50 @@ export interface Certificate {
   expires_on: string | null;
   credential_url: string | null;
   media_url: string | null;
+}
+
+export interface ArticleSummary {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  cover_image_url: string | null;
+  external_url: string | null;
+  category: string | null;
+  tags: string[] | null;
+  featured: boolean;
+  published_at: string | null;
+}
+
+export interface ArticleDetail extends ArticleSummary {
+  body: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+}
+
+export interface ArticleAdmin extends ArticleDetail {
+  sort_order: number;
+  status: PublishStatus;
+  is_placeholder: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArticleInput {
+  title: string;
+  slug: string | null;
+  excerpt: string | null;
+  body: string | null;
+  cover_image_url: string | null;
+  external_url: string | null;
+  category: string | null;
+  tags: string[];
+  featured: boolean;
+  seo_title: string | null;
+  seo_description: string | null;
+  sort_order: number;
+  publish_status: PublishStatus;
+  is_placeholder: boolean;
 }
 
 export interface ContentLink {
@@ -240,6 +314,7 @@ export interface TimelineEntry {
   year: number;
   month: number | null;
   external_url: string | null;
+  image_url: string | null;
   featured: boolean;
   display_order: number;
   related_project: ContentLink | null;
@@ -442,6 +517,12 @@ export interface AdminProject {
   embed_enabled: boolean;
   last_verified_at: string | null;
   public_visibility: boolean;
+  preview_image: string | null;
+  preview_status: PreviewStatus;
+  preview_source: string | null;
+  preview_source_url: string | null;
+  preview_checked_at: string | null;
+  preview_error: string | null;
   github_stars: number | null;
   github_forks: number | null;
   github_language: string | null;
@@ -524,6 +605,7 @@ export interface AdminCaseStudy {
   title: string;
   slug: string;
   summary: string | null;
+  cover_image_url: string | null;
   overview: string | null;
   problem: string | null;
   context: string | null;
@@ -987,6 +1069,7 @@ export interface TimelineInput {
   start_date: string | null;
   end_date: string | null;
   external_url: string | null;
+  image_url: string | null;
   related_project_id: string | null;
   related_experience_id: string | null;
   related_leadership_id: string | null;
@@ -1267,6 +1350,7 @@ export interface ExperienceAdmin {
   slug: string | null;
   location: string | null;
   description: string | null;
+  logo_url: string | null;
   started_on: string | null;
   ended_on: string | null;
   is_current: boolean;
@@ -1284,6 +1368,7 @@ export interface ExperienceInput {
   slug: string | null;
   location: string | null;
   description: string | null;
+  logo_url: string | null;
   started_on: string | null;
   ended_on: string | null;
   is_current: boolean;
@@ -1303,6 +1388,7 @@ export interface LeadershipAdmin {
   started_on: string | null;
   ended_on: string | null;
   url: string | null;
+  image_url: string | null;
   sort_order: number;
   status: string;
   is_placeholder: boolean;
@@ -1321,6 +1407,7 @@ export interface LeadershipInput {
   started_on: string | null;
   ended_on: string | null;
   url: string | null;
+  image_url: string | null;
   sort_order: number;
   publish_status: PublishStatus;
   is_placeholder: boolean;
@@ -1344,6 +1431,7 @@ export interface GitHubConnection {
   scopes: string[];
   repository_access: string | null;
   private_repository_access: boolean;
+  repository_count: number | null;
   connected_at: string | null;
   updated_at: string | null;
   revoked_at: string | null;
@@ -1477,6 +1565,7 @@ export interface LiveUrlCandidate {
   url: string;
   source: string;
   confidence: string;
+  source_key: string | null;
 }
 
 export interface CategorySuggestion {
@@ -1559,6 +1648,7 @@ export interface GitHubImportRequest {
   primary_mode: WorkMode;
   project_status: ProjectStage;
   import_images: boolean;
+  generate_preview: boolean;
 }
 
 export interface GitHubImportResult {
@@ -1609,6 +1699,8 @@ export interface GitHubProjectLink {
 export interface GitHubImportLog {
   id: string;
   project_id: string | null;
+  user_id: string | null;
+  user_email: string | null;
   repository_id: string;
   repository_full_name: string;
   action: string;

@@ -41,6 +41,7 @@ class CaseStudySummary(ORMModel):
     title: str
     slug: str
     summary: str | None
+    cover_image_url: str | None = None
     featured: bool
     is_placeholder: bool
     published_at: datetime | None
@@ -109,6 +110,11 @@ class ProjectSummary(ORMModel):
     embed_enabled: bool = False
     last_verified_at: datetime | None = None
     public_visibility: bool = True
+    preview_image: str | None = None
+    preview_status: str = "not_discovered"
+    preview_source: str | None = None
+    preview_source_url: str | None = None
+    preview_checked_at: datetime | None = None
     github_stars: int | None = None
     github_forks: int | None = None
     github_language: str | None = None

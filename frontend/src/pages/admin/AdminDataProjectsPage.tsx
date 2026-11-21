@@ -72,7 +72,7 @@ export default function AdminDataProjectsPage() {
       projects.reload();
       setNotice(message);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The action failed.");
+      setNotice(error instanceof Error ? error.message : "Something went wrong. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -81,26 +81,34 @@ export default function AdminDataProjectsPage() {
   const changeStatus = (project: AdminDataProject, status: DataProjectStatus) => {
     if (status === "archived" && project.status !== "archived") {
       const confirmed = window.confirm(
-        `Archive ${project.title}? It will disappear from the public Data Lab until it is published again.`,
+        `Archive "${project.title}"? It will be hidden from the public Data Lab until you publish it again.`,
       );
       if (!confirmed) return;
     }
     void run(
       `${project.id}:${status}`,
       () => adminDataService.setStatus(project.id, status),
-      `${project.title} is now ${status}.`,
+      `"${project.title}" ${
+        status === "draft"
+          ? "saved as a draft."
+          : status === "published"
+            ? "published."
+            : status === "experiment"
+              ? "marked as an experiment."
+              : "archived."
+      }`,
     );
   };
 
   const remove = (project: AdminDataProject) => {
     const confirmed = window.confirm(
-      `Delete ${project.title} permanently? Its visualizations, insights, and resources are removed with it and this cannot be undone.`,
+      `Delete "${project.title}"? Its charts, insights and resources will be removed too. This cannot be undone.`,
     );
     if (!confirmed) return;
     void run(
       `${project.id}:delete`,
       () => adminDataService.deleteProject(project.id),
-      `${project.title} was deleted.`,
+      `"${project.title}" was deleted.`,
     );
   };
 
@@ -115,14 +123,13 @@ export default function AdminDataProjectsPage() {
             Data projects
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Draft, edit, publish, archive, and delete analysis records. Visualizations,
-            insights, and resources are saved with the project and served by the Data Lab
-            API.
+            Add, edit and publish your data projects. Charts, insights and resources are saved
+            with each project.
           </p>
         </div>
         <Link to="/admin/data/new" className={buttonStyles("primary", "md")}>
           <Plus className="size-4" aria-hidden="true" />
-          New data project
+          Add data project
         </Link>
       </div>
 
@@ -162,7 +169,7 @@ export default function AdminDataProjectsPage() {
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search title, slug, category, tool…"
+            placeholder="Search data projects"
             aria-label="Search data projects"
             className="h-10 w-full border border-line bg-ink-950 pl-9 pr-3 text-sm text-paper placeholder:text-faint focus:border-line-strong focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
           />
@@ -179,21 +186,20 @@ export default function AdminDataProjectsPage() {
       ) : null}
 
       <div className="mt-6">
-        {projects.loading ? <LoadingState rows={4} label="Loading data projects" /> : null}
-        {!projects.loading && projects.error ? (
+        {projects.loading ? <LoadingState rows={4} label="Loading data projects" /> : null}        {!projects.loading && projects.error ? (
           <ErrorState
-            message="The admin data project list could not be loaded."
+            message="We couldn't load your data projects. Please try again."
             onRetry={projects.reload}
           />
         ) : null}
         {!projects.loading && !projects.error && all.length === 0 ? (
           <EmptyState
             title="No data projects yet"
-            description="Create the first analysis record. It starts as a private draft and only appears in the public Data Lab once published."
+            description="Add your first data project. It starts as a private draft and only appears on your website once you publish it."
             action={
               <Link to="/admin/data/new" className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />
-                New data project
+                Add data project
               </Link>
             }
           />
@@ -201,7 +207,7 @@ export default function AdminDataProjectsPage() {
         {!projects.loading && !projects.error && all.length > 0 && items.length === 0 ? (
           <EmptyState
             title="No data projects match this view"
-            description="Change the status tab or clear the search to see the rest of the index."
+            description="Try a different status or clear your search."
             action={
               <button
                 type="button"
@@ -211,7 +217,7 @@ export default function AdminDataProjectsPage() {
                   setStatusFilter("");
                 }}
               >
-                Reset view
+                Clear filters
               </button>
             }
           />
@@ -247,7 +253,7 @@ export default function AdminDataProjectsPage() {
                       ) : null}
                       {project.is_demo ? (
                         <span className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-signal-soft">
-                          Demo
+                          Sample
                         </span>
                       ) : null}
                       {project.is_placeholder ? (
@@ -283,7 +289,7 @@ export default function AdminDataProjectsPage() {
                       rel="noreferrer"
                       className="inline-flex size-8 items-center justify-center border border-line text-muted transition-colors hover:border-paper hover:text-paper"
                       aria-label={`Preview ${project.title}`}
-                      title="Preview this record before publishing"
+                      title="Preview this project before publishing"
                     >
                       <Eye className="size-3.5" aria-hidden="true" />
                     </a>
@@ -354,11 +360,11 @@ export default function AdminDataProjectsPage() {
 
       <p className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
         <span>
-          {items.length} of {all.length} records
+          {items.length} of {all.length} projects
         </span>
         <Link to="/data-lab" className="inline-flex items-center gap-1.5 hover:text-paper">
           <FlaskConical className="size-3" aria-hidden="true" />
-          Public Data Lab
+          View Data Lab
           <ArrowUpRight className="size-3" aria-hidden="true" />
         </Link>
       </p>

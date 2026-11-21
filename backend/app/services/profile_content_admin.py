@@ -57,6 +57,7 @@ def _apply_experience(
     )
     entry.location = payload.location
     entry.description = payload.description
+    entry.logo_url = payload.logo_url
     entry.started_on = payload.started_on
     entry.ended_on = payload.ended_on
     entry.is_current = payload.is_current
@@ -109,6 +110,7 @@ def _apply_leadership(
     entry.started_on = payload.started_on
     entry.ended_on = payload.ended_on
     entry.url = payload.url
+    entry.image_url = payload.image_url
     entry.sort_order = payload.sort_order
     entry.is_placeholder = payload.is_placeholder
     _publish(entry, payload.publish_status)

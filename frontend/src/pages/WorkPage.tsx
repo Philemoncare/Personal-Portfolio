@@ -11,6 +11,7 @@ import { ProjectCard, ProjectRow } from "@/components/work/project-card";
 import { projectAssetId } from "@/components/work/project-assets";
 import { ProjectStatus } from "@/components/work/project-status";
 import { ProjectVisual } from "@/components/work/project-visual";
+import { hasHomepagePreview } from "@/components/work/HomepagePreview";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { usePageContent, usePageSeo } from "@/app/ContentProvider";
@@ -109,8 +110,16 @@ function WorkFeature({
         <ProjectVisual
           title={project.title}
           index={index}
-          imageUrl={project.cover_image_url}
-          imageAlt={`${project.title} project cover`}
+          imageUrl={
+            hasHomepagePreview(project)
+              ? project.preview_image
+              : project.cover_image_url
+          }
+          imageAlt={
+            hasHomepagePreview(project)
+              ? `Captured homepage of ${project.title}`
+              : `${project.title} project cover`
+          }
           assetId={projectAssetId(project.slug)}
           aspect="landscape"
           className="h-full"

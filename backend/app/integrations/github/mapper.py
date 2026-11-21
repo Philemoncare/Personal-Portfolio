@@ -43,7 +43,7 @@ from app.schemas.github import (
     RepositoryInspectionOut,
 )
 from app.services import media as media_service
-from app.services import project_admin
+from app.services import project_admin, project_preview
 
 logger = logging.getLogger("portfolio.github")
 
@@ -74,6 +74,12 @@ PORTFOLIO_OWNED_FIELDS = (
     "last_verified_at",
     "deployment_provider",
     "deployment_status",
+    "preview_image",
+    "preview_status",
+    "preview_source",
+    "preview_source_url",
+    "preview_checked_at",
+    "preview_error",
 )
 
 
@@ -169,7 +175,9 @@ def _apply_provider_fields(project: Project, repository: GitHubRepositoryOut) ->
     set_value("github_is_fork", repository.fork)
     set_value("github_is_archived", repository.archived)
     set_value("github_repository_updated_at", repository.updated_at)
-    set_value("github_url", repository.html_url)
+    # A private repository URL must never reach a public page by default. The
+    # admin-only link panel derives its URL from owner/name instead.
+    set_value("github_url", None if repository.private else repository.html_url)
     set_value("github_stars", repository.stargazers_count)
     set_value("github_forks", repository.forks_count)
     set_value("github_language", repository.language)
@@ -365,6 +373,16 @@ async def import_repository(
     )
     if live_url:
         live_url = live_url[:500]
+    preview_source: str | None = None
+    if live_url and live_candidate is not None and payload.live_url:
+        # The admin supplied a URL; keep the discovered provenance only when it
+        # is exactly the same destination.
+        same = live_url.rstrip("/").lower() == live_candidate.url.rstrip("/").lower()
+        preview_source = (live_candidate.source_key or "readme") if same else "manual"
+    elif live_url and live_candidate is not None:
+        preview_source = live_candidate.source_key or "readme"
+    elif live_url:
+        preview_source = "manual"
     documentation_url = (payload.documentation_url or "").strip() or inspection.documentation_url
     if documentation_url:
         documentation_url = documentation_url[:500]
@@ -374,6 +392,8 @@ async def import_repository(
     ] or [tech.name for tech in inspection.technologies]
 
     sort_order = int(db.scalar(select(func.max(Project.sort_order))) or 0) + 10
+    # Private repository links are withheld until the admin explicitly adds one.
+    public_source_url = None if repository.private else repository.html_url
     project_input = ProjectInput(
         title=title,
         slug=None,
@@ -385,18 +405,26 @@ async def import_repository(
         project_status=_normalise_stage(payload.project_status),
         status="draft",
         featured=payload.featured,
-        github_url=repository.html_url,
-        repository_url=repository.html_url,
+        github_url=public_source_url,
+        repository_url=public_source_url,
         live_url=live_url,
         documentation_url=documentation_url,
         deployment_status="not_deployed",
-        public_visibility=True,
+        # A private repository must never become public from a single publish
+        # click. The admin has to enable public visibility explicitly.
+        public_visibility=not repository.private,
         sort_order=sort_order,
         media=[],
     )
     project = project_admin.create_project(db, project_input)
     _apply_provider_fields(project, repository)
     project.github_sync_enabled = True
+    if live_url:
+        # A discovered URL is never trusted blindly: the preview stays
+        # "awaiting_verification" until the probe succeeds.
+        project.preview_status = "awaiting_verification"
+        project.preview_source = preview_source
+        project.preview_source_url = live_url
     try:
         db.commit()
     except IntegrityError as exc:
@@ -463,6 +491,29 @@ async def import_repository(
         case_study_id = case_study.id
 
     db.refresh(project)
+    preview_outcome: project_preview.PreviewOutcome | None = None
+    if live_url and payload.generate_preview:
+        try:
+            preview_outcome = await project_preview.generate_project_preview(
+                db,
+                admin=admin,
+                project=project,
+                source=preview_source,
+            )
+            if preview_outcome.status != "generated":
+                warnings.append(preview_outcome.message)
+        except project_preview.PreviewError as exc:
+            project.preview_status = "unavailable"
+            project.preview_error = exc.message
+            db.commit()
+            warnings.append(exc.message)
+        except Exception:  # a failed preview must never lose the draft
+            logger.warning("Homepage preview generation failed during import")
+            warnings.append(
+                "The homepage preview could not be generated. "
+                "Refresh it from the project editor."
+            )
+    db.refresh(project)
     technologies = [tech.name for tech in project.technologies]
     details = {
         "files_inspected": len(inspection.inspected_files),
@@ -473,6 +524,9 @@ async def import_repository(
         "technologies_attached": len(technologies),
         "case_study_created": case_study_id is not None,
         "case_study_id": str(case_study_id) if case_study_id else None,
+        "live_url": project.live_url,
+        "preview_status": project.preview_status,
+        "preview_source": project.preview_source,
         "warnings": warnings[:10],
     }
     summary_text = (
@@ -520,16 +574,22 @@ async def sync_project(
         )
 
     changed = _apply_provider_fields(project, repository)
-    # Only fill editorial links that are empty; never replace a chosen value.
-    if repository.homepage:
-        if not project.live_url:
-            project.live_url = repository.homepage
-            changed.append("live_url")
-        if not project.deployment_url:
-            project.deployment_url = repository.homepage
-            changed.append("deployment_url")
-    if not project.repository_url:
-        project.repository_url = repository.html_url
+    if not repository.private:
+        # Only fill editorial links that are empty; never replace a chosen value.
+        if repository.homepage:
+            if not project.live_url:
+                project.live_url = repository.homepage
+                changed.append("live_url")
+            if not project.deployment_url:
+                project.deployment_url = repository.homepage
+                changed.append("deployment_url")
+        if not project.repository_url:
+            project.repository_url = repository.html_url
+            changed.append("repository_url")
+    elif project.repository_url == repository.html_url:
+        # The repository became private. Remove the URL the importer added so
+        # it cannot leak onto the public page; an editorial URL is untouched.
+        project.repository_url = None
         changed.append("repository_url")
 
     db.commit()
@@ -567,22 +627,29 @@ def unlink_repository(db: Session, project: Project) -> None:
 
 def project_github_link(project: Project) -> dict[str, Any]:
     metadata = project.github_metadata if isinstance(project.github_metadata, dict) else {}
+    full_name = (
+        f"{project.github_owner}/{project.github_repository_name}"
+        if project.github_owner and project.github_repository_name
+        else None
+    )
+    # This payload is admin-only. A private repository withholds its URL from
+    # public fields, so rebuild the link for the admin panel from owner/name.
+    repository_url = project.github_url or (
+        f"https://github.com/{full_name}" if full_name else None
+    )
     return {
         "connected": bool(project.github_repository_id),
         "project_id": project.id,
         "repository_id": project.github_repository_id,
-        "repository_full_name": (
-            f"{project.github_owner}/{project.github_repository_name}"
-            if project.github_owner and project.github_repository_name
-            else None
-        ),
-        "repository_url": project.github_url,
+        "repository_full_name": full_name,
+        "repository_url": repository_url,
         "owner": project.github_owner,
         "default_branch": project.github_default_branch,
         "visibility": project.github_visibility,
         "is_fork": project.github_is_fork,
         "is_archived": project.github_is_archived,
-        "sync_enabled": project.github_sync_enabled,
+        "sync_enabled": bool(project.github_repository_id)
+        and project.github_sync_enabled,
         "last_synced_at": project.github_last_synced_at,
         "repository_updated_at": project.github_repository_updated_at,
         "description": metadata.get("description"),

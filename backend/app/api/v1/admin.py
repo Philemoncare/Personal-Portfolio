@@ -37,13 +37,17 @@ from app.schemas.admin import (
     CaseStudyInput,
     ProjectAdminOut,
     ProjectInput,
+    ProjectPreviewOut,
+    ProjectPreviewRequest,
     ProjectReorderInput,
     ProjectStatusInput,
 )
 from app.schemas.project import ProjectCategoryOut, ProjectDetail, TechnologyOut
 from app.services import activity, project_admin
+from app.services import project_preview
 from app.services.content import ContentService
 from app.services.github_metadata import GitHubMetadataError, refresh_project_metadata
+from app.services.project_preview import PreviewError, PreviewOutcome
 
 router = APIRouter()
 
@@ -292,6 +296,71 @@ def preview_project(
     if detail is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return detail
+
+
+def _preview_payload(
+    project: Project, outcome: PreviewOutcome | None = None
+) -> ProjectPreviewOut:
+    return ProjectPreviewOut(
+        project_id=project.id,
+        live_url=project.live_url,
+        preview_image=project.preview_image,
+        preview_status=project.preview_status,  # type: ignore[arg-type]
+        preview_source=project.preview_source,
+        preview_source_url=project.preview_source_url,
+        preview_checked_at=project.preview_checked_at,
+        preview_error=project.preview_error,
+        verified=project.preview_status in {"verified", "generated"},
+        final_url=outcome.final_url if outcome else project.preview_source_url,
+        message=outcome.message if outcome else None,
+    )
+
+
+@router.post("/projects/{project_id}/preview/verify", response_model=ProjectPreviewOut)
+async def verify_project_homepage(
+    project_id: uuid.UUID,
+    payload: ProjectPreviewRequest,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> ProjectPreviewOut:
+    """Check the live URL is public, reachable, and serves HTML."""
+
+    project = _get_project(db, project_id)
+    try:
+        outcome = await project_preview.verify_project_homepage(
+            db, project, url=payload.url
+        )
+    except PreviewError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    return _preview_payload(project, outcome)
+
+
+@router.post("/projects/{project_id}/preview", response_model=ProjectPreviewOut)
+async def generate_project_homepage_preview(
+    project_id: uuid.UUID,
+    payload: ProjectPreviewRequest,
+    request: Request,
+    admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+) -> ProjectPreviewOut:
+    """Capture and store a screenshot of the verified deployed homepage."""
+
+    project = _get_project(db, project_id)
+    try:
+        outcome = await project_preview.generate_project_preview(
+            db, admin=admin, project=project, url=payload.url
+        )
+    except PreviewError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    activity.record(
+        db,
+        "project_preview_generated",
+        user_id=admin.id,
+        identifier=project.slug,
+        detail=f"Homepage preview {outcome.status} for “{project.title}”",
+        request=request,
+    )
+    return _preview_payload(project, outcome)
 
 
 @router.post("/projects/{project_id}/github", response_model=ProjectAdminOut)

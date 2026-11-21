@@ -2,10 +2,12 @@ import { ExternalLink, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Field, Select, StatusBadge, TextArea, TextInput, Checkbox } from "@/components/admin/form";
+import { MediaField } from "@/components/admin/MediaField";
 import { AdminTable } from "@/components/admin/table";
 import { buttonStyles } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
+import { listMedia } from "@/services/auth.service";
 import { siteService } from "@/services/site.service";
 import type { LeadershipAdmin, LeadershipInput, PublishStatus } from "@/types/api";
 
@@ -19,6 +21,7 @@ const BLANK: LeadershipInput = {
   started_on: null,
   ended_on: null,
   url: null,
+  image_url: null,
   sort_order: 0,
   publish_status: "draft",
   is_placeholder: false,
@@ -35,6 +38,7 @@ function toInput(entry: LeadershipAdmin): LeadershipInput {
     started_on: entry.started_on,
     ended_on: entry.ended_on,
     url: entry.url,
+    image_url: entry.image_url,
     sort_order: entry.sort_order,
     publish_status: entry.status as PublishStatus,
     is_placeholder: entry.is_placeholder,
@@ -43,6 +47,7 @@ function toInput(entry: LeadershipAdmin): LeadershipInput {
 
 export default function AdminLeadershipPage() {
   const entries = useApiQuery((signal) => siteService.listLeadershipAdmin(signal), []);
+  const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<LeadershipInput>(BLANK);
   const [saving, setSaving] = useState(false);
@@ -64,7 +69,7 @@ export default function AdminLeadershipPage() {
 
   const save = async () => {
     if (!form.organization.trim() || !form.title.trim()) {
-      setNotice({ tone: "error", text: "Organization and title are required." });
+      setNotice({ tone: "error", text: "Please add the organization and your role." });
       return;
     }
     setSaving(true);
@@ -79,17 +84,17 @@ export default function AdminLeadershipPage() {
       };
       if (editing === "new") {
         await siteService.createLeadership(payload);
-        setNotice({ tone: "ok", text: "Leadership entry created." });
+        setNotice({ tone: "ok", text: "Leadership added." });
       } else if (editing) {
         await siteService.updateLeadership(editing, payload);
-        setNotice({ tone: "ok", text: "Leadership entry updated." });
+        setNotice({ tone: "ok", text: "Leadership updated." });
       }
       setEditing(null);
       entries.reload();
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The entry could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setSaving(false);
@@ -97,17 +102,17 @@ export default function AdminLeadershipPage() {
   };
 
   const remove = async (entry: LeadershipAdmin) => {
-    if (!window.confirm(`Delete “${entry.title}” at ${entry.organization}?`)) return;
+    if (!window.confirm(`Delete “${entry.title}” at ${entry.organization}? This cannot be undone.`)) return;
     setSaving(true);
     try {
       await siteService.deleteLeadership(entry.id);
       if (editing === entry.id) setEditing(null);
       entries.reload();
-      setNotice({ tone: "ok", text: "Leadership entry deleted." });
+      setNotice({ tone: "ok", text: "Leadership deleted." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The entry could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this entry. Please try again.",
       });
     } finally {
       setSaving(false);
@@ -123,13 +128,13 @@ export default function AdminLeadershipPage() {
             Leadership
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Communities, committees, and initiatives. Published entries appear on the leadership
-            page with their contribution and outcome.
+            Community work, committees and initiatives. Published entries appear on your
+            Leadership page with your contribution and the outcome.
           </p>
         </div>
         <button type="button" onClick={startNew} className={buttonStyles("primary", "md")}>
           <Plus className="size-4" aria-hidden="true" />
-          Add entry
+          Add leadership
         </button>
       </div>
 
@@ -150,7 +155,7 @@ export default function AdminLeadershipPage() {
         <section className="mt-6 border border-line-strong bg-ink-900/40 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
             <h2 className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-              {editing === "new" ? "New leadership entry" : "Edit leadership entry"}
+              {editing === "new" ? "Add leadership" : "Edit leadership"}
             </h2>
             <button
               type="button"
@@ -166,33 +171,33 @@ export default function AdminLeadershipPage() {
                 id="organization"
                 value={form.organization}
                 onChange={(event) => setForm({ ...form, organization: event.target.value })}
-                placeholder="Community or institution"
+                placeholder="Community or organisation"
               />
             </Field>
-            <Field label="Title" htmlFor="title" required>
+            <Field label="Your role" htmlFor="title" required>
               <TextInput
                 id="title"
                 value={form.title}
                 onChange={(event) => setForm({ ...form, title: event.target.value })}
-                placeholder="Role or position"
+                placeholder="e.g. Student Representative"
               />
             </Field>
-            <Field label="Slug" htmlFor="slug" hint="Leave blank to generate one from the title.">
+            <Field label="Web address" htmlFor="slug" hint="Leave blank to create one from the role title.">
               <TextInput
                 id="slug"
                 value={form.slug ?? ""}
                 onChange={(event) => setForm({ ...form, slug: event.target.value || null })}
               />
             </Field>
-            <Field label="Reference URL" htmlFor="url" hint="Optional public link for the entry.">
+            <Field label="Link" htmlFor="url" hint="Optional link with more information.">
               <TextInput
                 id="url"
                 value={form.url ?? ""}
                 onChange={(event) => setForm({ ...form, url: event.target.value || null })}
-                placeholder="https://"
+                placeholder="https://example.com"
               />
             </Field>
-            <Field label="Started" htmlFor="started">
+            <Field label="Start date" htmlFor="started">
               <TextInput
                 id="started"
                 type="date"
@@ -200,7 +205,7 @@ export default function AdminLeadershipPage() {
                 onChange={(event) => setForm({ ...form, started_on: event.target.value || null })}
               />
             </Field>
-            <Field label="Ended" htmlFor="ended">
+            <Field label="End date" htmlFor="ended">
               <TextInput
                 id="ended"
                 type="date"
@@ -214,16 +219,16 @@ export default function AdminLeadershipPage() {
                 rows={4}
                 value={form.description ?? ""}
                 onChange={(event) => setForm({ ...form, description: event.target.value || null })}
-                placeholder="Context for the work."
+                placeholder="What the group or programme is about."
               />
             </Field>
-            <Field label="Contribution" htmlFor="contribution" className="sm:col-span-2">
+            <Field label="Your contribution" htmlFor="contribution" className="sm:col-span-2">
               <TextArea
                 id="contribution"
                 rows={4}
                 value={form.contribution ?? ""}
                 onChange={(event) => setForm({ ...form, contribution: event.target.value || null })}
-                placeholder="What you contributed."
+                placeholder="What you did."
               />
             </Field>
             <Field label="Outcome" htmlFor="outcome" className="sm:col-span-2">
@@ -235,7 +240,20 @@ export default function AdminLeadershipPage() {
                 placeholder="What changed as a result."
               />
             </Field>
-            <Field label="Sort order" htmlFor="sort">
+            <Field label="Image" className="sm:col-span-2">
+              <MediaField
+                value={form.image_url ?? ""}
+                onChange={(value) => setForm({ ...form, image_url: value || null })}
+                assets={media.data?.items ?? []}
+                loading={media.loading}
+                onUploaded={() => media.reload()}
+                folder="leadership"
+                title={`${form.organization || "Leadership"} image`}
+                altText={form.organization ? `${form.organization} image` : "Leadership image"}
+                emptyLabel="No image uploaded."
+              />
+            </Field>
+            <Field label="Display order" htmlFor="sort">
               <TextInput
                 id="sort"
                 type="number"
@@ -245,7 +263,7 @@ export default function AdminLeadershipPage() {
                 }
               />
             </Field>
-            <Field label="Publish status" htmlFor="status">
+            <Field label="Visibility" htmlFor="status">
               <Select
                 id="status"
                 value={form.publish_status}
@@ -253,15 +271,15 @@ export default function AdminLeadershipPage() {
                   setForm({ ...form, publish_status: event.target.value as PublishStatus })
                 }
                 options={[
-                  { value: "draft", label: "Draft — private" },
-                  { value: "published", label: "Published — public" },
+                  { value: "draft", label: "Draft (private)" },
+                  { value: "published", label: "Published (visible on your website)" },
                   { value: "archived", label: "Archived" },
                 ]}
               />
             </Field>
             <div className="sm:col-span-2">
               <Checkbox
-                label="Mark as placeholder"
+                label="This entry is not finished yet"
                 checked={form.is_placeholder}
                 onChange={(next) => setForm({ ...form, is_placeholder: next })}
               />
@@ -274,7 +292,7 @@ export default function AdminLeadershipPage() {
             className={buttonStyles("primary", "sm", "mt-5")}
           >
             <Save className="size-3.5" aria-hidden="true" />
-            {saving ? "Saving…" : "Save entry"}
+            {saving ? "Saving..." : "Save leadership"}
           </button>
         </section>
       ) : null}
@@ -282,16 +300,19 @@ export default function AdminLeadershipPage() {
       <div className="mt-6">
         {entries.loading ? <LoadingState rows={3} label="Loading leadership" /> : null}
         {!entries.loading && entries.error ? (
-          <ErrorState message={entries.error.detail} onRetry={entries.reload} />
+          <ErrorState
+            message="We couldn't load your leadership entries. Please try again."
+            onRetry={entries.reload}
+          />
         ) : null}
         {!entries.loading && !entries.error && items.length === 0 ? (
           <EmptyState
-            title="No leadership entries"
-            description="Add the first entry. Nothing is shown publicly until it is published."
+            title="No leadership yet"
+            description="Add your first entry. It stays private until you publish it."
             action={
               <button type="button" onClick={startNew} className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />
-                Add entry
+                Add leadership
               </button>
             }
           />

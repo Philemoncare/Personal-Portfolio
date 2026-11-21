@@ -3,8 +3,9 @@ import type {
   AdminProject,
   AdminReference,
   CaseStudySectionKey,
-  PublishStatus,
   ProjectInput,
+  ProjectPreview,
+  PublishStatus,
 } from "@/types/api";
 
 import { apiRequest } from "./api";
@@ -14,6 +15,7 @@ export interface AdminCaseStudyInput {
   title: string;
   slug: string | null;
   summary: string | null;
+  cover_image_url: string | null;
   overview: string | null;
   problem: string | null;
   context: string | null;
@@ -83,6 +85,20 @@ export const adminProjectsService = {
   refreshGitHub(id: string): Promise<AdminProject> {
     return apiRequest<AdminProject>(`/api/v1/admin/projects/${id}/github`, {
       method: "POST",
+    });
+  },
+
+  verifyPreview(id: string, url?: string | null): Promise<ProjectPreview> {
+    return apiRequest<ProjectPreview>(`/api/v1/admin/projects/${id}/preview/verify`, {
+      method: "POST",
+      body: { url: url?.trim() ? url.trim() : null },
+    });
+  },
+
+  generatePreview(id: string, url?: string | null): Promise<ProjectPreview> {
+    return apiRequest<ProjectPreview>(`/api/v1/admin/projects/${id}/preview`, {
+      method: "POST",
+      body: { url: url?.trim() ? url.trim() : null },
     });
   },
 

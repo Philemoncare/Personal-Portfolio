@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import posixpath
 import uuid
 from datetime import UTC, datetime
 from typing import Any
@@ -15,6 +17,7 @@ from app.integrations.github.contents import (
     extract_images,
     get_readme,
     inspect_repository_files,
+    scan_repository_images,
 )
 from app.integrations.github.parser import (
     NOT_DOCUMENTED,
@@ -35,8 +38,10 @@ from app.schemas.github import (
     GitHubCommitOut,
     GitHubContentsOut,
     GitHubRepositoryOut,
+    LiveUrlCandidateOut,
     RepositoryInspectionOut,
 )
+from app.services.project_preview import build_candidates
 
 logger = logging.getLogger("portfolio.github")
 
@@ -167,6 +172,66 @@ async def get_languages(client: GitHubClient, full_name: str) -> dict[str, int]:
     }
 
 
+def _pages_url(payload: Any) -> str | None:
+    """Extract a public site URL from a GitHub Pages response."""
+
+    if not isinstance(payload, dict):
+        return None
+    html_url = payload.get("html_url")
+    if isinstance(html_url, str) and html_url.startswith(("http://", "https://")):
+        return html_url
+    cname = payload.get("cname")
+    if isinstance(cname, str) and cname.strip():
+        return f"https://{cname.strip()}"
+    return None
+
+
+async def get_pages_url(client: GitHubClient, full_name: str) -> str | None:
+    """Read GitHub Pages deployment metadata when it exists.
+
+    A 404 simply means Pages is not enabled for this repository.
+    """
+
+    try:
+        payload = await client.get_json(
+            f"/repos/{full_name}/pages", use_cache=False
+        )
+    except GitHubError as exc:
+        if exc.code in {"not_found", "forbidden"}:
+            return None
+        logger.info("GitHub Pages lookup unavailable for %s: %s", full_name, exc.code)
+        return None
+    return _pages_url(payload)
+
+
+def _package_homepage(files: dict[str, str]) -> str | None:
+    for path, text in files.items():
+        if posixpath.basename(path).lower() != "package.json":
+            continue
+        try:
+            payload = json.loads(text)
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        homepage = payload.get("homepage")
+        if isinstance(homepage, str) and homepage.strip().startswith(
+            ("http://", "https://")
+        ):
+            return homepage.strip()
+    return None
+
+
+def _cname_host(files: dict[str, str]) -> str | None:
+    for path, text in files.items():
+        if posixpath.basename(path).lower() != "cname":
+            continue
+        first = text.strip().splitlines()[0].strip() if text.strip() else ""
+        if first and " " not in first:
+            return first
+    return None
+
+
 async def get_activity(
     client: GitHubClient, raw: dict[str, Any]
 ) -> GitHubActivityOut:
@@ -223,6 +288,9 @@ async def analyze_repository(
     readme = await get_readme(client, full_name)
     plan = await inspect_repository_files(client, full_name, branch=branch)
     activity = await get_activity(client, raw)
+    scanned_images = await scan_repository_images(
+        client, full_name=full_name, ref=branch
+    )
 
     limitations: list[str] = []
     safe_files: dict[str, str] = {}
@@ -266,12 +334,35 @@ async def analyze_repository(
         full_name=full_name,
         readme_path=readme.path or "README.md",
         repository_id=str(raw.get("id") or repository_id),
+        scanned_paths=scanned_images,
     )
     live_urls = detect_live_urls(
         homepage=raw.get("homepage"),
         markdown=readme_text,
         repository_url=str(raw.get("html_url") or ""),
     )
+    pages_url = await get_pages_url(client, full_name)
+    readme_candidates = [
+        (item.url, item.confidence, item.source)
+        for item in live_urls
+        if item.source != "GitHub repository homepage"
+    ]
+    homepage_candidates = build_candidates(
+        homepage=raw.get("homepage"),
+        pages_url=pages_url,
+        package_homepage=_package_homepage(safe_files),
+        cname=_cname_host(safe_files),
+        readme_urls=readme_candidates,
+    )
+    live_urls = [
+        LiveUrlCandidateOut(
+            url=candidate.url,
+            source=candidate.label,
+            confidence=candidate.confidence,
+            source_key=candidate.source,
+        )
+        for candidate in homepage_candidates[:6]
+    ]
     documentation_url = detect_documentation_url(
         readme_text, str(raw.get("html_url") or "")
     )
@@ -289,6 +380,11 @@ async def analyze_repository(
         limitations.append(
             f"{len(images.ignored)} README image reference(s) were ignored "
             "(external hosts, badges, or unsupported formats)."
+        )
+    if not live_urls:
+        limitations.append(
+            "No deployed homepage was documented. The homepage preview stays "
+            "unavailable until you add a verified live URL."
         )
 
     repository = map_repository(raw, languages=languages)

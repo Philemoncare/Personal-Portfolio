@@ -43,15 +43,10 @@ export function AuthLayout({
             <span className="text-base font-semibold tracking-[-0.02em] text-paper">PHILL</span>
             <span className="size-1.5 bg-signal" aria-hidden="true" />
             <span className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted">
-              Private
+              Admin
             </span>
           </Link>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <span className="hidden sm:inline font-mono text-[0.56rem] uppercase tracking-[0.16em] text-faint">
-              Administration
-            </span>
-          </div>
+          <ThemeToggle />
         </Container>
       </header>
 
@@ -80,13 +75,13 @@ export function AuthLayout({
       <footer className="border-t border-line">
         <Container className="flex flex-wrap items-center justify-between gap-3 py-5">
           <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-faint">
-            Authorised personnel only
+            Private area
           </p>
           <Link
             to="/"
             className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted transition-colors hover:text-paper"
           >
-            Return to public site
+            Back to website
           </Link>
         </Container>
       </footer>

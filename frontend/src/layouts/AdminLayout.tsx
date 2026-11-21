@@ -40,7 +40,9 @@ import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { useAuth } from "@/auth/useAuth";
 import { buttonStyles } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useApiQuery } from "@/hooks/useApiQuery";
 import { useSeo } from "@/hooks/useSeo";
+import { settingsService } from "@/services/settings.service";
 import type { Admin } from "@/types/api";
 import { cn } from "@/utils/cn";
 
@@ -60,7 +62,8 @@ const ADMIN_NAV = [
       { label: "Experience", to: "/admin/experience", end: false, icon: Briefcase },
       { label: "Timeline", to: "/admin/timeline", end: false, icon: CalendarClock },
       { label: "Now", to: "/admin/now", end: false, icon: Sparkles },
-      { label: "Articles", to: "/admin/pages", end: false, icon: FileText },
+      { label: "Articles", to: "/admin/articles", end: false, icon: FileText },
+      { label: "Pages & SEO", to: "/admin/pages", end: false, icon: BookOpen },
     ],
   },
   {
@@ -108,11 +111,13 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut: endSession } = useAuth();
+  const settings = useApiQuery((signal) => settingsService.getPublic(signal), []);
+  const wordmark = settings.data?.wordmark?.trim() || "PHILL";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useSeo({
     title: "Admin — Phill",
-    description: "Private portfolio administration.",
+    description: "Manage your website content.",
     noIndex: true,
   });
 
@@ -177,10 +182,10 @@ export function AdminLayout() {
       <aside className="hidden w-64 shrink-0 border-r border-line bg-surface flex-col justify-between lg:flex">
         <div className="p-5 overflow-y-auto max-h-screen sticky top-0">
           <Link to="/admin" className="flex items-center gap-2.5 px-3 mb-6">
-            <span className="text-base font-semibold tracking-[-0.02em] text-paper">PHILL</span>
+            <span className="text-base font-semibold tracking-[-0.02em] text-paper">{wordmark}</span>
             <span className="size-1.5 bg-signal" aria-hidden="true" />
             <span className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted">
-              Control Center
+              Admin
             </span>
           </Link>
 
@@ -194,7 +199,7 @@ export function AdminLayout() {
                 {admin?.full_name || admin?.email || "Administrator"}
               </p>
               <p className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
-                Private Access
+                Signed in
               </p>
             </div>
             <ThemeToggle />

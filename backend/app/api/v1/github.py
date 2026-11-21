@@ -94,6 +94,7 @@ def _connection_out(connection: GitHubConnection | None) -> GitHubConnectionOut 
         scopes=connection.scope_list,
         repository_access=connection.repository_access,
         private_repository_access=connection.private_repository_access,
+        repository_count=connection.repository_count,
         connected_at=connection.connected_at,
         updated_at=connection.updated_at,
         revoked_at=connection.revoked_at,
@@ -364,7 +365,7 @@ async def github_repositories(
     start = (page - 1) * per_page
     page_items = mapped[start : start + per_page]
 
-    if connection.is_active and connection.repository_count != len(raw):
+    if connection.is_active and not truncated and connection.repository_count != len(raw):
         connection.repository_count = len(raw)
         db.commit()
 
@@ -775,7 +776,16 @@ def github_import_logs(
         .limit(limit)
         .offset(offset)
     ).all()
-    return GitHubImportLogListOut(
-        items=[GitHubImportLogOut.model_validate(row) for row in rows],
-        total=total,
-    )
+    user_ids = {row.user_id for row in rows if row.user_id is not None}
+    emails: dict[uuid.UUID, str] = {}
+    if user_ids:
+        emails = {
+            user.id: user.email
+            for user in db.scalars(select(AdminUser).where(AdminUser.id.in_(user_ids)))
+        }
+    items = []
+    for row in rows:
+        item = GitHubImportLogOut.model_validate(row)
+        item.user_email = emails.get(row.user_id) if row.user_id else None
+        items.append(item)
+    return GitHubImportLogListOut(items=items, total=total)

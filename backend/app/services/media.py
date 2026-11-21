@@ -18,14 +18,18 @@ from app.core.constants import MEDIA_FOLDERS
 from app.models import (
     AdminUser,
     Article,
+    CaseStudy,
     Certificate,
     DataProject,
+    ExperienceEntry,
+    LeadershipEntry,
     MediaAsset,
     PageContent,
     Project,
     ProjectMedia,
     SiteProfile,
     SiteSettings,
+    TimelineEntry,
 )
 
 logger = logging.getLogger("portfolio.media")
@@ -231,15 +235,26 @@ def _collect_usage(db: Session, asset: MediaAsset) -> list[dict[str, str | None]
 
     for project in db.scalars(
         select(Project).where(
-            or_(Project.cover_image == asset.url, Project.og_image == asset.url)
+            or_(
+                Project.cover_image == asset.url,
+                Project.og_image == asset.url,
+                Project.preview_image == asset.url,
+            )
         )
     ).all():
+        field = (
+            "cover"
+            if project.cover_image == asset.url
+            else "homepage preview"
+            if project.preview_image == asset.url
+            else "SEO image"
+        )
         usage.append(
             {
                 "type": "project",
                 "id": str(project.id),
                 "title": project.title,
-                "field": "cover" if project.cover_image == asset.url else "SEO image",
+                "field": field,
             }
         )
 
@@ -292,6 +307,54 @@ def _collect_usage(db: Session, asset: MediaAsset) -> list[dict[str, str | None]
                 "id": str(article.id),
                 "title": article.title,
                 "field": "Cover image",
+            }
+        )
+
+    for study in db.scalars(
+        select(CaseStudy).where(CaseStudy.cover_image_url == asset.url)
+    ).all():
+        usage.append(
+            {
+                "type": "case_study",
+                "id": str(study.id),
+                "title": study.title,
+                "field": "Cover image",
+            }
+        )
+
+    for experience in db.scalars(
+        select(ExperienceEntry).where(ExperienceEntry.logo_url == asset.url)
+    ).all():
+        usage.append(
+            {
+                "type": "experience",
+                "id": str(experience.id),
+                "title": f"{experience.title} · {experience.organization}",
+                "field": "Organization logo",
+            }
+        )
+
+    for leadership in db.scalars(
+        select(LeadershipEntry).where(LeadershipEntry.image_url == asset.url)
+    ).all():
+        usage.append(
+            {
+                "type": "leadership",
+                "id": str(leadership.id),
+                "title": f"{leadership.title} · {leadership.organization}",
+                "field": "Image",
+            }
+        )
+
+    for timeline in db.scalars(
+        select(TimelineEntry).where(TimelineEntry.image_url == asset.url)
+    ).all():
+        usage.append(
+            {
+                "type": "timeline",
+                "id": str(timeline.id),
+                "title": timeline.title,
+                "field": "Image",
             }
         )
 

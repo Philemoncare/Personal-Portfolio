@@ -2,6 +2,8 @@ import type {
   AdminMessageList,
   AdminSettings,
   AdminSettingsInput,
+  ArticleAdmin,
+  ArticleInput,
   ContentReference,
   NowAdminItem,
   NowInput,
@@ -93,6 +95,35 @@ export const adminContentService = {
   },
   deleteTimeline(id: string): Promise<void> {
     return apiRequest<void>(`/api/v1/admin/timeline/${id}`, { method: "DELETE" });
+  },
+
+  // --- Articles ---------------------------------------------------------
+  listArticles(signal?: AbortSignal): Promise<ArticleAdmin[]> {
+    return apiRequest<ArticleAdmin[]>("/api/v1/admin/articles", { signal });
+  },
+  getArticle(id: string, signal?: AbortSignal): Promise<ArticleAdmin> {
+    return apiRequest<ArticleAdmin>(`/api/v1/admin/articles/${id}`, { signal });
+  },
+  createArticle(payload: ArticleInput): Promise<ArticleAdmin> {
+    return apiRequest<ArticleAdmin>("/api/v1/admin/articles", {
+      method: "POST",
+      body: payload,
+    });
+  },
+  updateArticle(id: string, payload: ArticleInput): Promise<ArticleAdmin> {
+    return apiRequest<ArticleAdmin>(`/api/v1/admin/articles/${id}`, {
+      method: "PUT",
+      body: payload,
+    });
+  },
+  reorderArticles(ids: string[]): Promise<{ updated: number }> {
+    return apiRequest<{ updated: number }>("/api/v1/admin/articles/reorder", {
+      method: "POST",
+      body: { ids },
+    });
+  },
+  deleteArticle(id: string): Promise<void> {
+    return apiRequest<void>(`/api/v1/admin/articles/${id}`, { method: "DELETE" });
   },
 
   // --- Resume -----------------------------------------------------------

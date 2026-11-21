@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { label: "Data Lab", to: "/data-lab" },
   { label: "Build Lab", to: "/build-lab" },
   { label: "Leadership", to: "/leadership" },
+  { label: "Articles", to: "/articles" },
   { label: "About", to: "/about" },
   { label: "Now", to: "/now" },
   { label: "Contact", to: "/contact" },

@@ -12,7 +12,7 @@ import { formatDate } from "@/utils/format";
 function maskPhone(value: string | null): string {
   if (!value) return "Not configured";
   if (value.length < 7) return "Configured";
-  return `${value.slice(0, 3)}â€¢â€¢â€¢â€¢â€¢${value.slice(-3)}`;
+  return `${value.slice(0, 3)}•••••${value.slice(-3)}`;
 }
 
 function Row({ label, value }: { label: string; value: ReactNode }) {
@@ -35,11 +35,21 @@ export default function AdminAccountPage() {
   }
 
   if (account.error && !admin) {
-    return <ErrorState message={account.error.detail} onRetry={account.reload} />;
+    return (
+      <ErrorState
+        message="We couldn't load your account. Please try again."
+        onRetry={account.reload}
+      />
+    );
   }
 
   if (!admin) {
-    return <ErrorState message="The account could not be read." onRetry={account.reload} />;
+    return (
+      <ErrorState
+        message="We couldn't load your account. Please try again."
+        onRetry={account.reload}
+      />
+    );
   }
 
   const signOut = async () => {
@@ -58,18 +68,17 @@ export default function AdminAccountPage() {
           {admin.full_name || admin.email}
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
-          Identity, access level and session controls for this administrator.
+          Your account details and sign-in activity.
         </p>
       </header>
 
       {admin.must_change_password ? (
         <div className="border border-signal/40 bg-signal/5 px-5 py-4">
           <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-signal">
-            Password change required
+            Change your password
           </p>
           <p className="mt-2 text-sm leading-relaxed text-paper-dim">
-            This account was provisioned with a temporary password. Replace it before using the
-            CMS.
+            This account was set up with a temporary password. Please change it before continuing.
           </p>
           <Link to="/change-password" className={buttonStyles("primary", "sm", "mt-4")}>
             Change password
@@ -82,7 +91,7 @@ export default function AdminAccountPage() {
         <section className="border border-line bg-ink-900/30 px-5 py-2 sm:px-6">
           <dl>
             <Row label="Email" value={admin.email} />
-            <Row label="Verification phone" value={maskPhone(admin.phone)} />
+            <Row label="Phone number" value={maskPhone(admin.phone)} />
             <Row
               label="Role"
               value={
@@ -98,12 +107,12 @@ export default function AdminAccountPage() {
               value={
                 admin.password_changed_at
                   ? formatDate(admin.password_changed_at, { withDay: true })
-                  : "Never recorded"
+                  : "Never changed"
               }
             />
             <Row
               label="Last sign in"
-              value={admin.last_login_at ? formatDate(admin.last_login_at, { withDay: true }) : "Not recorded"}
+              value={admin.last_login_at ? formatDate(admin.last_login_at, { withDay: true }) : "Not yet"}
             />
             <Row label="Account created" value={formatDate(admin.created_at, { withDay: true })} />
           </dl>
@@ -115,7 +124,7 @@ export default function AdminAccountPage() {
               Password
             </p>
             <p className="mt-3 text-sm leading-relaxed text-paper-dim">
-              Changing the password signs out every other browser session.
+              Changing your password signs you out of all other browsers.
             </p>
             <Link to="/change-password" className={buttonStyles("secondary", "sm", "mt-4 w-full")}>
               <KeyRound className="size-3.5" aria-hidden="true" />
@@ -125,13 +134,13 @@ export default function AdminAccountPage() {
 
           <div className="border border-line p-5">
             <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-              Sessions &amp; activity
+              Security
             </p>
             <p className="mt-3 text-sm leading-relaxed text-paper-dim">
-              Review active sessions, revoke devices and inspect recent security events.
+              Review your active sessions and recent sign-in activity.
             </p>
             <Link to="/admin/security" className={buttonStyles("secondary", "sm", "mt-4 w-full")}>
-              Open security
+              View security
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           </div>

@@ -37,7 +37,7 @@ export default function ResetPasswordPage() {
     event.preventDefault();
 
     if (!/^\d{6}$/.test(code)) {
-      setError("Enter the six-digit code from the SMS.");
+      setError("Enter the 6-digit code from the text message.");
       return;
     }
     if (password.length < MIN_LENGTH) {
@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
       return;
     }
     if (password !== confirm) {
-      setError("The two passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
 
@@ -56,11 +56,11 @@ export default function ResetPasswordPage() {
       await resetPassword(state.challengeId as string, code, password);
       navigate("/login", {
         replace: true,
-        state: { message: "Password reset. Sign in with your new password." },
+        state: { message: "Your password has been updated. Sign in with your new password." },
       });
     } catch (cause) {
       setError(
-        cause instanceof ApiError ? cause.detail : "The password could not be reset.",
+        cause instanceof ApiError ? cause.detail : "We couldn't update your password. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -69,16 +69,16 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthLayout
-      eyebrow="Account recovery"
-      title="Set a new password."
+      eyebrow="Password reset"
+      title="Create a new password"
       description={
         state.phoneMasked
-          ? `Enter the code sent to ${state.phoneMasked} and choose a new password.`
-          : "Enter the recovery code and choose a new password. Resetting signs out every existing session."
+          ? `Enter the code we sent to ${state.phoneMasked}, then choose a new password.`
+          : "Enter the verification code, then choose a new password."
       }
       meta={
         <p className="text-xs leading-relaxed text-muted">
-          A reset invalidates the code and revokes all active sessions for the account.
+          This will sign you out of all other sessions.
         </p>
       }
       footer={
@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
           className="inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted transition-colors hover:text-paper"
         >
           <ArrowLeft className="size-3.5" aria-hidden="true" />
-          Request another code
+          Send a new code
         </Link>
       }
     >
@@ -98,13 +98,13 @@ export default function ResetPasswordPage() {
               Development only
             </span>
             <span className="mt-1 block">
-              No SMS provider is configured. The code for this local session is{" "}
+              No SMS provider is set up. The code for this local session is{" "}
               <span className="font-mono tracking-[0.2em] text-paper">{state.devOtp}</span>.
             </span>
           </FormMessage>
         ) : null}
 
-        <Field id="code" label="Six-digit code">
+        <Field id="code" label="Verification code">
           <input
             id="code"
             name="code"
@@ -116,7 +116,7 @@ export default function ResetPasswordPage() {
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             className={`${inputClassName} font-mono tracking-[0.4em]`}
-            placeholder="000000"
+            placeholder="Enter the 6-digit code"
             disabled={submitting}
           />
         </Field>
@@ -124,7 +124,7 @@ export default function ResetPasswordPage() {
         <Field
           id="password"
           label="New password"
-          hint={`At least ${MIN_LENGTH} characters. Long is better than complicated.`}
+          hint={`Use at least ${MIN_LENGTH} characters. A longer phrase is easier to remember.`}
         >
           <input
             id="password"
@@ -136,6 +136,7 @@ export default function ResetPasswordPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className={inputClassName}
+            placeholder="Enter your new password"
             disabled={submitting}
           />
         </Field>
@@ -150,6 +151,7 @@ export default function ResetPasswordPage() {
             value={confirm}
             onChange={(event) => setConfirm(event.target.value)}
             className={inputClassName}
+            placeholder="Enter your new password again"
             disabled={submitting}
           />
         </Field>
@@ -161,7 +163,7 @@ export default function ResetPasswordPage() {
           className={buttonStyles("primary", "md", "w-full")}
           disabled={submitting}
         >
-          {submitting ? <InlineLoading label="Resetting" /> : "Reset password"}
+          {submitting ? <InlineLoading label="Updating" /> : "Update password"}
           {!submitting ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
         </button>
       </form>

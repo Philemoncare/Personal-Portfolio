@@ -205,9 +205,13 @@ def _apply_fields(
         db, requested_slug, exclude_id=None if is_new else project.id
     )
 
-    project.category = _resolve_category(
-        db, payload, None if is_new else project.category
-    )
+    category = _resolve_category(db, payload, None if is_new else project.category)
+    if is_new:
+        # Assign the foreign key directly: linking the relationship on a
+        # transient project would cascade into the category flush.
+        project.category_id = category.id
+    else:
+        project.category = category
     project.tools = _resolve_tools(db, payload)
 
     project.short_description = payload.short_description
@@ -263,8 +267,11 @@ def _apply_fields(
 
 def create_project(db: Session, payload: DataProjectInput) -> DataProject:
     project = DataProject()
-    db.add(project)
+    # Apply fields before adding the row: resolving a brand-new category or tool
+    # flushes the session, and an already-added project would be inserted with a
+    # NULL category_id.
     _apply_fields(db, project, payload, is_new=True)
+    db.add(project)
     db.commit()
     db.refresh(project)
     return project

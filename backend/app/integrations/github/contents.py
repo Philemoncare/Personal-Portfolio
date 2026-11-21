@@ -29,6 +29,23 @@ MAX_INSPECTED_FILES = 18
 IMAGE_EXTENSIONS = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 UNSUPPORTED_IMAGE_EXTENSIONS = {".gif", ".svg", ".bmp", ".ico", ".tiff", ".avif"}
 
+# Bounded scan of conventional asset folders so screenshot assets are offered
+# even when the README does not link them. One listing per folder, never a
+# recursive walk of the whole repository.
+IMAGE_SCAN_DIRECTORIES = (
+    "screenshots",
+    "screens",
+    "docs",
+    "assets",
+    "images",
+    "media",
+    "public",
+    "src/assets",
+    "frontend/public",
+    "frontend/src/assets",
+)
+MAX_SCANNED_IMAGES = 24
+
 # Exact filenames (case-insensitive) that may be fetched as text.
 SAFE_FILE_NAMES = {
     "readme.md",
@@ -81,6 +98,7 @@ SAFE_FILE_NAMES = {
     "astro.config.mjs",
     "svelte.config.js",
     "remix.config.js",
+    "cname",
 }
 
 FORBIDDEN_SUBSTRINGS = (
@@ -359,8 +377,45 @@ def _repository_raw_path(url: str, full_name: str) -> str | None:
     return None
 
 
+async def scan_repository_images(
+    client: GitHubClient,
+    *,
+    full_name: str,
+    ref: str | None = None,
+    limit: int = MAX_SCANNED_IMAGES,
+) -> list[str]:
+    """List supported images in conventional asset folders, bounded and safe."""
+
+    found: list[str] = []
+    seen: set[str] = set()
+    for directory in IMAGE_SCAN_DIRECTORIES:
+        try:
+            listing = await get_directory(client, full_name, path=directory, ref=ref)
+        except GitHubError:
+            continue
+        for entry in listing.entries:
+            if entry.type != "file":
+                continue
+            path = entry.path
+            extension = posixpath.splitext(path)[1].lower()
+            if extension not in IMAGE_EXTENSIONS:
+                continue
+            if is_forbidden(path) or path in seen:
+                continue
+            seen.add(path)
+            found.append(path)
+            if len(found) >= limit:
+                return found
+    return found
+
+
 def extract_images(
-    markdown: str, *, full_name: str, readme_path: str, repository_id: str
+    markdown: str,
+    *,
+    full_name: str,
+    readme_path: str,
+    repository_id: str,
+    scanned_paths: list[str] | None = None,
 ) -> GitHubImagesOut:
     found: list[GitHubImageOut] = []
     ignored: list[dict[str, str]] = []
@@ -433,6 +488,30 @@ def extract_images(
         consider(match.group(2), match.group(0))
     for match in HTML_IMAGE.finditer(markdown):
         consider(match.group(1), match.group(0))
+
+    # Conventionally named asset folders supply candidates the README may not
+    # reference. They are offered, never imported automatically.
+    for raw_path in scanned_paths or []:
+        try:
+            path = safe_repository_path(raw_path)
+        except UnsafePathError:
+            continue
+        if path in seen:
+            continue
+        extension = posixpath.splitext(path)[1].lower()
+        if extension not in IMAGE_EXTENSIONS:
+            continue
+        seen.add(path)
+        found.append(
+            GitHubImageOut(
+                path=path,
+                name=posixpath.basename(path),
+                markdown=None,
+                source_url=f"https://github.com/{full_name}/blob/HEAD/{path}",
+                preview_url=preview_url(path),
+                mime_type=IMAGE_EXTENSIONS[extension],
+            )
+        )
 
     # Screenshots are more useful first; badges are already excluded.
     found.sort(

@@ -84,45 +84,39 @@ export default function LoginPage() {
   if (status === "initializing") {
     return (
       <AuthLayout
-        eyebrow="Administrator access"
+        eyebrow="Admin"
         title="Sign in"
-        description="Checking for an existing session."
+        description="Checking whether you are already signed in."
       >
-        <InlineLoading label="Checking session" />
+        <InlineLoading label="Checking your session" />
       </AuthLayout>
     );
   }
 
   return (
     <AuthLayout
-      eyebrow="Administrator access"
-      title="Sign in to the private area."
-      description="Content management for the portfolio. Public visitors never need an account."
+      eyebrow="Admin"
+      title="Sign in"
+      description="Manage the content on your website. Visitors do not need an account."
       meta={
         <dl className="space-y-3">
           <div className="flex items-baseline justify-between gap-4">
             <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-              Scope
+              You can manage
             </dt>
-            <dd className="text-xs text-paper-dim">CMS, media, settings</dd>
+            <dd className="text-xs text-paper-dim">Content, media and settings</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4">
             <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-              Verification
+              How you sign in
             </dt>
-            <dd className="text-xs text-paper-dim">Password + SMS code</dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-4">
-            <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-              Sessions
-            </dt>
-            <dd className="text-xs text-paper-dim">HttpOnly cookie</dd>
+            <dd className="text-xs text-paper-dim">Password and phone code</dd>
           </div>
         </dl>
       }
       footer={
         <p className="font-mono text-[0.56rem] uppercase leading-relaxed tracking-[0.14em] text-faint">
-          Access is logged. Repeated failures temporarily lock the account.
+          Sign-in attempts are recorded. Too many failed attempts will lock the account for a short time.
         </p>
       }
     >
@@ -131,8 +125,8 @@ export default function LoginPage() {
 
         <Field
           id="identifier"
-          label="Email or phone"
-          hint="Use the address or Ghana mobile number on the administrator record."
+          label="Email or phone number"
+          hint="Use the email address or phone number linked to your account."
         >
           <input
             id="identifier"
@@ -143,7 +137,7 @@ export default function LoginPage() {
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
             className={inputClassName}
-            placeholder="you@example.com"
+            placeholder="Enter your email or phone number"
             disabled={submitting}
           />
         </Field>
@@ -158,7 +152,7 @@ export default function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className={inputClassName}
-            placeholder="Your password"
+            placeholder="Enter your password"
             disabled={submitting}
           />
         </Field>
@@ -170,7 +164,7 @@ export default function LoginPage() {
           className={buttonStyles("primary", "md", "w-full")}
           disabled={submitting || !identifier.trim() || !password}
         >
-          {submitting ? <InlineLoading label="Signing in" /> : "Continue"}
+          {submitting ? <InlineLoading label="Signing in" /> : "Sign in"}
           {!submitting ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
         </button>
 
@@ -179,13 +173,13 @@ export default function LoginPage() {
             to="/forgot-password"
             className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted transition-colors hover:text-paper"
           >
-            Forgot password
+            Forgot your password?
           </Link>
           <Link
             to="/"
             className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted transition-colors hover:text-paper"
           >
-            Public site
+            Back to website
           </Link>
         </div>
       </form>

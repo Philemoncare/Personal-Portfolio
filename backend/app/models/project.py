@@ -114,6 +114,11 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base):
             "deployment_status IN ('not_deployed', 'deploying', 'live', 'failed', 'offline')",
             name="deployment_status_valid",
         ),
+        CheckConstraint(
+            "preview_status IN ('not_discovered', 'awaiting_verification', "
+            "'verified', 'generated', 'unavailable', 'unreachable')",
+            name="preview_status_valid",
+        ),
     )
 
     title: Mapped[str] = mapped_column(String(160), nullable=False)
@@ -175,6 +180,25 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base):
     public_visibility: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true", nullable=False, index=True
     )
+
+    # --- Verified deployed-homepage preview ------------------------------
+    # `preview_image` is a stored screenshot of the *actual* deployed site,
+    # captured by the controlled browser runner. It is never a repository
+    # image or a generated mock-up.
+    preview_image: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    preview_status: Mapped[str] = mapped_column(
+        String(30),
+        default="not_discovered",
+        server_default="not_discovered",
+        nullable=False,
+        index=True,
+    )
+    preview_source: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    preview_source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    preview_checked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    preview_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # --- Cached public GitHub metadata (never fabricated) -----------------
     github_stars: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -292,6 +316,7 @@ class CaseStudy(UUIDPrimaryKeyMixin, TimestampMixin, PublishableMixin, Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cover_image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     overview: Mapped[str | None] = mapped_column(Text, nullable=True)
     problem: Mapped[str | None] = mapped_column(Text, nullable=True)
     context: Mapped[str | None] = mapped_column(Text, nullable=True)

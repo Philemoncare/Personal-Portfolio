@@ -121,7 +121,7 @@ export default function AdminMediaPage() {
       .catch((cause: unknown) => {
         if (!active) return;
         setListError(
-          cause instanceof ApiError ? cause.detail : "The media library could not load.",
+          cause instanceof ApiError ? cause.detail : "We couldn't load your media. Please try again.",
         );
       })
       .finally(() => {
@@ -168,11 +168,11 @@ export default function AdminMediaPage() {
   const onUpload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!file) {
-      setUploadError("Choose an image first.");
+      setUploadError("Please choose an image to upload.");
       return;
     }
     if (file.size > MAX_BYTES) {
-      setUploadError("Images must be 8 MB or smaller.");
+      setUploadError("The file is too large. Images must be 8 MB or smaller.");
       return;
     }
 
@@ -194,11 +194,11 @@ export default function AdminMediaPage() {
       const input = document.getElementById("media-file") as HTMLInputElement | null;
       if (input) input.value = "";
       reload();
-      setNotice(`Uploaded ${asset.filename} to ${asset.folder}.`);
+      setNotice(`Uploaded ${asset.filename}.`);
       openEditor(asset);
     } catch (cause) {
       setUploadError(
-        cause instanceof ApiError ? cause.detail : "The upload could not be completed.",
+        cause instanceof ApiError ? cause.detail : "We couldn't upload this file. Please try again.",
       );
     } finally {
       setUploading(false);
@@ -208,7 +208,7 @@ export default function AdminMediaPage() {
   const onSave = async () => {
     if (!selected || !edit) return;
     if (!edit.title.trim() || edit.alt_text.trim().length < 4) {
-      setSaveError("A title and a meaningful alt text are required.");
+      setSaveError("Please add a title and a short description of the image.");
       return;
     }
 
@@ -226,12 +226,12 @@ export default function AdminMediaPage() {
       });
       setSelected(updated);
       setEdit(editStateFrom(updated));
-      setNotice("Media metadata saved.");
+      setNotice("Changes saved.");
       reload();
       void loadUsage(updated);
     } catch (cause) {
       setSaveError(
-        cause instanceof ApiError ? cause.detail : "The metadata could not be saved.",
+        cause instanceof ApiError ? cause.detail : "We couldn't save your changes. Please try again.",
       );
     } finally {
       setSaving(false);
@@ -249,12 +249,12 @@ export default function AdminMediaPage() {
       setReplaceFile(null);
       const input = document.getElementById("replace-file") as HTMLInputElement | null;
       if (input) input.value = "";
-      setNotice(`Replaced the file behind ${updated.filename}. Existing references still work.`);
+      setNotice(`File replaced. Existing images keep working.`);
       reload();
       void loadUsage(updated);
     } catch (cause) {
       setSaveError(
-        cause instanceof ApiError ? cause.detail : "The file could not be replaced.",
+        cause instanceof ApiError ? cause.detail : "We couldn't replace this file. Please try again.",
       );
     } finally {
       setReplacing(false);
@@ -269,11 +269,11 @@ export default function AdminMediaPage() {
       await deleteMedia(asset.id, force);
       setConfirmDelete(false);
       closeEditor();
-      setNotice("Media asset deleted.");
+      setNotice("File deleted.");
       reload();
     } catch (cause) {
       setSaveError(
-        cause instanceof ApiError ? cause.detail : "The asset could not be deleted.",
+        cause instanceof ApiError ? cause.detail : "We couldn't delete this file. Please try again.",
       );
     } finally {
       setSaving(false);
@@ -285,7 +285,7 @@ export default function AdminMediaPage() {
       await navigator.clipboard.writeText(value);
       setNotice(`Copied ${label}.`);
     } catch {
-      setNotice(`Copy failed. Select the value manually: ${value}`);
+      setNotice(`Could not copy. Select the value manually: ${value}`);
     }
   };
 
@@ -299,15 +299,13 @@ export default function AdminMediaPage() {
     <div className="space-y-10">
       <header className="border-b border-line pb-6">
         <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">
-          Media library
+          Media
         </p>
         <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-          Images and references
+          Media Library
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-          Uploaded files are validated server-side, stored under a generated filename, and served
-          from <code className="font-mono text-[0.85em] text-paper-dim">/media</code>. Nothing here
-          exposes a filesystem path, and deleting a referenced asset is blocked until you confirm.
+          Upload and manage the images and files used on your website.
         </p>
       </header>
 
@@ -334,12 +332,12 @@ export default function AdminMediaPage() {
       <section aria-labelledby="upload-heading" className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <h2 id="upload-heading" className={labelClass}>
-            Upload
+            Upload file
           </h2>
           <form onSubmit={onUpload} className="mt-4 space-y-4 border border-line p-5">
             <div className="space-y-2">
               <label htmlFor="media-file" className={labelClass}>
-                Image file
+                File
               </label>
               <input
                 id="media-file"
@@ -349,8 +347,7 @@ export default function AdminMediaPage() {
                 className="block w-full text-sm text-paper-dim file:mr-4 file:border file:border-line-strong file:bg-transparent file:px-3 file:py-2 file:font-mono file:text-[0.58rem] file:uppercase file:tracking-[0.14em] file:text-paper"
               />
               <p className="text-xs text-faint">
-                JPEG, PNG or WebP. Maximum 8 MB and 8000px. Executable and markup extensions are
-                rejected before the file is written.
+                JPEG, PNG or WebP. Maximum 8 MB.
               </p>
             </div>
 
@@ -369,7 +366,7 @@ export default function AdminMediaPage() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="media-alt" className={labelClass}>
-                  Alt text
+                  Description
                 </label>
                 <input
                   id="media-alt"
@@ -410,13 +407,13 @@ export default function AdminMediaPage() {
               disabled={uploading || !file}
             >
               <Upload className="size-3.5" aria-hidden="true" />
-              {uploading ? "Uploading" : "Upload image"}
+              {uploading ? "Uploading..." : "Upload file"}
             </button>
           </form>
         </div>
 
         <div className="lg:col-span-5">
-          <h2 className={labelClass}>Curated registry</h2>
+          <h2 className={labelClass}>Built-in images</h2>
           <ul className="mt-4 max-h-72 divide-y divide-line overflow-y-auto border border-line">
             {registered.map((asset) => (
               <li key={asset.id} className="flex items-center gap-3 px-4 py-3">
@@ -424,14 +421,14 @@ export default function AdminMediaPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-paper">{asset.id}</p>
                   <p className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
-                    {asset.width}×{asset.height} · {asset.variants.length} variants
+                    {asset.width}×{asset.height} · {asset.variants.length} sizes
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => copy(asset.id, "registry id")}
+                  onClick={() => copy(asset.id, "image name")}
                   className={buttonStyles("ghost", "sm", "px-2")}
-                  aria-label={`Copy registry id ${asset.id}`}
+                  aria-label={`Copy image name ${asset.id}`}
                 >
                   <Copy className="size-3.5" aria-hidden="true" />
                 </button>
@@ -444,7 +441,7 @@ export default function AdminMediaPage() {
       <section aria-labelledby="library-heading">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-3">
           <h2 id="library-heading" className={labelClass}>
-            Uploaded assets
+            Uploaded files
           </h2>
           <span className="font-mono text-[0.56rem] uppercase tracking-[0.12em] text-faint">
             {data?.total ?? 0} total
@@ -456,7 +453,7 @@ export default function AdminMediaPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className={inputClass}
-            placeholder="Search title, filename, alt text"
+            placeholder="Search files"
             aria-label="Search media"
           />
           <select
@@ -476,18 +473,18 @@ export default function AdminMediaPage() {
             value={kind}
             onChange={(event) => setKind(event.target.value)}
             className={inputClass}
-            aria-label="Filter by kind"
+            aria-label="Filter by type"
           >
-            <option value="">All kinds</option>
+            <option value="">All types</option>
             <option value="image">Images</option>
           </select>
           <select
             value={association}
             onChange={(event) => setAssociation(event.target.value)}
             className={inputClass}
-            aria-label="Filter by attached content"
+            aria-label="Filter by project or page"
           >
-            <option value="">All associations</option>
+            <option value="">All attachments</option>
             {ASSOCIATION_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type.replace(/_/g, " ")}
@@ -536,10 +533,9 @@ export default function AdminMediaPage() {
           </div>
         ) : items.length === 0 ? (
           <div className="mt-6 border border-dashed border-line-strong px-5 py-8">
-            <p className="text-sm text-paper">No assets match this view.</p>
+            <p className="text-sm text-paper">No files match this view.</p>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted">
-              Upload an image above, or clear the filters. Public pages fall back to typographic
-              layouts when no real image exists.
+              Upload an image above, or clear the filters.
             </p>
           </div>
         ) : (
@@ -572,9 +568,8 @@ export default function AdminMediaPage() {
                     {asset.attached_to_type ? (
                       <span className="inline-flex items-center gap-1 font-mono text-[0.5rem] uppercase tracking-[0.1em] text-faint">
                         <Link2 className="size-2.5" aria-hidden="true" />
-                        attached
-                      </span>
-                    ) : null}
+                        in use
+                      </span>                    ) : null}
                   </span>
                   <span className="block border-t border-line px-4 py-3">
                     <span className="block truncate text-sm text-paper">{asset.title}</span>
@@ -598,25 +593,25 @@ export default function AdminMediaPage() {
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
             <div>
               <h2 id="editor-heading" className={labelClass}>
-                Edit asset
+                Edit file
               </h2>
               <p className="mt-1 break-all font-mono text-[0.56rem] text-faint">{selected.url}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => copy(selected.url, "media URL")}
+                onClick={() => copy(selected.url, "file path")}
                 className={buttonStyles("secondary", "sm")}
               >
                 <Copy className="size-3.5" aria-hidden="true" />
-                Copy reference
+                Copy file path
               </button>
               <button
                 type="button"
-                onClick={() => copy(selected.filename, "filename")}
+                onClick={() => copy(selected.filename, "file name")}
                 className={buttonStyles("ghost", "sm", "border border-line")}
               >
-                Copy filename
+                Copy file name
               </button>
               <button type="button" onClick={closeEditor} className={buttonStyles("ghost", "sm")}>
                 Close
@@ -662,14 +657,13 @@ export default function AdminMediaPage() {
               <div className="mt-5 border border-line p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
-                    Usage
+                    Used on your website
                   </p>
                   <button
                     type="button"
                     onClick={() => void loadUsage(selected)}
                     className="text-muted hover:text-paper"
-                    aria-label="Refresh usage"
-                  >
+                    aria-label="Refresh usage"                  >
                     <RefreshCw
                       className={cn("size-3.5", usageBusy && "animate-spin")}
                       aria-hidden="true"
@@ -677,7 +671,7 @@ export default function AdminMediaPage() {
                   </button>
                 </div>
                 {usageBusy ? (
-                  <p className="mt-2 text-xs text-muted">Checking references…</p>
+                  <p className="mt-2 text-xs text-muted">Checking...</p>
                 ) : usage ? (
                   usage.count === 0 ? (
                     <p className="mt-2 text-xs text-muted">Not used anywhere yet.</p>
@@ -691,7 +685,7 @@ export default function AdminMediaPage() {
                           <li key={`${entry.type}-${entry.id}-${entry.field}`} className="text-xs">
                             <p className="truncate text-paper-dim">{entry.title}</p>
                             <p className="font-mono text-[0.5rem] uppercase tracking-[0.1em] text-faint">
-                              {entry.type} · {entry.field}
+                              {entry.type.replace(/_/g, " ")} · {entry.field.replace(/_/g, " ")}
                             </p>
                           </li>
                         ))}
@@ -700,7 +694,7 @@ export default function AdminMediaPage() {
                   )
                 ) : (
                   <p className="mt-2 text-xs text-muted">
-                    Usage could not be checked. Deleting asks the server to confirm references.
+                    We couldn't check where this file is used. You can still try to delete it.
                   </p>
                 )}
               </div>
@@ -721,7 +715,7 @@ export default function AdminMediaPage() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="edit-alt" className={labelClass}>
-                    Alt text
+                    Description
                   </label>
                   <input
                     id="edit-alt"
@@ -766,7 +760,7 @@ export default function AdminMediaPage() {
 
               <div className="border border-line p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className={labelClass}>Attachment</p>
+                  <p className={labelClass}>Where it's used</p>
                   {attached ? (
                     <button
                       type="button"
@@ -782,7 +776,7 @@ export default function AdminMediaPage() {
                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <label htmlFor="edit-association" className={labelClass}>
-                      Attach to
+                      Used in
                     </label>
                     <select
                       id="edit-association"
@@ -792,7 +786,7 @@ export default function AdminMediaPage() {
                       }
                       className={inputClass}
                     >
-                      <option value="">Not attached</option>
+                      <option value="">Not linked</option>
                       {ASSOCIATION_TYPES.map((type) => (
                         <option key={type} value={type}>
                           {type.replace(/_/g, " ")}
@@ -802,7 +796,7 @@ export default function AdminMediaPage() {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="edit-association-id" className={labelClass}>
-                      Content id
+                      Item ID
                     </label>
                     <input
                       id="edit-association-id"
@@ -811,22 +805,22 @@ export default function AdminMediaPage() {
                         setEdit({ ...edit, attached_to_id: event.target.value })
                       }
                       className={inputClass}
-                      placeholder="UUID of the project or entry"
+                      placeholder="ID of the project or entry"
                       disabled={!edit.attached_to_type}
                     />
                   </div>
                 </div>
                 <p className="mt-2 text-xs leading-relaxed text-muted">
-                  Attaching records which content an asset belongs to. Project and page image
-                  fields are what actually render on the public site.
+                  This links the file to a project or entry. Images appear on your website through
+                  the image fields in those editors.
                 </p>
               </div>
 
               <div className="border border-line p-4">
                 <p className={labelClass}>Replace file</p>
                 <p className="mt-2 text-xs leading-relaxed text-muted">
-                  Keeps the same filename and URL so existing references keep working. The new file
-                  must use the same extension ({selected.extension.toUpperCase()}).
+                  The file keeps the same name and link, so existing images keep working. The new
+                  file must be the same type ({selected.extension.toUpperCase()}).
                 </p>
                 <input
                   id="replace-file"
@@ -847,7 +841,7 @@ export default function AdminMediaPage() {
                   disabled={replacing || !replaceFile}
                   className={buttonStyles("secondary", "sm", "mt-3")}
                 >
-                  {replacing ? "Replacing…" : "Replace file"}
+                  {replacing ? "Replacing..." : "Replace file"}
                 </button>
               </div>
 
@@ -867,7 +861,7 @@ export default function AdminMediaPage() {
                   disabled={saving}
                   className={buttonStyles("primary", "sm")}
                 >
-                  {saving ? "Saving" : "Save metadata"}
+                  {saving ? "Saving..." : "Save changes"}
                 </button>
 
                 {confirmDelete ? (
@@ -879,10 +873,10 @@ export default function AdminMediaPage() {
                           aria-hidden="true"
                         />
                         Used in {usageCount} {usageCount === 1 ? "place" : "places"}. Deleting will
-                        leave broken references there.
+                        leave broken images on your website.
                       </p>
                     ) : (
-                      <p className="text-sm text-paper">Delete this asset permanently?</p>
+                      <p className="text-sm text-paper">Delete this file? This cannot be undone.</p>
                     )}
                     <div className="flex flex-wrap items-center gap-2">
                       <button
@@ -891,7 +885,7 @@ export default function AdminMediaPage() {
                         disabled={saving}
                         className={buttonStyles("secondary", "sm", "border-signal text-signal")}
                       >
-                        {usageCount > 0 ? "Delete anyway" : "Confirm delete"}
+                        {usageCount > 0 ? "Delete anyway" : "Delete"}
                       </button>
                       <button
                         type="button"

@@ -2,10 +2,12 @@ import { Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Checkbox, Field, Select, StatusBadge, TextArea, TextInput } from "@/components/admin/form";
+import { MediaField } from "@/components/admin/MediaField";
 import { AdminTable } from "@/components/admin/table";
 import { buttonStyles } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
+import { listMedia } from "@/services/auth.service";
 import { siteService } from "@/services/site.service";
 import type { ExperienceAdmin, ExperienceInput, PublishStatus } from "@/types/api";
 
@@ -15,6 +17,7 @@ const BLANK: ExperienceInput = {
   slug: null,
   location: null,
   description: null,
+  logo_url: null,
   started_on: null,
   ended_on: null,
   is_current: false,
@@ -30,6 +33,7 @@ function toInput(entry: ExperienceAdmin): ExperienceInput {
     slug: entry.slug,
     location: entry.location,
     description: entry.description,
+    logo_url: entry.logo_url,
     started_on: entry.started_on,
     ended_on: entry.ended_on,
     is_current: entry.is_current,
@@ -41,6 +45,7 @@ function toInput(entry: ExperienceAdmin): ExperienceInput {
 
 export default function AdminExperiencePage() {
   const entries = useApiQuery((signal) => siteService.listExperienceAdmin(signal), []);
+  const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<ExperienceInput>(BLANK);
   const [saving, setSaving] = useState(false);
@@ -62,7 +67,7 @@ export default function AdminExperiencePage() {
 
   const save = async () => {
     if (!form.organization.trim() || !form.title.trim()) {
-      setNotice({ tone: "error", text: "Organization and title are required." });
+      setNotice({ tone: "error", text: "Please add the organization and job title." });
       return;
     }
     setSaving(true);
@@ -77,17 +82,17 @@ export default function AdminExperiencePage() {
       };
       if (editing === "new") {
         await siteService.createExperience(payload);
-        setNotice({ tone: "ok", text: "Experience entry created." });
+        setNotice({ tone: "ok", text: "Experience added." });
       } else if (editing) {
         await siteService.updateExperience(editing, payload);
-        setNotice({ tone: "ok", text: "Experience entry updated." });
+        setNotice({ tone: "ok", text: "Experience updated." });
       }
       setEditing(null);
       entries.reload();
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The entry could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setSaving(false);
@@ -95,17 +100,17 @@ export default function AdminExperiencePage() {
   };
 
   const remove = async (entry: ExperienceAdmin) => {
-    if (!window.confirm(`Delete “${entry.title}” at ${entry.organization}?`)) return;
+    if (!window.confirm(`Delete “${entry.title}” at ${entry.organization}? This cannot be undone.`)) return;
     setSaving(true);
     try {
       await siteService.deleteExperience(entry.id);
       if (editing === entry.id) setEditing(null);
       entries.reload();
-      setNotice({ tone: "ok", text: "Experience entry deleted." });
+      setNotice({ tone: "ok", text: "Experience deleted." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The entry could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this entry. Please try again.",
       });
     } finally {
       setSaving(false);
@@ -121,8 +126,8 @@ export default function AdminExperiencePage() {
             Experience
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Roles, organizations, and what the work involved. Published entries appear on the
-            experience page and can be linked from the timeline.
+            Roles and organizations, and what the work involved. Published entries appear on your
+            Experience page.
           </p>
         </div>
         <button type="button" onClick={startNew} className={buttonStyles("primary", "md")}>
@@ -148,7 +153,7 @@ export default function AdminExperiencePage() {
         <section className="mt-6 border border-line-strong bg-ink-900/40 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
             <h2 className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-              {editing === "new" ? "New experience entry" : "Edit experience entry"}
+              {editing === "new" ? "Add experience" : "Edit experience"}
             </h2>
             <button type="button" onClick={() => setEditing(null)} className={buttonStyles("ghost", "sm")}>
               Cancel
@@ -160,18 +165,18 @@ export default function AdminExperiencePage() {
                 id="organization"
                 value={form.organization}
                 onChange={(event) => setForm({ ...form, organization: event.target.value })}
-                placeholder="Company or institution"
+                placeholder="Company or organisation"
               />
             </Field>
-            <Field label="Title" htmlFor="title" required>
+            <Field label="Job title" htmlFor="title" required>
               <TextInput
                 id="title"
                 value={form.title}
                 onChange={(event) => setForm({ ...form, title: event.target.value })}
-                placeholder="Role"
+                placeholder="e.g. Data Analyst"
               />
             </Field>
-            <Field label="Slug" htmlFor="slug" hint="Leave blank to generate one from the title.">
+            <Field label="Web address" htmlFor="slug" hint="Leave blank to create one from the job title.">
               <TextInput
                 id="slug"
                 value={form.slug ?? ""}
@@ -183,9 +188,10 @@ export default function AdminExperiencePage() {
                 id="location"
                 value={form.location ?? ""}
                 onChange={(event) => setForm({ ...form, location: event.target.value || null })}
+                placeholder="City or remote"
               />
             </Field>
-            <Field label="Started" htmlFor="started">
+            <Field label="Start date" htmlFor="started">
               <TextInput
                 id="started"
                 type="date"
@@ -193,7 +199,7 @@ export default function AdminExperiencePage() {
                 onChange={(event) => setForm({ ...form, started_on: event.target.value || null })}
               />
             </Field>
-            <Field label="Ended" htmlFor="ended" hint="Disabled while this is a current role.">
+            <Field label="End date" htmlFor="ended" hint="Not used while this is your current role.">
               <TextInput
                 id="ended"
                 type="date"
@@ -208,10 +214,23 @@ export default function AdminExperiencePage() {
                 rows={5}
                 value={form.description ?? ""}
                 onChange={(event) => setForm({ ...form, description: event.target.value || null })}
-                placeholder="What the role covered and what was delivered."
+                placeholder="What you did in this role and what you achieved."
               />
             </Field>
-            <Field label="Sort order" htmlFor="sort">
+            <Field label="Organization logo" className="sm:col-span-2">
+              <MediaField
+                value={form.logo_url ?? ""}
+                onChange={(value) => setForm({ ...form, logo_url: value || null })}
+                assets={media.data?.items ?? []}
+                loading={media.loading}
+                onUploaded={() => media.reload()}
+                folder="experience"
+                title={`${form.organization || "Experience"} logo`}
+                altText={form.organization ? `${form.organization} logo` : "Organization logo"}
+                emptyLabel="No logo uploaded."
+              />
+            </Field>
+            <Field label="Display order" htmlFor="sort">
               <TextInput
                 id="sort"
                 type="number"
@@ -219,7 +238,7 @@ export default function AdminExperiencePage() {
                 onChange={(event) => setForm({ ...form, sort_order: Number(event.target.value) || 0 })}
               />
             </Field>
-            <Field label="Publish status" htmlFor="status">
+            <Field label="Visibility" htmlFor="status">
               <Select
                 id="status"
                 value={form.publish_status}
@@ -227,8 +246,8 @@ export default function AdminExperiencePage() {
                   setForm({ ...form, publish_status: event.target.value as PublishStatus })
                 }
                 options={[
-                  { value: "draft", label: "Draft — private" },
-                  { value: "published", label: "Published — public" },
+                  { value: "draft", label: "Draft (private)" },
+                  { value: "published", label: "Published (visible on your website)" },
                   { value: "archived", label: "Archived" },
                 ]}
               />
@@ -242,7 +261,7 @@ export default function AdminExperiencePage() {
                 }
               />
               <Checkbox
-                label="Mark as placeholder"
+                label="This entry is not finished yet"
                 checked={form.is_placeholder}
                 onChange={(next) => setForm({ ...form, is_placeholder: next })}
               />
@@ -250,7 +269,7 @@ export default function AdminExperiencePage() {
           </div>
           <button type="button" onClick={save} disabled={saving} className={buttonStyles("primary", "sm", "mt-5")}>
             <Save className="size-3.5" aria-hidden="true" />
-            {saving ? "Saving…" : "Save entry"}
+            {saving ? "Saving..." : "Save experience"}
           </button>
         </section>
       ) : null}
@@ -258,12 +277,15 @@ export default function AdminExperiencePage() {
       <div className="mt-6">
         {entries.loading ? <LoadingState rows={3} label="Loading experience" /> : null}
         {!entries.loading && entries.error ? (
-          <ErrorState message={entries.error.detail} onRetry={entries.reload} />
+          <ErrorState
+            message="We couldn't load your experience. Please try again."
+            onRetry={entries.reload}
+          />
         ) : null}
         {!entries.loading && !entries.error && items.length === 0 ? (
           <EmptyState
-            title="No experience entries"
-            description="Add the first role. Nothing is shown publicly until it is published."
+            title="No experience yet"
+            description="Add your first role. It stays private until you publish it."
             action={
               <button type="button" onClick={startNew} className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />

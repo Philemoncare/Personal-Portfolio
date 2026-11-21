@@ -17,6 +17,7 @@ import {
   TextArea,
   TextInput,
 } from "@/components/admin/form";
+import { MediaField } from "@/components/admin/MediaField";
 import { buttonStyles } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiResource } from "@/hooks/useApiResource";
@@ -25,6 +26,7 @@ import {
   adminProjectsService,
   type AdminCaseStudyInput,
 } from "@/services/adminProjects.service";
+import { listMedia } from "@/services/auth.service";
 import type {
   AdminCaseStudy,
   AdminReference,
@@ -90,6 +92,7 @@ interface StudyFormState {
   title: string;
   slug: string;
   summary: string;
+  cover_image_url: string;
   status: PublishStatus;
   featured: boolean;
   sort_order: string;
@@ -115,6 +118,7 @@ function fromStudy(study: AdminCaseStudy): StudyFormState {
     title: study.title,
     slug: study.slug,
     summary: study.summary ?? "",
+    cover_image_url: study.cover_image_url ?? "",
     status: study.status,
     featured: study.featured,
     sort_order: String(study.sort_order),
@@ -131,6 +135,7 @@ function blankForm(): StudyFormState {
     title: "",
     slug: "",
     summary: "",
+    cover_image_url: "",
     status: "draft",
     featured: false,
     sort_order: "100",
@@ -152,6 +157,7 @@ function toPayload(form: StudyFormState, status: PublishStatus): AdminCaseStudyI
     title: form.title.trim(),
     slug: optional(form.slug),
     summary: optional(form.summary),
+    cover_image_url: optional(form.cover_image_url),
     overview: optional(form.sections.overview ?? ""),
     problem: optional(form.sections.problem ?? ""),
     context: optional(form.sections.context ?? ""),
@@ -200,6 +206,7 @@ export default function AdminCaseStudyEditorPage() {
     (signal) => adminProjectsService.listProjects({}, signal),
     [],
   );
+  const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
 
   useEffect(() => {
     if (!isNew) {
@@ -433,6 +440,19 @@ export default function AdminCaseStudyEditorPage() {
                   value={form.summary}
                   onChange={(event) => update("summary", event.target.value)}
                   placeholder="One sentence that explains the engineering story."
+                />
+              </Field>
+              <Field label="Cover image" className="sm:col-span-2">
+                <MediaField
+                  value={form.cover_image_url}
+                  onChange={(value) => update("cover_image_url", value)}
+                  assets={media.data?.items ?? []}
+                  loading={media.loading}
+                  onUploaded={() => media.reload()}
+                  folder="case-studies"
+                  title={form.title ? `${form.title} cover` : "Case study cover"}
+                  altText={form.title ? `${form.title} cover image` : "Case study cover image"}
+                  emptyLabel="No cover image uploaded."
                 />
               </Field>
             </div>

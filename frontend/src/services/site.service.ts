@@ -113,6 +113,7 @@ export const PAGE_KEYS: PageKeyMeta[] = [
   { key: "build-lab", label: "Build Lab", path: "/build-lab" },
   { key: "leadership", label: "Leadership", path: "/leadership" },
   { key: "experience", label: "Experience", path: "/experience" },
+  { key: "articles", label: "Articles", path: "/articles" },
   { key: "about", label: "About", path: "/about" },
   { key: "now", label: "Now", path: "/now" },
   { key: "timeline", label: "Timeline", path: "/timeline" },

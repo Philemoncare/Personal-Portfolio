@@ -41,7 +41,7 @@ function inquiryLabel(value: string | null): string {
 }
 
 const EMAIL_STATUS_COPY: Record<ContactMessageAdmin["email_status"], string> = {
-  not_configured: "Stored only — email delivery is not configured",
+  not_configured: "Saved only — email notifications are off",
   sent: "Notification email sent",
   failed: "Notification email failed",
 };
@@ -87,13 +87,13 @@ export default function AdminMessagesPage() {
         tone: "ok",
         text:
           status === "replied"
-            ? "Marked replied. Reply by email to actually deliver your answer."
-            : `Message marked ${status}.`,
+            ? "Marked as replied. Reply by email to send your answer."
+            : `Message marked as ${status}.`,
       });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The message status could not be changed.",
+        text: error instanceof Error ? error.message : "We couldn't update this message. Please try again.",
       });
     } finally {
       setBusyId(null);
@@ -108,7 +108,7 @@ export default function AdminMessagesPage() {
   };
 
   const remove = async (message: ContactMessageAdmin) => {
-    if (!window.confirm(`Delete the message from ${message.name} permanently?`)) return;
+    if (!window.confirm(`Delete the message from ${message.name}? This cannot be undone.`)) return;
     setBusyId(message.id);
     setNotice(null);
     try {
@@ -119,7 +119,7 @@ export default function AdminMessagesPage() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The message could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this message. Please try again.",
       });
     } finally {
       setBusyId(null);
@@ -131,7 +131,7 @@ export default function AdminMessagesPage() {
       await navigator.clipboard.writeText(value);
       setNotice({ tone: "ok", text: `Copied ${label}.` });
     } catch {
-      setNotice({ tone: "error", text: `Copy failed. The value is: ${value}` });
+      setNotice({ tone: "error", text: `Could not copy. The value is: ${value}` });
     }
   };
 
@@ -144,8 +144,7 @@ export default function AdminMessagesPage() {
             Messages
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Every submission from the public contact form is stored here before anything else
-            happens. Email notification is optional and its real status is shown per message.
+            Messages sent through the contact form appear here. Email notifications are optional.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -171,8 +170,8 @@ export default function AdminMessagesPage() {
           )}
           <p className="text-sm leading-relaxed text-paper-dim">
             {emailConfigured
-              ? "Email delivery is configured. New messages are stored and a notification is attempted."
-              : "Email delivery is not configured. Messages are stored only and must be reviewed here — no email is sent automatically."}
+              ? "Email notifications are on. New messages are saved here and an email is sent."
+              : "Email notifications are off. New messages are saved here and no email is sent."}
           </p>
         </div>
         {messages.data?.notification_email ? (
@@ -237,7 +236,7 @@ export default function AdminMessagesPage() {
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search name, email, subject, or text"
+            placeholder="Search messages"
             className="w-full border border-line bg-ink-950 py-2 pl-9 pr-3 font-sans text-sm text-paper placeholder:text-faint focus:border-line-strong focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
           />
         </div>
@@ -248,7 +247,7 @@ export default function AdminMessagesPage() {
           <LoadingState rows={4} label="Loading messages" />
         ) : null}
         {!messages.loading && messages.error ? (
-          <ErrorState message="Messages could not be loaded." onRetry={messages.reload} />
+          <ErrorState message="We couldn't load your messages. Please try again." onRetry={messages.reload} />
         ) : null}
         {!messages.loading && !messages.error && items.length === 0 ? (
           <EmptyState
@@ -256,7 +255,7 @@ export default function AdminMessagesPage() {
             description={
               search || statusFilter
                 ? "Try a different search term or status filter."
-                : "Contact form submissions will appear here once they are sent."
+                : "Messages sent from your contact form will appear here."
             }
           />
         ) : null}
@@ -487,8 +486,8 @@ export default function AdminMessagesPage() {
                   </div>
 
                   <p className="border-t border-line px-4 py-3 text-xs leading-relaxed text-muted sm:px-5">
-                    “Reply by email” opens your mail client with a prefilled subject. This app does
-                    not send replies itself, so the replied status is only a record of what you did.
+                    “Reply by email” opens your email app with the subject filled in. This app does
+                    not send replies, so the replied status simply records that you answered.
                   </p>
                 </article>
               ) : (
@@ -496,8 +495,7 @@ export default function AdminMessagesPage() {
                   <Mail className="size-6 text-faint" aria-hidden="true" />
                   <p className="mt-3 text-sm text-paper-dim">Select a message to read it here.</p>
                   <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted">
-                    Message bodies render as plain text only. HTML in a submission is never
-                    executed.
+                    Messages are shown as plain text.
                   </p>
                 </div>
               )}

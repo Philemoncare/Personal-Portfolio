@@ -16,21 +16,21 @@ const OPTIONS: Array<{
   {
     mode: "dark",
     label: "Dark",
-    description: "The designed primary look: ink surfaces with signal accents.",
+    description: "The default dark theme.",
     icon: Moon,
     swatch: ["#0a0a0b", "#15151a", "#ff5b3a"],
   },
   {
     mode: "light",
     label: "Light",
-    description: "A paper-toned alternative that keeps the same editorial structure.",
+    description: "A lighter theme with the same layout.",
     icon: Sun,
     swatch: ["#f6f4ef", "#ffffff", "#d94a2b"],
   },
   {
     mode: "system",
     label: "System",
-    description: "Follow the operating system preference and update when it changes.",
+    description: "Matches your device setting.",
     icon: Monitor,
     swatch: ["#0a0a0b", "#f6f4ef", "#ff5b3a"],
   },
@@ -43,17 +43,16 @@ export default function AdminAppearancePage() {
     <>
       <div className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Surface</p>
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Theme</p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
             Appearance
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Choose how the site renders on this device. Colour tokens, type, spacing, and motion
-            are shared between the public site and the admin so both stay consistent.
+            Choose how the site looks on this device.
           </p>
         </div>
         <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
-          Currently resolving to {resolved}
+          Currently {resolved}
         </span>
       </div>
 
@@ -107,23 +106,20 @@ export default function AdminAppearancePage() {
         })}
       </div>
 
-      <AdminPanel title="How this is stored" className="mt-6">
+      <AdminPanel title="About this setting" className="mt-6">
         <p className="max-w-2xl text-sm leading-relaxed text-paper-dim">
-          Your choice is saved in this browser only, under{" "}
-          <code className="font-mono text-[0.72rem] text-paper">phill:theme</code>. It is a display
-          preference, not published content, and it does not change what visitors see. Visitors use
-          their own system preference until they choose otherwise.
+          Your choice is saved in this browser only. It does not change what visitors see.
         </p>
         <p className="mt-3 text-xs leading-relaxed text-muted">
-          Site-wide colour values such as the accent come from{" "}
+          Site-wide colours, such as the accent colour, are set in{" "}
           <Link to="/admin/settings" className="text-paper underline underline-offset-4">
-            Settings → Site
-          </Link>
-          , which is stored in the database and applies to everyone.
+            Settings
+          </Link>{" "}
+          and apply to everyone.
         </p>
         <div className="mt-5">
           <Link to="/" className={buttonStyles("secondary", "sm")}>
-            Preview the public site
+            View website
           </Link>
         </div>
       </AdminPanel>

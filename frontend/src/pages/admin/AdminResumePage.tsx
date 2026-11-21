@@ -75,21 +75,21 @@ export default function AdminResumePage() {
   const submitUpload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!upload.title.trim() || !upload.version_label.trim()) {
-      setNotice({ tone: "error", text: "A title and version label are required." });
+      setNotice({ tone: "error", text: "Please add a title and a version label." });
       return;
     }
     if (!file) {
-      setNotice({ tone: "error", text: "Choose a PDF file to upload." });
+      setNotice({ tone: "error", text: "Please choose a PDF file." });
       return;
     }
     const looksPdf =
       file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
     if (!looksPdf) {
-      setNotice({ tone: "error", text: "Resume files must be PDF documents." });
+      setNotice({ tone: "error", text: "The file must be a PDF." });
       return;
     }
     if (file.size > MAX_BYTES) {
-      setNotice({ tone: "error", text: "Resume files must be 5 MB or smaller." });
+      setNotice({ tone: "error", text: "The file is too large. Resumes must be 5 MB or smaller." });
       return;
     }
 
@@ -106,11 +106,11 @@ export default function AdminResumePage() {
       setUpload(BLANK_UPLOAD);
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      setNotice({ tone: "ok", text: "Resume uploaded and stored." });
+      setNotice({ tone: "ok", text: "Resume uploaded." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The resume could not be uploaded.",
+        text: error instanceof Error ? error.message : "We couldn't upload this file. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -127,7 +127,7 @@ export default function AdminResumePage() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The resume could not be updated.",
+        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -143,7 +143,7 @@ export default function AdminResumePage() {
   const saveEdit = async () => {
     if (!editing) return;
     if (!editForm.title.trim() || !editForm.version_label.trim()) {
-      setNotice({ tone: "error", text: "A title and version label are required." });
+      setNotice({ tone: "error", text: "Please add a title and a version label." });
       return;
     }
     await patch(
@@ -155,7 +155,7 @@ export default function AdminResumePage() {
   };
 
   const remove = async (resume: ResumeAdmin) => {
-    if (!window.confirm(`Delete “${resume.title}” (${resume.version_label}) permanently?`)) {
+    if (!window.confirm(`Delete “${resume.title}” (${resume.version_label})? This cannot be undone.`)) {
       return;
     }
     setBusy(true);
@@ -168,7 +168,7 @@ export default function AdminResumePage() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The resume could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this resume. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -184,11 +184,11 @@ export default function AdminResumePage() {
         <div>
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Resume</p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Managed PDF
+            Resume
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Upload a PDF, keep versions, and publish exactly one current file. The public site only
-            ever links to the managed download route — storage paths are never exposed.
+            Upload a PDF of your resume. You can keep older versions and choose which one is
+            current.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -219,7 +219,7 @@ export default function AdminResumePage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <AdminPanel
           title="Upload a new version"
-          description="PDF only, 5 MB maximum. Drafts and archived files stay private; only a published current file is offered publicly."
+          description="PDF only, 5 MB maximum. Drafts stay private. Only the published current file appears on your website."
         >
           <form onSubmit={submitUpload} noValidate className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -228,10 +228,10 @@ export default function AdminResumePage() {
                   id="resume-title"
                   value={upload.title}
                   onChange={(event) => setUpload({ ...upload, title: event.target.value })}
-                  placeholder="For example: Full-Stack Resume"
+                  placeholder="e.g. My resume 2026"
                 />
               </Field>
-              <Field label="Version label" htmlFor="resume-version" required hint="Free text, e.g. 2026-01 or v3.">
+              <Field label="Version" htmlFor="resume-version" required hint="A short label, such as 2026-01 or v3.">
                 <TextInput
                   id="resume-version"
                   value={upload.version_label}
@@ -244,7 +244,7 @@ export default function AdminResumePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Publish status" htmlFor="resume-status">
+              <Field label="Visibility" htmlFor="resume-status">
                 <Select
                   id="resume-status"
                   value={upload.publish_status}
@@ -274,14 +274,14 @@ export default function AdminResumePage() {
                 checked={upload.is_current}
                 onChange={(checked) => setUpload({ ...upload, is_current: checked })}
                 label="Make this the current resume"
-                hint="Marks the file as current and publishes it. Other versions stop being current."
+                hint="Marks this version as current and publishes it. Other versions stop being current."
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
               <button type="submit" disabled={busy} className={buttonStyles("primary", "md")}>
                 <Upload className="size-4" aria-hidden="true" />
-                {busy ? "Uploading…" : "Upload resume"}
+                {busy ? "Uploading..." : "Upload resume"}
               </button>
               {file ? (
                 <span className="font-mono text-[0.56rem] uppercase tracking-[0.12em] text-muted">
@@ -295,10 +295,10 @@ export default function AdminResumePage() {
         <div className="space-y-6">
           <div className="border border-line bg-ink-900/60 p-5">
             <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-              Current PDF
+              Current resume
             </p>
             {resumes.loading ? (
-              <p className="mt-3 text-sm text-muted">Loading…</p>
+              <p className="mt-3 text-sm text-muted">Loading...</p>
             ) : current ? (
               <>
                 <p className="mt-3 text-sm font-medium text-paper">{current.title}</p>
@@ -321,20 +321,19 @@ export default function AdminResumePage() {
               </>
             ) : (
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                No current PDF. The public resume page shows the online record until a file is
-                published.
+                No current resume. Your online resume is shown until you publish a PDF.
               </p>
             )}
           </div>
 
           <div className="border border-line bg-ink-900/60 p-5">
             <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-              Storage behaviour
+              How files are stored
             </p>
             <ul className="mt-3 space-y-2 text-xs leading-relaxed text-muted">
-              <li>File names are generated by the server.</li>
-              <li>Only the download endpoint exposes a file.</li>
-              <li>Deleting a version removes the stored file.</li>
+              <li>File names are created automatically.</li>
+              <li>Files are only available through the download link.</li>
+              <li>Deleting a version removes the file.</li>
             </ul>
           </div>
         </div>
@@ -364,7 +363,7 @@ export default function AdminResumePage() {
                   onChange={(event) => setEditForm({ ...editForm, title: event.target.value })}
                 />
               </Field>
-              <Field label="Version label" htmlFor="edit-resume-version" required>
+              <Field label="Version" htmlFor="edit-resume-version" required>
                 <TextInput
                   id="edit-resume-version"
                   value={editForm.version_label}
@@ -382,7 +381,7 @@ export default function AdminResumePage() {
                 className={buttonStyles("primary", "md")}
               >
                 <Save className="size-4" aria-hidden="true" />
-                {busy ? "Saving…" : "Save details"}
+                {busy ? "Saving..." : "Save details"}
               </button>
               <button
                 type="button"
@@ -397,14 +396,14 @@ export default function AdminResumePage() {
       ) : null}
 
       <div className="mt-8">
-        {resumes.loading ? <LoadingState rows={3} label="Loading resumes" /> : null}
+        {resumes.loading ? <LoadingState rows={3} label="Loading resume" /> : null}
         {!resumes.loading && resumes.error ? (
-          <ErrorState message="Resume versions could not be loaded." onRetry={resumes.reload} />
+          <ErrorState message="We couldn't load your resume. Please try again." onRetry={resumes.reload} />
         ) : null}
         {!resumes.loading && !resumes.error && items.length === 0 ? (
           <EmptyState
-            title="No resume versions yet"
-            description="Upload the first PDF. It is stored privately until you publish it, and the online resume page works without it."
+            title="No resume uploaded yet"
+            description="Upload your first PDF. It stays private until you publish it. Your online resume works without it."
           />
         ) : null}
 

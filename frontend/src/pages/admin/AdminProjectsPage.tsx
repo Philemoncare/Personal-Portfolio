@@ -18,6 +18,7 @@ import { buttonStyles } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { adminProjectsService } from "@/services/adminProjects.service";
+import { githubService } from "@/services/github.service";
 import type { AdminProject, PublishStatus } from "@/types/api";
 import { cn } from "@/utils/cn";
 import { relativeTime } from "@/utils/format";
@@ -43,6 +44,7 @@ export default function AdminProjectsPage() {
     (signal) => adminProjectsService.listProjects({}, signal),
     [],
   );
+  const github = useApiQuery((signal) => githubService.status(signal), []);
   const [statusFilter, setStatusFilter] = useState<"" | PublishStatus>("");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export default function AdminProjectsPage() {
       projects.reload();
       setNotice(message);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The action failed.");
+      setNotice(error instanceof Error ? error.message : "Something went wrong. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -90,14 +92,16 @@ export default function AdminProjectsPage() {
   const changeStatus = (project: AdminProject, status: PublishStatus) => {
     if (status === "archived" && project.status !== "archived") {
       const confirmed = window.confirm(
-        `Archive ${project.title}? It will disappear from public listings until it is published again.`,
+        `Archive "${project.title}"? It will be hidden from your website until you publish it again.`,
       );
       if (!confirmed) return;
     }
     void run(
       `${project.id}:${status}`,
       () => adminProjectsService.setProjectStatus(project.id, status),
-      `${project.title} is now ${status}.`,
+      `"${project.title}" ${
+        status === "draft" ? "saved as a draft." : status === "published" ? "published." : "archived."
+      }`,
     );
   };
 
@@ -111,13 +115,13 @@ export default function AdminProjectsPage() {
 
   const remove = (project: AdminProject) => {
     const confirmed = window.confirm(
-      `Delete ${project.title} permanently? This also removes its media rows and cannot be undone.`,
+      `Delete "${project.title}"? This cannot be undone.`,
     );
     if (!confirmed) return;
     void run(
       `${project.id}:delete`,
       () => adminProjectsService.deleteProject(project.id),
-      `${project.title} was deleted.`,
+      `"${project.title}" was deleted.`,
     );
   };
 
@@ -140,20 +144,20 @@ export default function AdminProjectsPage() {
       <div className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">
-            Work system
+            Work
           </p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
             Projects
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Create, edit, publish, archive, duplicate, and reorder project records. Everything
-            here is stored in the database and served by the same API the public site reads.
+            Add, edit and publish the projects shown on your website. You can also archive
+            projects and change the order they appear in.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/admin/projects/new" className={buttonStyles("secondary", "md")}>
             <Plus className="size-4" aria-hidden="true" />
-            Create project
+            Add project
           </Link>
           <Link to="/admin/github" className={buttonStyles("primary", "md")}>
             <GitBranch className="size-4" aria-hidden="true" />
@@ -165,14 +169,23 @@ export default function AdminProjectsPage() {
       <div className="mt-4 flex flex-wrap items-center gap-3 border border-line bg-ink-800/40 px-4 py-3 text-xs text-paper-dim">
         <GitBranch className="size-4 text-signal" aria-hidden="true" />
         <span>
-          GitHub-linked projects appear with a GitHub source marker. Imports always start as
-          drafts and can be synchronized without overwriting editorial content.
+          {github.loading
+            ? "Checking GitHub..."
+            : github.data?.connected
+              ? `GitHub connected as @${github.data.connection?.username ?? "unknown"}${
+                  github.data.connection?.repository_count != null
+                    ? ` · ${github.data.connection.repository_count.toLocaleString()} repositories`
+                    : ""
+                }. Imported projects start as drafts, and syncing never overwrites content you have edited.`
+              : github.data?.configured
+                ? "GitHub is not connected. Connect an account to import repositories. You can still add projects manually."
+                : "GitHub is not set up on this server. You can still add projects manually."}
         </span>
         <Link
           to="/admin/integrations/github"
           className="ml-auto inline-flex items-center gap-1 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-signal hover:underline"
         >
-          GitHub settings
+          {github.data?.connected ? "Manage connection" : "GitHub settings"}
           <ArrowUpRight className="size-3" aria-hidden="true" />
         </Link>
       </div>
@@ -209,7 +222,7 @@ export default function AdminProjectsPage() {
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search title, slug, category…"
+            placeholder="Search projects"
             aria-label="Search projects"
             className="h-10 w-full border border-line bg-ink-950 pl-9 pr-3 text-sm text-paper placeholder:text-faint focus:border-line-strong focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
           />
@@ -226,21 +239,21 @@ export default function AdminProjectsPage() {
       ) : null}
 
       <div className="mt-6">
-        {projects.loading ? <LoadingState rows={4} label="Loading admin projects" /> : null}
+        {projects.loading ? <LoadingState rows={4} label="Loading projects" /> : null}
         {!projects.loading && projects.error ? (
           <ErrorState
-            message="The admin project list could not be loaded."
+            message="We couldn't load your projects. Please try again."
             onRetry={projects.reload}
           />
         ) : null}
         {!projects.loading && !projects.error && all.length === 0 ? (
           <EmptyState
             title="No projects yet"
-            description="Create the first project record. It starts as a draft and stays private until you publish it."
+            description="Add your first project. It stays private until you publish it."
             action={
               <Link to="/admin/projects/new" className={buttonStyles("secondary", "sm")}>
                 <Plus className="size-3.5" aria-hidden="true" />
-                New project
+                Add project
               </Link>
             }
           />
@@ -248,7 +261,7 @@ export default function AdminProjectsPage() {
         {!projects.loading && !projects.error && all.length > 0 && items.length === 0 ? (
           <EmptyState
             title="No projects match this view"
-            description="Change the status tab or clear the search to see the rest of the index."
+            description="Try a different status or clear your search."
             action={
               <button
                 type="button"
@@ -258,7 +271,7 @@ export default function AdminProjectsPage() {
                   setStatusFilter("");
                 }}
               >
-                Reset view
+                Clear filters
               </button>
             }
           />
@@ -266,20 +279,21 @@ export default function AdminProjectsPage() {
 
         {items.length > 0 ? (
           <div className="border border-line">
-            <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_7rem_9rem_7rem_8rem_11rem] gap-4 border-b border-line bg-ink-800/50 px-4 py-3 font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted xl:grid">
+            <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_7rem_9rem_7rem_8rem_6rem_11rem] gap-4 border-b border-line bg-ink-800/50 px-4 py-3 font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted xl:grid">
               <span>Order</span>
               <span>Project</span>
               <span>Source</span>
               <span>Category</span>
               <span>Stage</span>
-              <span>Publish</span>
+              <span>Status</span>
+              <span>Updated</span>
               <span className="text-right">Actions</span>
             </div>
             <ul className="divide-y divide-line">
               {items.map((project) => (
                 <li
                   key={project.id}
-                  className="grid gap-3 px-4 py-4 xl:grid-cols-[2.5rem_minmax(0,1fr)_7rem_9rem_7rem_8rem_11rem] xl:items-center xl:gap-4"
+                  className="grid gap-3 px-4 py-4 xl:grid-cols-[2.5rem_minmax(0,1fr)_7rem_9rem_7rem_8rem_6rem_11rem] xl:items-center xl:gap-4"
                 >
                   <div className="flex items-center gap-2 font-mono text-[0.58rem] text-faint">
                     <span className="tabular-nums">{String(project.sort_order).padStart(3, "0")}</span>
@@ -348,6 +362,12 @@ export default function AdminProjectsPage() {
                     {PROJECT_STAGE_LABELS[project.project_status]}
                   </span>
                   <StatusBadge status={project.status} />
+                  <span
+                    className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted"
+                    title={project.updated_at}
+                  >
+                    {relativeTime(project.updated_at)}
+                  </span>
 
                   <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
                     <Link
@@ -366,7 +386,7 @@ export default function AdminProjectsPage() {
                       title={
                         project.status === "published"
                           ? "Open the public page"
-                          : "Preview this record before publishing"
+                          : "Preview this project before publishing"
                       }
                     >
                       <Eye className="size-3.5" aria-hidden="true" />
@@ -437,10 +457,10 @@ export default function AdminProjectsPage() {
 
       <p className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
         <span>
-          {items.length} of {all.length} records
+          Showing {items.length} of {all.length} projects
         </span>
         <Link to="/work" className="inline-flex items-center gap-1.5 hover:text-paper">
-          Public work index
+          View work page
           <ArrowUpRight className="size-3" aria-hidden="true" />
         </Link>
       </p>

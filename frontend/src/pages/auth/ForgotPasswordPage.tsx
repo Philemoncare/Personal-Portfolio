@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       setError(
         cause instanceof ApiError
           ? cause.detail
-          : "The request could not be sent. Check your connection and try again.",
+          : "Could not send the code. Check your connection and try again.",
       );
     } finally {
       setSubmitting(false);
@@ -46,12 +46,12 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthLayout
-      eyebrow="Account recovery"
-      title="Request a reset code."
-      description="Recovery is delivered by SMS to the verification number on the administrator record. If no account matches, the same message is shown."
+      eyebrow="Password reset"
+      title="Reset your password"
+      description="Enter the email address or phone number linked to your account. We'll send a verification code."
       meta={
         <p className="text-xs leading-relaxed text-muted">
-          Codes are single-use, expire after five minutes, and are stored only as a hash.
+          Each code can be used once and expires after five minutes.
         </p>
       }
       footer={
@@ -67,8 +67,8 @@ export default function ForgotPasswordPage() {
       <form onSubmit={onSubmit} className="space-y-5" noValidate>
         <Field
           id="identifier"
-          label="Email or phone"
-          hint="Use the address or Ghana mobile number on the administrator record."
+          label="Email or phone number"
+          hint="Use the email address or phone number linked to your account."
         >
           <input
             id="identifier"
@@ -79,7 +79,7 @@ export default function ForgotPasswordPage() {
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
             className={inputClassName}
-            placeholder="you@example.com"
+            placeholder="Enter your email or phone number"
             disabled={submitting}
           />
         </Field>
@@ -91,13 +91,13 @@ export default function ForgotPasswordPage() {
           className={buttonStyles("primary", "md", "w-full")}
           disabled={submitting || identifier.trim().length < 3}
         >
-          {submitting ? <InlineLoading label="Requesting" /> : "Send reset code"}
+          {submitting ? <InlineLoading label="Sending" /> : "Send code"}
           {!submitting ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
         </button>
 
         <p className="border-t border-line pt-4 text-xs leading-relaxed text-faint">
-          Recovery requires a verification phone. An account without one must be reset by an
-          operator with server access.
+          If you cannot receive the code, ask the person who manages this website to reset your
+          password for you.
         </p>
       </form>
     </AuthLayout>

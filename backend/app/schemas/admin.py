@@ -13,6 +13,14 @@ ProjectStage = Literal["in_progress", "active", "completed", "archived", "experi
 PrimaryMode = Literal["build", "data", "lead", "explore"]
 MediaType = Literal["image", "diagram", "video"]
 DeploymentStatus = Literal["not_deployed", "deploying", "live", "failed", "offline"]
+PreviewStatus = Literal[
+    "not_discovered",
+    "awaiting_verification",
+    "verified",
+    "generated",
+    "unavailable",
+    "unreachable",
+]
 
 SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 
@@ -103,6 +111,26 @@ class ProjectStatusInput(BaseModel):
     status: PublishStatus
 
 
+class ProjectPreviewRequest(BaseModel):
+    """Optional URL override used when the admin approves a corrected URL."""
+
+    url: str | None = Field(default=None, max_length=500)
+
+
+class ProjectPreviewOut(BaseModel):
+    project_id: UUID
+    live_url: str | None
+    preview_image: str | None
+    preview_status: PreviewStatus
+    preview_source: str | None
+    preview_source_url: str | None
+    preview_checked_at: datetime | None
+    preview_error: str | None
+    verified: bool = False
+    final_url: str | None = None
+    message: str | None = None
+
+
 class ProjectReorderInput(BaseModel):
     ids: list[UUID]
 
@@ -141,6 +169,12 @@ class ProjectAdminOut(ORMModel):
     embed_enabled: bool
     last_verified_at: datetime | None
     public_visibility: bool
+    preview_image: str | None = None
+    preview_status: PreviewStatus = "not_discovered"
+    preview_source: str | None = None
+    preview_source_url: str | None = None
+    preview_checked_at: datetime | None = None
+    preview_error: str | None = None
     github_stars: int | None
     github_forks: int | None
     github_language: str | None
@@ -173,6 +207,7 @@ class CaseStudyInput(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     slug: str | None = Field(default=None, max_length=200, pattern=SLUG_PATTERN)
     summary: str | None = None
+    cover_image_url: str | None = Field(default=None, max_length=1000)
     overview: str | None = None
     problem: str | None = None
     context: str | None = None
@@ -207,6 +242,7 @@ class CaseStudyAdminOut(ORMModel):
     title: str
     slug: str
     summary: str | None
+    cover_image_url: str | None
     overview: str | None
     problem: str | None
     context: str | None

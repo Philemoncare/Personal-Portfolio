@@ -20,6 +20,7 @@ class GitHubConnectionOut(BaseModel):
     scopes: list[str] = []
     repository_access: str | None = None
     private_repository_access: bool = False
+    repository_count: int | None = None
     connected_at: datetime | None = None
     updated_at: datetime | None = None
     revoked_at: datetime | None = None
@@ -154,6 +155,7 @@ class LiveUrlCandidateOut(BaseModel):
     url: str
     source: str
     confidence: str
+    source_key: str | None = None
 
 
 class CategorySuggestionOut(BaseModel):
@@ -236,6 +238,7 @@ class GitHubImportRequest(BaseModel):
     primary_mode: str = "build"
     project_status: str = "in_progress"
     import_images: bool = True
+    generate_preview: bool = True
 
 
 class GitHubImportResultOut(BaseModel):
@@ -295,6 +298,8 @@ class GitHubImportLogOut(BaseModel):
 
     id: UUID
     project_id: UUID | None
+    user_id: UUID | None = None
+    user_email: str | None = None
     repository_id: str
     repository_full_name: str
     action: str

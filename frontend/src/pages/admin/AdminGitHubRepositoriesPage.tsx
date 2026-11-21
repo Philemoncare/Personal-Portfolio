@@ -83,6 +83,13 @@ function repositoryStatus(repo: GitHubRepository): { label: string; tone: "defau
   return { label: "Draft", tone: "warn" };
 }
 
+function syncStatus(repo: GitHubRepository): { label: string; tone: "good" | "warn" } | null {
+  if (!repo.linked_project_id) return null;
+  if (repo.sync_available) return { label: "Sync available", tone: "warn" };
+  if (repo.last_synced_at) return { label: "Synced", tone: "good" };
+  return null;
+}
+
 function Metric({
   icon: Icon,
   value,
@@ -106,6 +113,7 @@ function Metric({
 
 function RepositoryRow({ repo }: { repo: GitHubRepository }) {
   const status = repositoryStatus(repo);
+  const sync = syncStatus(repo);
   return (
     <li className="grid gap-4 px-4 py-5 xl:grid-cols-[minmax(0,1fr)_12rem_11rem_10rem_11rem] xl:items-start">
       <div className="min-w-0">
@@ -119,11 +127,16 @@ function RepositoryRow({ repo }: { repo: GitHubRepository }) {
           {repo.archived ? <StatusPill label="Archived" tone="warn" /> : null}
           {repo.fork ? <StatusPill label="Fork" /> : null}
           <StatusPill label={status.label} tone={status.tone} />
-          {repo.sync_available ? <StatusPill label="Sync available" tone="warn" /> : null}
+          {sync ? <StatusPill label={sync.label} tone={sync.tone} /> : null}
         </div>
         <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-paper-dim">
           {repo.description || "No description provided on GitHub."}
         </p>
+        {repo.fork ? (
+          <p className="mt-1.5 text-[0.68rem] leading-relaxed text-warning">
+            Fork of another repository. Attribute the original work before publishing.
+          </p>
+        ) : null}
         {repo.topics.length > 0 ? (
           <div className="mt-2 flex flex-wrap gap-1">
             {repo.topics.slice(0, 5).map((topic) => (
@@ -215,12 +228,30 @@ function RepositoryRow({ repo }: { repo: GitHubRepository }) {
   );
 }
 
+type SortKey = "updated" | "name" | "stars" | "created";
+
+function sortRepositories(items: GitHubRepository[], key: SortKey): GitHubRepository[] {
+  const time = (value: string | null) => (value ? new Date(value).getTime() : 0);
+  return [...items].sort((a, b) => {
+    if (key === "name") return a.full_name.localeCompare(b.full_name);
+    if (key === "stars") return b.stargazers_count - a.stargazers_count;
+    if (key === "created") return time(b.created_at) - time(a.created_at);
+    return time(b.updated_at) - time(a.updated_at);
+  });
+}
+
 function RepositoryBrowser() {
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");
   const [view, setView] = useState<View>("all");
   const [language, setLanguage] = useState("");
+  const [sort, setSort] = useState<SortKey>("updated");
+  const [limit, setLimit] = useState(30);
   const [nonce, setNonce] = useState(0);
+
+  useEffect(() => {
+    setLimit(30);
+  }, [term, view, language, sort]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setTerm(search.trim()), 300);
@@ -249,13 +280,13 @@ function RepositoryBrowser() {
       ),
     [repositories],
   );
-  const visible = useMemo(
-    () =>
-      language
-        ? repositories.filter((repo) => (repo.language || "").toLowerCase() === language.toLowerCase())
-        : repositories,
-    [repositories, language],
-  );
+  const visible = useMemo(() => {
+    const filtered = language
+      ? repositories.filter((repo) => (repo.language || "").toLowerCase() === language.toLowerCase())
+      : repositories;
+    return sortRepositories(filtered, sort);
+  }, [repositories, language, sort]);
+  const shown = visible.slice(0, limit);
 
   return (
     <>
@@ -279,6 +310,20 @@ function RepositoryBrowser() {
           ))}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="sr-only" htmlFor="github-sort">
+            Sort repositories
+          </label>
+          <select
+            id="github-sort"
+            value={sort}
+            onChange={(event) => setSort(event.target.value as SortKey)}
+            className="h-10 border border-line bg-background px-3 font-mono text-[0.62rem] uppercase tracking-[0.08em] text-paper focus:border-line-strong focus:outline-none"
+          >
+            <option value="updated">Recently updated</option>
+            <option value="created">Newest</option>
+            <option value="stars">Most stars</option>
+            <option value="name">Name A–Z</option>
+          </select>
           <label className="sr-only" htmlFor="github-language">
             Filter by language
           </label>
@@ -365,16 +410,27 @@ function RepositoryBrowser() {
             <span className="text-right">Actions</span>
           </div>
           <ul className="divide-y divide-line">
-            {visible.map((repo) => (
+            {shown.map((repo) => (
               <RepositoryRow key={repo.id} repo={repo} />
             ))}
           </ul>
+          {visible.length > shown.length ? (
+            <div className="border-t border-line px-4 py-3 text-center">
+              <button
+                type="button"
+                onClick={() => setLimit((value) => value + 30)}
+                className={buttonStyles("outline", "sm")}
+              >
+                Load {Math.min(30, visible.length - shown.length)} more
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
         <span>
-          {visible.length} of {repositories.length} loaded repositories
+          Showing {shown.length} of {visible.length} loaded repositories
           {query.data?.truncated ? " · result limit reached" : ""}
         </span>
         <span className="flex flex-wrap items-center gap-3">
@@ -419,6 +475,28 @@ export default function AdminGitHubRepositoriesPage() {
           </Link>
         </div>
       </div>
+
+      {status.data?.connected ? (
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border border-line bg-ink-800/40 px-4 py-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-muted">
+          <span className="inline-flex items-center gap-2 text-paper">
+            <GitBranch className="size-3.5 text-signal" aria-hidden="true" />
+            Connected as @{status.data.connection?.username ?? "unknown"}
+          </span>
+          <span>
+            Repositories:{" "}
+            {status.data.connection?.repository_count === null ||
+            status.data.connection?.repository_count === undefined
+              ? "not counted yet"
+              : status.data.connection.repository_count.toLocaleString()}
+          </span>
+          <span>
+            Access:{" "}
+            {status.data.connection?.private_repository_access
+              ? "public + private"
+              : "public only"}
+          </span>
+        </div>
+      ) : null}
 
       <div className="mt-6">
         {status.loading ? <LoadingState rows={3} label="Checking GitHub connection" /> : null}
