@@ -37,11 +37,12 @@ def _sign(value: str) -> str:
     ).hexdigest()
 
 
-def create_oauth_state(user_id: uuid.UUID) -> str:
+def create_oauth_state(user_id: uuid.UUID, origin: str | None = None) -> str:
     payload = {
         "u": str(user_id),
         "n": secrets.token_urlsafe(16),
         "t": int(time.time()),
+        "o": origin or "",
     }
     encoded = base64.urlsafe_b64encode(
         json.dumps(payload, separators=(",", ":")).encode("utf-8")
@@ -49,7 +50,7 @@ def create_oauth_state(user_id: uuid.UUID) -> str:
     return f"{encoded}.{_sign(encoded)}"
 
 
-def verify_oauth_state(state: str | None) -> uuid.UUID | None:
+def verify_oauth_state_info(state: str | None) -> dict[str, Any] | None:
     if not state or "." not in state:
         return None
     encoded, signature = state.rsplit(".", 1)
@@ -59,12 +60,18 @@ def verify_oauth_state(state: str | None) -> uuid.UUID | None:
         payload = json.loads(base64.urlsafe_b64decode(encoded.encode("ascii")))
         created = int(payload["t"])
         user_id = uuid.UUID(str(payload["u"]))
+        origin = str(payload.get("o") or "")
     except (ValueError, KeyError, TypeError):
         return None
     ttl = settings.github_oauth_state_ttl_minutes * 60
     if time.time() - created > ttl:
         return None
-    return user_id
+    return {"user_id": user_id, "origin": origin}
+
+
+def verify_oauth_state(state: str | None) -> uuid.UUID | None:
+    info = verify_oauth_state_info(state)
+    return info["user_id"] if info else None
 
 
 def build_authorize_url(state: str) -> str:

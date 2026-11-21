@@ -159,6 +159,7 @@ def github_status(
 
 @router.get("/integrations/github/connect", response_model=GitHubConnectOut)
 def github_connect(
+    request: Request,
     response: Response,
     admin: AdminUser = Depends(get_current_admin),
 ) -> GitHubConnectOut:
@@ -170,7 +171,14 @@ def github_connect(
                 "GITHUB_CLIENT_SECRET, and GITHUB_REDIRECT_URI."
             ),
         )
-    state = auth.create_oauth_state(admin.id)
+    origin = ""
+    referer = request.headers.get("referer") or request.headers.get("origin")
+    if referer:
+        from urllib.parse import urlparse
+        parsed = urlparse(referer)
+        origin = f"{parsed.scheme}://{parsed.netloc}"
+
+    state = auth.create_oauth_state(admin.id, origin=origin)
     authorize_url = auth.build_authorize_url(state)
     response.set_cookie(
         OAUTH_COOKIE,
@@ -189,11 +197,12 @@ def github_connect(
     )
 
 
-def _frontend_redirect(kind: str, reason: str | None = None) -> RedirectResponse:
+def _frontend_redirect(kind: str, reason: str | None = None, base_url: str | None = None) -> RedirectResponse:
     params = {"github": kind}
     if reason:
         params["reason"] = reason
-    url = f"{settings.frontend_public_url}/admin/integrations/github?{urlencode(params)}"
+    target_base = (base_url or settings.frontend_public_url).rstrip("/")
+    url = f"{target_base}/admin/integrations/github?{urlencode(params)}"
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 
 
@@ -206,17 +215,33 @@ async def github_callback(
     error_description: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> RedirectResponse:
+    state_info = auth.verify_oauth_state_info(state)
+    target_origin = state_info.get("origin") if state_info else None
+    if not target_origin:
+        referer = request.headers.get("referer") or request.headers.get("origin")
+        if referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            target_origin = f"{parsed.scheme}://{parsed.netloc}"
+
     if error:
         logger.info("GitHub OAuth denied by user: %s", error)
-        return _frontend_redirect("error", error_description or error)
+        return _frontend_redirect("error", error_description or error, base_url=target_origin)
 
-    user_id = auth.verify_oauth_state(state)
-    if user_id is None:
-        return _frontend_redirect("error", "The GitHub authorization state is invalid or expired.")
+    if not state_info:
+        return _frontend_redirect("error", "The GitHub authorization state is invalid or expired.", base_url=target_origin)
 
-    cookie_state = request.cookies.get(OAUTH_COOKIE)
-    if not cookie_state or not state or not hmac.compare_digest(cookie_state, state):
-        return _frontend_redirect("error", "The GitHub authorization could not be verified.")
+    user_id = state_info["user_id"]
+
+    session_token = request.cookies.get(settings.session_cookie_name) or ""
+    admin = resolve_session(db, session_token)
+    if admin is None or admin.id != user_id:
+        admin = db.get(AdminUser, user_id)
+
+    if admin is None or not admin.is_active:
+        return _frontend_redirect(
+            "error", "Your admin session expired before GitHub finished connecting.", base_url=target_origin
+        )
 
     session_token = request.cookies.get(settings.session_cookie_name) or ""
     admin = resolve_session(db, session_token)
