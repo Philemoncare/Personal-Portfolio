@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { label: "About", to: "/about" },
   { label: "Now", to: "/now" },
   { label: "Contact", to: "/contact" },
+  { label: "Arcade 🎮", to: "/arcade" },
 ];
 
 export function Header() {

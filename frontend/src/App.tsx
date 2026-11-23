@@ -28,6 +28,7 @@ const NowPage = lazy(() => import("@/pages/NowPage"));
 const TimelinePage = lazy(() => import("@/pages/TimelinePage"));
 const ResumePage = lazy(() => import("@/pages/ResumePage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const ArcadePage = lazy(() => import("@/pages/ArcadePage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const AdminLoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const VerifyOtpPage = lazy(() => import("@/pages/auth/VerifyOtpPage"));
@@ -125,6 +126,7 @@ export default function App() {
             <Route path="timeline" element={<TimelinePage />} />
             <Route path="resume" element={<ResumePage />} />
             <Route path="contact" element={<ContactPage />} />
+            <Route path="arcade" element={<ArcadePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 

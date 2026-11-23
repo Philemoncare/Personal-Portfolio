@@ -19,6 +19,7 @@ const INDEX_LINKS = [
   { label: "Timeline", to: "/timeline" },
   { label: "Resume", to: "/resume" },
   { label: "Contact", to: "/contact" },
+  { label: "Arcade 🎮", to: "/arcade" },
 ];
 
 function profileRoles(title: string | null | undefined): string[] {
