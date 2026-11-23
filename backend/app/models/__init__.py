@@ -1,14 +1,6 @@
 """Import every model so Alembic and relationship resolution see them."""
 
-from app.models.data import (
-    DataInsight,
-    DataProject,
-    DataProjectCategory,
-    DataResource,
-    DataTool,
-    DataVisualization,
-    data_project_tools,
-)
+from app.models.analytics import AnalyticsVisit
 from app.models.content import (
     Article,
     Certificate,
@@ -18,6 +10,15 @@ from app.models.content import (
     Skill,
     SkillGroup,
     TimelineEntry,
+)
+from app.models.data import (
+    DataInsight,
+    DataProject,
+    DataProjectCategory,
+    DataResource,
+    DataTool,
+    DataVisualization,
+    data_project_tools,
 )
 from app.models.identity import Resume, SiteProfile
 from app.models.integration import GitHubConnection, GitHubImportLog
@@ -37,6 +38,7 @@ from app.models.user import ActivityLog, AdminUser, AuthSession, OtpVerification
 __all__ = [
     "ActivityLog",
     "AdminUser",
+    "AnalyticsVisit",
     "ArkeselWebhookEvent",
     "Article",
     "AuthSession",

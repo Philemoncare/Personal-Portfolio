@@ -27,11 +27,11 @@ export function CurrentlyBuilding() {
           eyebrow="Currently building"
           title={
             <span id="currently-building-heading">
-              A live status{" "}
-              <span className="display-serif text-signal">board.</span>
+              What I am working on{" "}
+              <span className="display-serif text-signal">now.</span>
             </span>
           }
-          description="The current build, the learning track, and the open questions behind it. Updated directly from the Now record."
+          description="Current work, things I am learning and open questions. Updated by hand."
           action={
             <Link to="/now" className={buttonStyles("secondary", "sm")}>
               Read the Now page
@@ -45,11 +45,11 @@ export function CurrentlyBuilding() {
           {!loading && error ? <ErrorState message={error.detail} onRetry={reload} /> : null}
           {!loading && !error && published.length === 0 ? (
             <EmptyState
-              title="No current updates are published"
-              description="The status board is intentionally quiet rather than speculative. Updates appear once they are published from the Now page."
+              title="No current updates yet"
+              description="Updates will appear here once they are added."
               action={
                 <Link to="/contact" className={buttonStyles("secondary", "sm")}>
-                  Ask what is in progress
+                  Get in touch
                 </Link>
               }
             />
@@ -112,9 +112,9 @@ export function CurrentlyBuilding() {
         </div>
 
         <p className="mt-5 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-          Status is updated from the Now record / no percentage estimates
+          Updated by hand / no made-up progress percentages
           {withheld > 0
-            ? ` / ${withheld} update${withheld === 1 ? "" : "s"} withheld until verified`
+            ? ` / ${withheld} update${withheld === 1 ? "" : "s"} not shown yet`
             : ""}
         </p>
       </Container>

@@ -9,11 +9,11 @@ export function InfoStrip({
   availability: string | null;
 }) {
   const items = [
-    { label: "Based in", value: location || "Location not listed" },
+    { label: "Based in", value: location || "Not listed" },
     { label: "Focus", value: "Full-stack development" },
-    { label: "Practice", value: "Data & analytics" },
+    { label: "Also", value: "Data and analytics" },
     {
-      label: "Status",
+      label: "Availability",
       value: availability || "Open to collaboration",
       accent: true,
     },

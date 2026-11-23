@@ -16,7 +16,7 @@ export function ContactCta() {
           <div>
             <div className="flex items-center justify-between gap-3 border-t border-line pt-5">
               <Eyebrow index="07">Contact</Eyebrow>
-              <span className="type-meta text-faint">Open channel / 07</span>
+              <span className="type-meta text-faint">Contact / 07</span>
             </div>
 
             <h2
@@ -29,14 +29,14 @@ export function ContactCta() {
             </h2>
 
             <p className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-paper-dim sm:text-lg">
-              Let&apos;s build something useful. Tell me what you are working on, what is getting
-              in the way, and what a good outcome looks like.
+              Tell me what you are working on, what is in the way and what a good result looks
+              like.
             </p>
           </div>
 
           <div className="lg:pb-1">
             <Link to="/contact" className={buttonStyles("primary", "lg", "w-full sm:w-auto")}>
-              Start a conversation
+              Get in touch
               <ArrowUpRight className="size-4" aria-hidden="true" />
             </Link>
 

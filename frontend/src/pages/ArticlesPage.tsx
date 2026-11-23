@@ -17,9 +17,9 @@ export default function ArticlesPage() {
   const page = usePageContent("articles");
 
   usePageSeo("articles", {
-    title: "Articles — Phill",
+    title: "Articles | Philemon Melabah",
     description:
-      "Written notes on engineering, data, and the decisions behind the work.",
+      "Writing about software, data and the decisions behind the work.",
     path: "/articles",
   });
 
@@ -31,19 +31,20 @@ export default function ArticlesPage() {
         eyebrow={page?.eyebrow || "Articles"}
         title={page?.title || (
           <>
-            Notes on the work, <span className="display-serif text-signal">in writing.</span>
+            Writing about{" "}
+            <span className="display-serif text-signal">the work.</span>
           </>
         )}
         description={
           page?.description ||
-          "Long-form writing about engineering decisions, data work, and the details that do not fit on a project card."
+          "Longer notes on software decisions, data work and the details that do not fit on a project page."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
               <span>Published</span>
               <span className="text-paper">
-                {articles.loading ? "—" : String(items.length).padStart(2, "0")}
+                {articles.loading ? "..." : String(items.length).padStart(2, "0")}
               </span>
             </div>
           </div>
@@ -53,15 +54,15 @@ export default function ArticlesPage() {
       <Container className="py-12 sm:py-16">
         {articles.loading ? <LoadingState rows={3} label="Loading articles" /> : null}
         {!articles.loading && articles.error ? (
-          <ErrorState message={articles.error.detail} onRetry={articles.reload} />
+          <ErrorState message="We couldn't load the articles. Please try again in a moment." onRetry={articles.reload} />
         ) : null}
         {!articles.loading && !articles.error && items.length === 0 ? (
           <EmptyState
-            title="No articles published yet"
-            description="Writing appears here once an article is published from the admin."
+            title="No articles yet"
+            description="Articles will appear here once they are published."
             action={
               <Link to="/work" className={buttonStyles("secondary", "sm")}>
-                Explore the work
+                Browse projects
                 <ArrowUpRight className="size-3.5" aria-hidden="true" />
               </Link>
             }
@@ -128,7 +129,7 @@ export default function ArticlesPage() {
                       rel="noreferrer noopener"
                       className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
                     >
-                      Source
+                      Original link
                       <ArrowUpRight className="size-3" aria-hidden="true" />
                     </a>
                   ) : null}

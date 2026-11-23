@@ -47,7 +47,7 @@ function WorkFeature({
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="type-meta text-signal">
-              {String(index).padStart(2, "0")} / Latest index entry
+              {String(index).padStart(2, "0")} / Latest project
             </span>
             <ProjectStatus status={project.project_status} />
           </div>
@@ -101,7 +101,7 @@ function WorkFeature({
             />
           </span>
           <span className="type-meta text-faint">
-            {project.is_placeholder ? "Details pending" : "Published record"}
+            {project.is_placeholder ? "Not finished" : "Published"}
           </span>
         </div>
       </div>
@@ -192,7 +192,7 @@ export default function WorkPage() {
   usePageSeo("work", {
     title: "Work — Philemon Melabah",
     description:
-      "Projects, systems, and studies by Philemon Melabah. Filter by discipline, technology, or status and follow each project into its case study.",
+      "Projects and case studies by Philemon Melabah. Filter by category, technology or status, then open a project to read more.",
     path: "/work",
   });
 
@@ -237,39 +237,36 @@ export default function WorkPage() {
   return (
     <>
       <PageIntro
-        eyebrow={page?.eyebrow || "Index / Work"}
+        eyebrow={page?.eyebrow || "Work"}
         title={
           page?.title ? (
             page.title
           ) : (
             <>
-              Things I&apos;ve built, explored, and{" "}
-              <span className="display-serif text-signal">contributed to.</span>
+              Projects I have built{" "}
+              <span className="display-serif text-signal">and worked on.</span>
             </>
           )
         }
         description={
           page?.description ||
-          "A working index of the products, systems, and studies I've spent time on — what they do, how they're put together, and what I learned. Some are finished; others are still moving."
+          "A list of the projects I have worked on. Each one explains what it does, how it was built and what I learned. Some are finished; others are still in progress."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
               <span>Published projects</span>
               <span className="text-paper">
-                {facets.loading ? "—" : String(totalPublished).padStart(2, "0")}
+                {facets.loading ? "..." : String(totalPublished).padStart(2, "0")}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
               <span>Showing</span>
               <span className="text-paper" aria-live="polite">
-                {projects.loading ? "—" : String(resultCount).padStart(2, "0")}
+                {projects.loading ? "..." : String(resultCount).padStart(2, "0")}
               </span>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Source</span>
-              <span className="text-paper">FastAPI / SQLAlchemy</span>
-            </div>
+
           </div>
         }
       />
@@ -283,7 +280,7 @@ export default function WorkPage() {
                 id="work-filters-heading"
                 className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted"
               >
-                Filter the index
+                Filters
               </h2>
             </div>
             {filtersActive ? (
@@ -336,7 +333,7 @@ export default function WorkPage() {
                 ) : null}
               </div>
               <p className="mt-2 text-[0.68rem] leading-relaxed text-faint">
-                Searches names, descriptions, categories, and technologies.
+                Searches names, descriptions, categories and technologies.
               </p>
             </form>
 
@@ -361,7 +358,7 @@ export default function WorkPage() {
                 ))}
               </select>
               <p className="mt-2 text-[0.68rem] leading-relaxed text-faint">
-                Only tools used by published work appear here.
+                Only technologies used by published projects are listed.
               </p>
             </div>
 
@@ -385,7 +382,7 @@ export default function WorkPage() {
                 ))}
               </select>
               <p className="mt-2 text-[0.68rem] leading-relaxed text-faint">
-                Archived work appears only when selected.
+                Archived projects appear only when selected.
               </p>
             </div>
           </div>
@@ -393,7 +390,7 @@ export default function WorkPage() {
           <div className="border-t border-line px-4 py-4 sm:px-5">
             <div className="flex items-center gap-3">
               <span className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                Discipline
+                Category
               </span>
               <span className="h-px flex-1 bg-line" aria-hidden="true" />
             </div>
@@ -454,7 +451,7 @@ export default function WorkPage() {
             {query ? <FilterTag label={`“${query}”`} onRemove={() => { setSearchInput(""); updateParam("q", ""); }} /> : null}
             {!filtersActive ? (
               <span className="type-meta text-faint">
-                {String(totalPublished).padStart(2, "0")} published record
+                {String(totalPublished).padStart(2, "0")} published project
                 {totalPublished === 1 ? "" : "s"}
               </span>
             ) : (
@@ -464,27 +461,27 @@ export default function WorkPage() {
             )}
           </div>
           <span className="type-meta text-faint">
-            Sorted by curator order / newest publication
+            Newest first
           </span>
         </div>
 
         <div className="mt-8">
           {projects.loading && items.length === 0 ? (
-            <LoadingState rows={5} label="Loading project index" />
+            <LoadingState rows={5} label="Loading projects" />
           ) : null}
           {!projects.loading && projects.error ? (
             <ErrorState
-              message="The project index could not be loaded. The API may be unavailable — try again in a moment."
+              message="We couldn't load the projects. Please try again in a moment."
               onRetry={projects.reload}
             />
           ) : null}
           {!projects.loading && !projects.error && items.length === 0 ? (
             <EmptyState
-              title={filtersActive ? "No projects match those filters" : "The project index is empty"}
+              title={filtersActive ? "No projects match those filters" : "No projects yet"}
               description={
                 filtersActive
-                  ? "Try a broader search or clear one of the filters. Nothing is hidden behind a fake result."
-                  : "Projects appear here once they are published from the admin panel. Empty space is left honestly."
+                  ? "Try a broader search or clear one of the filters."
+                  : "Projects will appear here once they are published."
               }
               action={
                 filtersActive ? (
@@ -493,7 +490,7 @@ export default function WorkPage() {
                   </button>
                 ) : (
                   <Link to="/contact" className={buttonStyles("secondary", "sm")}>
-                    Start a conversation
+                    Get in touch
                     <ArrowUpRight className="size-3.5" aria-hidden="true" />
                   </Link>
                 )
@@ -516,7 +513,7 @@ export default function WorkPage() {
               {rows.length > 0 ? (
                 <div>
                   <div className="mb-2 flex items-center gap-3">
-                    <span className="type-meta text-muted">More from the index</span>
+                    <span className="type-meta text-muted">More projects</span>
                     <span className="h-px flex-1 bg-line" aria-hidden="true" />
                   </div>
                   {rows.map((project, index) => (
@@ -531,10 +528,10 @@ export default function WorkPage() {
         <p className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
           <span>
             {projects.data
-              ? `${resultCount} record${resultCount === 1 ? "" : "s"} / loaded from the content API`
-              : "Published content is served by the FastAPI content layer"}
+              ? `${resultCount} project${resultCount === 1 ? "" : "s"}`
+              : "No projects loaded yet"}
           </span>
-          <span>Filter state is kept in the URL</span>
+          <span>Filters are saved in the address bar</span>
         </p>
       </Container>
     </>

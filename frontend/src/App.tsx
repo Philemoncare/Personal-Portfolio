@@ -41,6 +41,7 @@ const AdminSecuritySessionsPage = lazy(
 );
 const AdminMediaPage = lazy(() => import("@/pages/admin/AdminMediaPage"));
 const AdminDashboardPage = lazy(() => import("@/pages/admin/AdminDashboardPage"));
+const AdminAnalyticsPage = lazy(() => import("@/pages/admin/AdminAnalyticsPage"));
 const AdminProfilePage = lazy(() => import("@/pages/admin/AdminProfilePage"));
 const AdminNowPage = lazy(() => import("@/pages/admin/AdminNowPage"));
 const AdminTimelinePage = lazy(() => import("@/pages/admin/AdminTimelinePage"));
@@ -138,6 +139,7 @@ export default function App() {
             <Route path="data/:id/preview" element={<AdminDataPreviewPage />} />
             <Route element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
               <Route path="now" element={<AdminNowPage />} />
               <Route path="timeline" element={<AdminTimelinePage />} />

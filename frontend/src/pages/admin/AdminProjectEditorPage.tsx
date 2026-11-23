@@ -1244,7 +1244,7 @@ export default function AdminProjectEditorPage() {
                                       ),
                                     )
                                   }
-                                  placeholder="https://…"
+                                  placeholder="https://example.com"
                                 />
                               </Field>
                             ) : (
@@ -1818,11 +1818,11 @@ export default function AdminProjectEditorPage() {
 
           {section === "seo" ? (
             <AdminPanel
-              title="Search and social preview"
-              description="Optional overrides for page metadata."
+              title="Search and sharing"
+              description="Optional text for search results and shared links."
             >
               <div className="grid gap-5">
-                <Field label="SEO title" htmlFor="seo-title" hint={`${form.seo_title.length}/200 characters`}>
+                <Field label="Search title" htmlFor="seo-title" hint={`${form.seo_title.length}/200 characters`}>
                   <TextInput
                     id="seo-title"
                     value={form.seo_title}
@@ -1830,16 +1830,16 @@ export default function AdminProjectEditorPage() {
                     placeholder={`${form.title || "Project"} — case study`}
                   />
                 </Field>
-                <Field label="SEO description" htmlFor="seo-description" hint={`${form.seo_description.length} characters`}>
+                <Field label="Search description" htmlFor="seo-description" hint={`${form.seo_description.length} characters`}>
                   <TextArea
                     id="seo-description"
                     rows={3}
                     value={form.seo_description}
                     onChange={(event) => update("seo_description", event.target.value)}
-                    placeholder="A concise description for search results and link previews."
+                    placeholder="A short description for search results and link previews."
                   />
                 </Field>
-                <Field label="Open Graph image">
+                <Field label="Social share image">
                   <MediaField
                     value={form.og_image}
                     onChange={(url) => update("og_image", url)}
@@ -1848,7 +1848,7 @@ export default function AdminProjectEditorPage() {
                     onUploaded={() => media.reload()}
                     title={form.title}
                     altText={`${form.title} social preview`}
-                    emptyLabel="No social image selected."
+                    emptyLabel="No social share image selected."
                   />
                 </Field>
                 <div className="border border-line bg-ink-950/40 p-4">
@@ -1864,7 +1864,7 @@ export default function AdminProjectEditorPage() {
                   <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted">
                     {form.seo_description ||
                       form.summary ||
-                      "The project summary appears here when no SEO description is set."}
+                      "The project summary appears here when no search description is set."}
                   </p>
                 </div>
               </div>
@@ -1874,22 +1874,22 @@ export default function AdminProjectEditorPage() {
           {section === "publishing" ? (
             <AdminPanel
               title="Publishing"
-              description="Publish and visibility are separate."
+              description="Choose who can see this project."
             >
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Status" htmlFor="status">
+                <Field label="Visibility" htmlFor="status">
                   <Select
                     id="status"
                     value={form.status}
                     onChange={(event) => update("status", event.target.value as PublishStatus)}
                     options={[
-                      { value: "draft", label: "Draft — private" },
-                      { value: "published", label: "Published — public" },
-                      { value: "archived", label: "Archived — hidden" },
+                      { value: "draft", label: "Draft (private)" },
+                      { value: "published", label: "Published (visible on your website)" },
+                      { value: "archived", label: "Archived (hidden)" },
                     ]}
                   />
                 </Field>
-                <Field label="Sort order" htmlFor="sort" hint="Lower numbers appear first in the public index.">
+                <Field label="Display order" htmlFor="sort" hint="Lower numbers appear first on your website.">
                   <TextInput
                     id="sort"
                     type="number"
@@ -1899,15 +1899,15 @@ export default function AdminProjectEditorPage() {
                 </Field>
                 <div className="flex flex-col gap-3 sm:col-span-2">
                   <Checkbox
-                    label="Featured on the homepage"
+                    label="Feature on the homepage"
                     checked={form.featured}
                     onChange={(next) => update("featured", next)}
                   />
                   <Checkbox
-                    label="Mark as placeholder"
+                    label="This project is not finished yet"
                     checked={form.is_placeholder}
                     onChange={(next) => update("is_placeholder", next)}
-                    hint="Shows a pending-content note."
+                    hint="Your website will show a note until it is final."
                   />
                   <Checkbox
                     label="Visible on the public site"
@@ -1930,7 +1930,7 @@ export default function AdminProjectEditorPage() {
                 className={buttonStyles("secondary", "md", "w-full")}
               >
                 <Save className="size-3.5" aria-hidden="true" />
-                {savingMode === "keep" ? "Saving…" : "Save changes"}
+                {savingMode === "keep" ? "Saving..." : "Save changes"}
               </button>
               <button
                 type="button"
@@ -1939,7 +1939,7 @@ export default function AdminProjectEditorPage() {
                 className={buttonStyles("primary", "md", "w-full")}
               >
                 <Check className="size-3.5" aria-hidden="true" />
-                {savingMode === "publish" ? "Publishing…" : "Publish project"}
+                {savingMode === "publish" ? "Publishing..." : "Publish project"}
               </button>
               <p className="text-[0.68rem] leading-relaxed text-faint">
                 Drafts are never public.
@@ -1948,7 +1948,7 @@ export default function AdminProjectEditorPage() {
           </AdminPanel>
 
           {!isNew ? (
-            <AdminPanel title="Record">
+            <AdminPanel title="Details">
               <dl className="space-y-3 text-xs">
                 <div className="flex items-center justify-between gap-3">
                   <dt className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">Published</dt>
@@ -1973,7 +1973,13 @@ export default function AdminProjectEditorPage() {
                 <div className="flex items-center justify-between gap-3">
                   <dt className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">Case study</dt>
                   <dd className="text-paper-dim">
-                    {linkedCaseStudy ? linkedCaseStudy.status : "Not linked"}
+                    {linkedCaseStudy
+                      ? linkedCaseStudy.status === "published"
+                        ? "Published"
+                        : linkedCaseStudy.status === "draft"
+                          ? "Draft"
+                          : "Archived"
+                      : "Not added"}
                   </dd>
                 </div>
               </dl>

@@ -1,5 +1,6 @@
 import {
   ArrowUpRight,
+  BarChart3,
   BookOpen,
   Briefcase,
   CalendarClock,
@@ -49,7 +50,10 @@ import { cn } from "@/utils/cn";
 const ADMIN_NAV = [
   {
     group: "Main",
-    items: [{ label: "Dashboard", to: "/admin", end: true, icon: LayoutDashboard }],
+    items: [
+      { label: "Dashboard", to: "/admin", end: true, icon: LayoutDashboard },
+      { label: "Analytics", to: "/admin/analytics", end: false, icon: BarChart3 },
+    ],
   },
   {
     group: "Content",

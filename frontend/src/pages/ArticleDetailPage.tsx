@@ -34,7 +34,7 @@ export default function ArticleDetailPage() {
   const entry = article.data;
 
   useSeo({
-    title: entry?.seo_title || (entry ? `${entry.title} — Phill` : "Article"),
+    title: entry?.seo_title || (entry ? `${entry.title} | Philemon Melabah` : "Article | Philemon Melabah"),
     description: entry?.seo_description ?? entry?.excerpt ?? null,
     path: slug ? `/articles/${slug}` : undefined,
     type: "article",
@@ -58,7 +58,7 @@ export default function ArticleDetailPage() {
           {article.error.status === 404 ? (
             <EmptyState
               title="Article not found"
-              description="This article does not exist, or it is no longer published."
+              description="This article does not exist or is no longer public."
               action={
                 <Link to="/articles" className={buttonStyles("secondary", "sm")}>
                   Back to articles
@@ -67,7 +67,7 @@ export default function ArticleDetailPage() {
             />
           ) : (
             <ErrorState
-              message="This article could not be loaded. The API may be unavailable — try again in a moment."
+              message="We couldn't load this article. Please try again in a moment."
               onRetry={article.reload}
             />
           )}
@@ -139,7 +139,7 @@ export default function ArticleDetailPage() {
               ))
             ) : (
               <p className="text-sm leading-relaxed text-muted">
-                The body of this article has not been added yet.
+                This article has no text yet.
               </p>
             )}
           </article>
@@ -172,7 +172,7 @@ export default function ArticleDetailPage() {
               {entry.external_url ? (
                 <div className="px-5 py-4">
                   <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
-                    Original source
+                    Original link
                   </dt>
                   <dd className="mt-1">
                     <a
@@ -181,7 +181,7 @@ export default function ArticleDetailPage() {
                       rel="noreferrer noopener"
                       className="inline-flex items-center gap-1.5 text-sm text-paper underline decoration-line underline-offset-4 hover:text-signal"
                     >
-                      Visit
+                      Open
                       <ArrowUpRight className="size-3.5" aria-hidden="true" />
                     </a>
                   </dd>
@@ -193,14 +193,14 @@ export default function ArticleDetailPage() {
 
         <div className="mt-14 flex flex-col gap-5 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            More writing and project records are collected in the indexes.
+            More writing and projects are listed on their own pages.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link to="/articles" className={buttonStyles("secondary", "sm")}>
               All articles
             </Link>
             <Link to="/work" className={buttonStyles("ghost", "sm")}>
-              Selected work
+              Projects
             </Link>
           </div>
         </div>

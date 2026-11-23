@@ -41,12 +41,12 @@ export function TimelinePreview() {
               id="timeline-preview-heading"
               className="mt-6 max-w-md text-balance text-[clamp(2rem,3.6vw,3.4rem)] font-medium leading-[0.98] tracking-[-0.04em] text-paper"
             >
-              Work in progress,{" "}
+              What I have worked on,{" "}
               <span className="display-serif text-signal">year by year.</span>
             </h2>
             <p className="mt-5 max-w-md text-pretty text-sm leading-relaxed text-paper-dim">
-              A short professional chronology. The full record, including education, projects, and
-              leadership, lives on the Timeline page.
+              A short view of my work. The full timeline includes education, projects and
+              leadership.
             </p>
             <Link to="/timeline" className={buttonStyles("secondary", "sm", "mt-7")}>
               Full timeline
@@ -59,8 +59,8 @@ export function TimelinePreview() {
             {!loading && error ? <ErrorState message={error.detail} onRetry={reload} /> : null}
             {!loading && !error && entries.length === 0 ? (
               <EmptyState
-                title="Timeline entries are not published yet"
-                description="The chronology stays quiet until each milestone is confirmed. Education, project, and leadership records will appear here."
+                title="No timeline entries yet"
+                description="Education, project and leadership milestones will appear here once they are added."
               />
             ) : null}
 
@@ -88,7 +88,7 @@ export function TimelinePreview() {
                               {TIMELINE_KIND_LABELS[entry.kind]}
                             </span>
                             {entry.is_placeholder ? (
-                              <Badge tone="placeholder">Pending</Badge>
+                              <Badge tone="placeholder">Not finished</Badge>
                             ) : null}
                           </div>
                           <h3 className="mt-1.5 text-lg font-medium tracking-tight text-paper">
@@ -108,7 +108,7 @@ export function TimelinePreview() {
 
             {!loading && !error && entries.length > 0 ? (
               <p className="mt-6 border-t border-line pt-4 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-                Showing the most recent published years / {String(entries.length).padStart(2, "0")} records
+                Most recent years / {String(entries.length).padStart(2, "0")} entries
               </p>
             ) : null}
           </div>

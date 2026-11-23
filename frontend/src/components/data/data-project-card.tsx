@@ -24,7 +24,7 @@ function DataProjectVisual({
       <div className="relative aspect-[16/9] overflow-hidden bg-background">
         <PortfolioImage
           src={project.cover_image_url}
-          alt={`${project.title} analysis cover`}
+          alt={`${project.title} project cover`}
           aspect="auto"
           priority={imageLoading === "eager"}
           sizes="(max-width: 768px) 100vw, 50vw"
@@ -90,7 +90,7 @@ export function DataProjectCard({
             <div className="flex flex-wrap items-center gap-2">
               {project.is_demo ? (
                 <span className="border border-signal/40 bg-signal/5 px-2 py-1 font-mono text-[0.5rem] uppercase tracking-[0.14em] text-signal-soft">
-                  Demo data
+                  Sample data
                 </span>
               ) : null}
               <span className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">
@@ -138,12 +138,12 @@ export function DataProjectCard({
               ) : null}
             </ul>
           ) : (
-            <span className="type-meta text-faint">Tooling being documented</span>
+            <span className="type-meta text-faint">No tools listed</span>
           )}
 
           <div className="flex items-center justify-between gap-4">
             <span className="inline-flex items-center gap-2 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-paper transition-colors group-hover:text-signal">
-              Explore Analysis
+              Read the analysis
               <ArrowUpRight
                 className="size-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
                 aria-hidden="true"
@@ -151,7 +151,7 @@ export function DataProjectCard({
             </span>
             {project.is_placeholder ? (
               <span className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-signal/80">
-                Analysis pending
+                Not finished
               </span>
             ) : null}
           </div>

@@ -141,10 +141,10 @@ const RESOURCE_TYPE_OPTIONS = (
 ).map(([value, label]) => ({ value, label }));
 
 const STATUS_OPTIONS: Array<{ value: DataProjectStatus; label: string }> = [
-  { value: "draft", label: "Draft — private" },
-  { value: "experiment", label: "Experiment — private" },
-  { value: "published", label: "Published — public" },
-  { value: "archived", label: "Archived — hidden" },
+  { value: "draft", label: "Draft (private)" },
+  { value: "experiment", label: "Experiment (private)" },
+  { value: "published", label: "Published (visible on your website)" },
+  { value: "archived", label: "Archived (hidden)" },
 ];
 
 const emptyVisualization: VisualizationRow = {
@@ -313,10 +313,10 @@ function parseRows(text: string, label: string): DataRow[] {
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new Error(`${label} must be valid JSON.`);
+    throw new Error(`${label} is not valid JSON.`);
   }
   if (!Array.isArray(parsed)) {
-    throw new Error(`${label} must be a JSON array of row objects.`);
+    throw new Error(`${label} must be a list of rows in JSON format.`);
   }
   return parsed.map((row, index) => {
     if (!row || typeof row !== "object" || Array.isArray(row)) {
@@ -382,7 +382,7 @@ function toPayload(form: DataFormState, status: DataProjectStatus): DataProjectI
       chart_type: visualization.chart_type,
       title: visualization.title.trim(),
       description: optional(visualization.description),
-      data: parseRows(visualization.dataText, `Visualization "${visualization.title}"`),
+      data: parseRows(visualization.dataText, `Chart "${visualization.title}"`),
       x_axis: optional(visualization.x_axis),
       y_axis: optional(visualization.y_axis),
       series: visualization.series
@@ -450,7 +450,7 @@ export default function AdminDataEditorPage() {
   const save = async (mode: "keep" | "draft" | "publish") => {
     if (!form) return;
     if (!form.title.trim()) {
-      setNotice("A project title is required.");
+      setNotice("Please add a title.");
       return;
     }
     if (!form.category_id && !form.extra_category.trim()) {
@@ -465,13 +465,13 @@ export default function AdminDataEditorPage() {
     try {
       const payload = toPayload(form, status);
       if (payload.visualizations.some((item) => !item.title)) {
-        throw new Error("Every visualization needs a title.");
+        throw new Error("Every chart needs a title.");
       }
       if (isNew) {
         const created = await adminDataService.createProject(payload);
         navigate(`/admin/data/${created.id}`, {
           replace: true,
-          state: { notice: "Data project created." },
+          state: { notice: "Data project added." },
         });
       } else if (id) {
         const updated = await adminDataService.updateProject(id, payload);
@@ -485,7 +485,9 @@ export default function AdminDataEditorPage() {
         );
       }
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The project could not be saved.");
+      setNotice(
+        error instanceof Error ? error.message : "We couldn't save this project. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -494,7 +496,7 @@ export default function AdminDataEditorPage() {
   const remove = async () => {
     if (!id || !form) return;
     const confirmed = window.confirm(
-      `Delete ${form.title || "this data project"} permanently? Its visualizations, insights, and resources are removed with it and this cannot be undone.`,
+      `Delete ${form.title || "this data project"}? Its charts, insights and resources are deleted too. This cannot be undone.`,
     );
     if (!confirmed) return;
     setSaving(true);
@@ -502,7 +504,9 @@ export default function AdminDataEditorPage() {
       await adminDataService.deleteProject(id);
       navigate("/admin/data", { replace: true });
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The project could not be deleted.");
+      setNotice(
+        error instanceof Error ? error.message : "We couldn't delete this project. Please try again.",
+      );
       setSaving(false);
     }
   };
@@ -518,7 +522,9 @@ export default function AdminDataEditorPage() {
       if (form) update("category_id", created.id);
       setNotice(`Category "${created.name}" added.`);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The category could not be created.");
+      setNotice(
+        error instanceof Error ? error.message : "We couldn't add this category. Please try again.",
+      );
     } finally {
       setTaxonomyBusy(false);
     }
@@ -535,7 +541,9 @@ export default function AdminDataEditorPage() {
       if (form) update("tool_ids", [...form.tool_ids, created.id]);
       setNotice(`Tool "${created.name}" added.`);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The tool could not be created.");
+      setNotice(
+        error instanceof Error ? error.message : "We couldn't add this tool. Please try again.",
+      );
     } finally {
       setTaxonomyBusy(false);
     }
@@ -547,10 +555,13 @@ export default function AdminDataEditorPage() {
         {project.error.status === 404 ? (
           <ErrorState message="This data project no longer exists." />
         ) : (
-          <ErrorState message={project.error.detail} onRetry={project.reload} />
+          <ErrorState
+            message="We couldn't load this data project. Please try again."
+            onRetry={project.reload}
+          />
         )}
         <Link to="/admin/data" className={`${buttonStyles("secondary", "sm")} mt-4`}>
-          Back to data projects
+          Back to Data Lab
         </Link>
       </div>
     );
@@ -559,7 +570,10 @@ export default function AdminDataEditorPage() {
   if (reference.error) {
     return (
       <div className="mt-6">
-        <ErrorState message={reference.error.detail} onRetry={reference.reload} />
+        <ErrorState
+          message="We couldn't load the project options. Please try again."
+          onRetry={reference.reload}
+        />
       </div>
     );
   }
@@ -567,7 +581,7 @@ export default function AdminDataEditorPage() {
   if ((!isNew && project.loading) || !reference.data || !form) {
     return (
       <div className="mt-6">
-        <LoadingState rows={6} label="Loading data project editor" />
+        <LoadingState rows={6} label="Loading data project" />
       </div>
     );
   }
@@ -584,19 +598,19 @@ export default function AdminDataEditorPage() {
             className="inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
           >
             <ArrowLeft className="size-3" aria-hidden="true" />
-            Data projects
+            Data Lab
           </Link>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            {isNew ? "New data project" : form.title || "Untitled analysis"}
+            {isNew ? "Add data project" : form.title || "Untitled analysis"}
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <StatusBadge status={form.status} />
             <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted">
-              {isNew ? "Draft will be created" : `/data/${form.slug}`}
+              {isNew ? "Will be saved as a draft" : `/data/${form.slug}`}
             </span>
             {form.is_demo ? (
               <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-signal">
-                Demo data
+                Sample data
               </span>
             ) : null}
           </div>
@@ -622,7 +636,7 @@ export default function AdminDataEditorPage() {
               className={buttonStyles("secondary", "sm")}
             >
               <FlaskConical className="size-3.5" aria-hidden="true" />
-              Public page
+              View website
               <ArrowUpRight className="size-3" aria-hidden="true" />
             </a>
           ) : null}
@@ -641,7 +655,7 @@ export default function AdminDataEditorPage() {
             disabled={saving}
             className={buttonStyles("primary", "sm")}
           >
-            {saving ? "Saving…" : "Publish"}
+            {saving ? "Saving..." : "Publish"}
           </button>
         </div>
       </div>
@@ -658,8 +672,8 @@ export default function AdminDataEditorPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
         <div className="space-y-6">
           <AdminPanel
-            title="Identity"
-            description="The title, public URL, and short copy used on cards and in search. The overview is the opening narrative on the analysis page."
+            title="Project details"
+            description="The title, web address and summary shown on your website."
           >
             <div className="grid gap-5">
               <Field label="Title" htmlFor="title" required>
@@ -671,9 +685,9 @@ export default function AdminDataEditorPage() {
                 />
               </Field>
               <Field
-                label="Slug"
+                label="Web address"
                 htmlFor="slug"
-                hint="Leave blank to generate one from the title. The public URL is /data/{slug}."
+                hint="Leave blank to create one from the title."
               >
                 <TextInput
                   id="slug"
@@ -685,20 +699,20 @@ export default function AdminDataEditorPage() {
               <Field
                 label="Short description"
                 htmlFor="short"
-                hint={`${form.short_description.length} characters. Used in cards, search, and social metadata.`}
+                hint={`${form.short_description.length} characters. Shown on cards and in search results.`}
               >
                 <TextArea
                   id="short"
                   rows={3}
                   value={form.short_description}
                   onChange={(event) => update("short_description", event.target.value)}
-                  placeholder="One or two sentences describing the question and what the analysis found."
+                  placeholder="One or two sentences about the question and what the analysis found."
                 />
               </Field>
               <Field
                 label="Overview"
                 htmlFor="description"
-                hint="Separate paragraphs with a blank line. Only write what the analysis actually supports."
+                hint="Separate paragraphs with a blank line. Only describe what the analysis actually supports."
               >
                 <TextArea
                   id="description"
@@ -710,7 +724,7 @@ export default function AdminDataEditorPage() {
               <Field
                 label="Keywords"
                 htmlFor="keywords"
-                hint="Comma-separated. Used by directory search, not displayed as tags."
+                hint="Separate each keyword with a comma. Used for search, not shown as tags."
               >
                 <TextInput
                   id="keywords"
@@ -723,8 +737,8 @@ export default function AdminDataEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Classification"
-            description="One category, the tools actually used, and the analysis type. Public filters only list tools and categories used by published projects."
+            title="Category and tools"
+            description="Choose the category, the tools you actually used, and the kind of analysis."
           >
             <div className="grid gap-5">
               <div className="grid gap-5 sm:grid-cols-2">
@@ -745,7 +759,7 @@ export default function AdminDataEditorPage() {
                 <Field
                   label="Or add a category"
                   htmlFor="new-category"
-                  hint="Created immediately and selected for this project."
+                  hint="Created now and selected for this project."
                 >
                   <div className="flex gap-2">
                     <TextInput
@@ -806,7 +820,7 @@ export default function AdminDataEditorPage() {
               </Field>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Add a tool" htmlFor="new-tool" hint="Created immediately and selected.">
+                <Field label="Add a tool" htmlFor="new-tool" hint="Created now and selected.">
                   <div className="flex gap-2">
                     <TextInput
                       id="new-tool"
@@ -825,9 +839,9 @@ export default function AdminDataEditorPage() {
                   </div>
                 </Field>
                 <Field
-                  label="Additional tools"
+                  label="Other tools"
                   htmlFor="extra-tools"
-                  hint="Comma-separated names saved with the project."
+                  hint="Separate each tool with a comma."
                 >
                   <TextInput
                     id="extra-tools"
@@ -882,18 +896,18 @@ export default function AdminDataEditorPage() {
                   onChange={(next) => update("featured", next)}
                 />
                 <Checkbox
-                  label="Demo / synthetic data"
+                  label="This project uses sample data"
                   checked={form.is_demo}
                   onChange={(next) => update("is_demo", next)}
-                  hint="Shows a visible DEMO DATA label on every chart and a notice on the page."
+                  hint="Your website will label the charts and page as sample data."
                 />
                 <Checkbox
-                  label="Mark as placeholder"
+                  label="This analysis is not finished yet"
                   checked={form.is_placeholder}
                   onChange={(next) => update("is_placeholder", next)}
-                  hint="Shows a pending-analysis notice instead of implying the write-up is complete."
+                  hint="Your website will show a note until it is final."
                 />
-                <Field label="Sort order" htmlFor="sort" hint="Lower numbers appear first.">
+                <Field label="Display order" htmlFor="sort" hint="Lower numbers appear first.">
                   <TextInput
                     id="sort"
                     type="number"
@@ -906,8 +920,8 @@ export default function AdminDataEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Question"
-            description="What the analysis set out to understand, and why that question was worth asking."
+            title="The question"
+            description="What you wanted to find out, and why it mattered."
           >
             <div className="grid gap-5">
               <Field label="The question" htmlFor="question">
@@ -931,7 +945,7 @@ export default function AdminDataEditorPage() {
 
           <AdminPanel
             title="Dataset"
-            description="Describe the dataset honestly. Leave row and column counts blank when they are unknown; never invent statistics. Mark private or unavailable datasets accordingly."
+            description="Describe the dataset plainly. Leave the row and column counts blank if you don't know them."
           >
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Dataset name" htmlFor="dataset-name">
@@ -941,7 +955,7 @@ export default function AdminDataEditorPage() {
                   onChange={(event) => update("dataset_name", event.target.value)}
                 />
               </Field>
-              <Field label="Source" htmlFor="dataset-source" hint="An organisation, URL, or short provenance note.">
+              <Field label="Source" htmlFor="dataset-source" hint="An organisation, a link, or a short note about where it came from.">
                 <TextInput
                   id="dataset-source"
                   value={form.dataset_source}
@@ -971,7 +985,7 @@ export default function AdminDataEditorPage() {
                   id="dataset-period"
                   value={form.dataset_time_period}
                   onChange={(event) => update("dataset_time_period", event.target.value)}
-                  placeholder="Jan 2023 – Dec 2024"
+                  placeholder="Jan 2023 to Dec 2024"
                 />
               </Field>
               <Field label="Data type" htmlFor="dataset-type">
@@ -979,10 +993,10 @@ export default function AdminDataEditorPage() {
                   id="dataset-type"
                   value={form.dataset_type}
                   onChange={(event) => update("dataset_type", event.target.value)}
-                  placeholder="CSV, SQL table, Excel workbook…"
+                  placeholder="CSV, SQL table, Excel workbook"
                 />
               </Field>
-              <Field label="License / usage" htmlFor="dataset-license">
+              <Field label="Licence and usage" htmlFor="dataset-license">
                 <TextInput
                   id="dataset-license"
                   value={form.dataset_license}
@@ -994,7 +1008,7 @@ export default function AdminDataEditorPage() {
                   label="Dataset can be shared publicly"
                   checked={form.dataset_is_public}
                   onChange={(next) => update("dataset_is_public", next)}
-                  hint="Uncheck for private, licensed, or unavailable data."
+                  hint="Uncheck for private, licensed or unavailable data."
                 />
               </div>
             </div>
@@ -1023,8 +1037,8 @@ export default function AdminDataEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Preparation and method"
-            description="How the data was cleaned, what methods were used, and the SQL or Python actually involved. Never paste credentials, private connection strings, or client secrets."
+            title="How the work was done"
+            description="How you cleaned and analysed the data. Do not paste passwords, private connection details or keys."
           >
             <div className="grid gap-5">
               <Field label="Data preparation" htmlFor="preparation">
@@ -1035,7 +1049,7 @@ export default function AdminDataEditorPage() {
                   onChange={(event) => update("data_preparation", event.target.value)}
                 />
               </Field>
-              <Field label="Methodology" htmlFor="methodology">
+              <Field label="Method" htmlFor="methodology">
                 <TextArea
                   id="methodology"
                   rows={5}
@@ -1054,7 +1068,7 @@ export default function AdminDataEditorPage() {
               <Field
                 label="SQL query"
                 htmlFor="sql-query"
-                hint="Stored and displayed as text. The public site never executes it."
+                hint="Shown as text on your website. It is never run there."
               >
                 <TextArea
                   id="sql-query"
@@ -1068,7 +1082,7 @@ export default function AdminDataEditorPage() {
               <Field
                 label="SQL result example"
                 htmlFor="sql-result"
-                hint="A JSON array of row objects. This is stored output, not a live query."
+                hint="Saved output from the query, written as JSON rows."
               >
                 <TextArea
                   id="sql-result"
@@ -1082,7 +1096,7 @@ export default function AdminDataEditorPage() {
               <Field
                 label="Python excerpt"
                 htmlFor="python"
-                hint="A short, public-safe excerpt. Syntax highlighting is applied on the public page."
+                hint="A short excerpt that is safe to share. It is highlighted on your website."
               >
                 <TextArea
                   id="python"
@@ -1097,8 +1111,8 @@ export default function AdminDataEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Storytelling"
-            description="The public page separates WHAT THE DATA SHOWS, WHY IT MATTERS, and WHAT I WOULD DO NEXT. Keep each block tied to the evidence."
+            title="What the analysis shows"
+            description="The main parts of the write-up. Keep each part tied to what the data shows."
           >
             <div className="grid gap-5">
               <Field label="What the data shows" htmlFor="shows">
@@ -1161,8 +1175,8 @@ export default function AdminDataEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Visualizations"
-            description="Each chart is configured by hand from stored data. The API validates the configuration; the public page re-checks it and fails softly rather than rendering broken charts."
+            title="Charts"
+            description="Each chart is built from data you add below. Add a chart only when you have data to show."
             actions={
               <button
                 type="button"
@@ -1172,13 +1186,13 @@ export default function AdminDataEditorPage() {
                 className={buttonStyles("secondary", "sm")}
               >
                 <Plus className="size-3.5" aria-hidden="true" />
-                Add visualization
+                Add chart
               </button>
             }
           >
             {form.visualizations.length === 0 ? (
               <p className="border border-dashed border-line-strong px-4 py-5 text-sm text-muted">
-                No visualizations yet. Add one only when the stored data supports it.
+                No charts yet. Add one when you have data to show.
               </p>
             ) : (
               <div className="space-y-5">
@@ -1197,7 +1211,7 @@ export default function AdminDataEditorPage() {
                     <div key={index} className="border border-line bg-ink-950/40 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <span className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
-                          Visualization {String(index + 1).padStart(2, "0")}
+                          Chart {String(index + 1).padStart(2, "0")}
                         </span>
                         <button
                           type="button"
@@ -1208,7 +1222,7 @@ export default function AdminDataEditorPage() {
                             )
                           }
                           className="text-muted transition-colors hover:text-signal"
-                          aria-label={`Remove visualization ${index + 1}`}
+                          aria-label={`Remove chart ${index + 1}`}
                         >
                           <Trash2 className="size-3.5" aria-hidden="true" />
                         </button>
@@ -1269,9 +1283,9 @@ export default function AdminDataEditorPage() {
                           />
                         </Field>
                         <Field
-                          label="X / category column"
+                          label="Category column"
                           htmlFor={`viz-x-${index}`}
-                          hint="Required for bar, line, area, pie, donut, histogram, scatter, and heatmap."
+                          hint="The column used for labels or groups."
                         >
                           <TextInput
                             id={`viz-x-${index}`}
@@ -1288,7 +1302,7 @@ export default function AdminDataEditorPage() {
                             }
                           />
                         </Field>
-                        <Field label="Y / value column" htmlFor={`viz-y-${index}`}>
+                        <Field label="Value column" htmlFor={`viz-y-${index}`}>
                           <TextInput
                             id={`viz-y-${index}`}
                             value={visualization.y_axis}
@@ -1307,7 +1321,7 @@ export default function AdminDataEditorPage() {
                         <Field
                           label="Series columns"
                           htmlFor={`viz-series-${index}`}
-                          hint="Comma-separated. Leave blank to use the Y column. Heatmaps need exactly one."
+                          hint="Separate each column with a comma. Leave blank to use the value column."
                         >
                           <TextInput
                             id={`viz-series-${index}`}
@@ -1348,8 +1362,8 @@ export default function AdminDataEditorPage() {
                           htmlFor={`viz-data-${index}`}
                           hint={
                             columns.length > 0
-                              ? `Detected columns: ${columns.join(", ")}`
-                              : "A JSON array of row objects. Fix invalid JSON before saving."
+                              ? `Columns found: ${columns.join(", ")}`
+                              : "Rows of data in JSON. Column names are found automatically."
                           }
                         >
                           <TextArea
@@ -1380,7 +1394,7 @@ export default function AdminDataEditorPage() {
 
           <AdminPanel
             title="Insights"
-            description="Each insight records the key finding, a possible explanation, and a recommendation. Keep explanations explicitly tentative when the evidence does not establish a cause."
+            description="The key finding, a possible explanation, and what you would recommend. Say when an explanation is only a guess."
             actions={
               <button
                 type="button"
@@ -1394,7 +1408,7 @@ export default function AdminDataEditorPage() {
           >
             {form.insights.length === 0 ? (
               <p className="border border-dashed border-line-strong px-4 py-5 text-sm text-muted">
-                No insights yet. Findings also appear in the Key findings section.
+                No insights yet. You can also add findings in the Key findings section.
               </p>
             ) : (
               <div className="space-y-5">
@@ -1500,7 +1514,7 @@ export default function AdminDataEditorPage() {
 
           <AdminPanel
             title="Resources"
-            description="Dataset files, notebooks, SQL files, Excel workbooks, PDF reports, dashboards, GitHub repositories, or external sources. Only resources with real content should be listed."
+            description="Files, notebooks, reports, dashboards or links that people can actually open."
             actions={
               <button
                 type="button"
@@ -1514,7 +1528,7 @@ export default function AdminDataEditorPage() {
           >
             {form.resources.length === 0 ? (
               <p className="border border-dashed border-line-strong px-4 py-5 text-sm text-muted">
-                No resources yet. Leave this empty if nothing can be shared publicly.
+                No resources yet. Leave this empty if nothing can be shared.
               </p>
             ) : (
               <div className="space-y-5">
@@ -1576,9 +1590,9 @@ export default function AdminDataEditorPage() {
                         />
                       </Field>
                       <Field
-                        label="URL"
+                        label="Link"
                         htmlFor={`resource-url-${index}`}
-                        hint="http(s) URL or a site-relative path. Leave blank if it is not public."
+                        hint="A full link or a page on your website. Leave blank if it is not public."
                         className="sm:col-span-2"
                       >
                         <TextInput
@@ -1625,8 +1639,8 @@ export default function AdminDataEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Links and SEO"
-            description="Repository, notebook, and dashboard links plus custom search and social metadata. Empty SEO fields fall back to the title and short description."
+            title="Links and search"
+            description="Repository, notebook and dashboard links, plus optional text for search results and shared links."
           >
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="GitHub repository" htmlFor="github">
@@ -1634,7 +1648,7 @@ export default function AdminDataEditorPage() {
                   id="github"
                   value={form.github_url}
                   onChange={(event) => update("github_url", event.target.value)}
-                  placeholder="https://github.com/…"
+                  placeholder="https://github.com/username/repository"
                 />
               </Field>
               <Field label="Notebook" htmlFor="notebook">
@@ -1642,7 +1656,7 @@ export default function AdminDataEditorPage() {
                   id="notebook"
                   value={form.notebook_url}
                   onChange={(event) => update("notebook_url", event.target.value)}
-                  placeholder="https://…"
+                  placeholder="https://example.com"
                 />
               </Field>
               <Field label="Dashboard" htmlFor="dashboard">
@@ -1650,17 +1664,17 @@ export default function AdminDataEditorPage() {
                   id="dashboard"
                   value={form.dashboard_url}
                   onChange={(event) => update("dashboard_url", event.target.value)}
-                  placeholder="https://…"
+                  placeholder="https://example.com"
                 />
               </Field>
-              <Field label="SEO title" htmlFor="seo-title">
+              <Field label="Search title" htmlFor="seo-title">
                 <TextInput
                   id="seo-title"
                   value={form.seo_title}
                   onChange={(event) => update("seo_title", event.target.value)}
                 />
               </Field>
-              <Field label="SEO description" htmlFor="seo-description" className="sm:col-span-2">
+              <Field label="Search description" htmlFor="seo-description" className="sm:col-span-2">
                 <TextArea
                   id="seo-description"
                   rows={3}
@@ -1675,7 +1689,7 @@ export default function AdminDataEditorPage() {
         <aside className="space-y-6 lg:sticky lg:top-24">
           <AdminPanel title="Publishing">
             <div className="grid gap-4">
-              <Field label="Status" htmlFor="status">
+              <Field label="Visibility" htmlFor="status">
                 <Select
                   id="status"
                   value={form.status}
@@ -1692,7 +1706,7 @@ export default function AdminDataEditorPage() {
                 className={buttonStyles("secondary", "md", "w-full")}
               >
                 <Save className="size-3.5" aria-hidden="true" />
-                {saving ? "Saving…" : "Save changes"}
+                {saving ? "Saving..." : "Save changes"}
               </button>
               <button
                 type="button"
@@ -1703,9 +1717,9 @@ export default function AdminDataEditorPage() {
                 Publish analysis
               </button>
               <p className="text-[0.68rem] leading-relaxed text-faint">
-                Only published analyses appear in the public Data Lab. Draft, experiment,
-                and archived records stay private. Saving validates chart configuration and
-                rejects obvious credentials.
+                Only published projects appear in the Data Lab. Draft, experiment and
+                archived projects stay private. Saving checks your chart settings and blocks
+                anything that looks like a password or key.
               </p>
             </div>
           </AdminPanel>
@@ -1714,7 +1728,7 @@ export default function AdminDataEditorPage() {
             <dl className="space-y-3 text-xs">
               <div className="flex items-center justify-between gap-3">
                 <dt className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">
-                  Visualizations
+                  Charts
                 </dt>
                 <dd className="text-paper-dim">{form.visualizations.length}</dd>
               </div>
@@ -1732,7 +1746,7 @@ export default function AdminDataEditorPage() {
               </div>
               <div className="flex items-center justify-between gap-3">
                 <dt className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">
-                  Status
+                  Visibility
                 </dt>
                 <dd className="text-paper-dim">
                   {DATA_PROJECT_STATUS_LABELS[form.status]}
@@ -1746,7 +1760,7 @@ export default function AdminDataEditorPage() {
                   <dd className="text-paper-dim">
                     {project.data?.updated_at
                       ? new Date(project.data.updated_at).toLocaleString()
-                      : "—"}
+                      : "Not saved yet"}
                   </dd>
                 </div>
               ) : null}

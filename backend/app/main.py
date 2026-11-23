@@ -10,6 +10,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.health import router as health_router
 from app.api.v1 import admin as admin_router
+from app.api.v1 import analytics_admin as analytics_admin_router
+from app.api.v1 import analytics_public as analytics_public_router
 from app.api.v1 import auth as auth_router
 from app.api.v1 import content_admin as content_admin_router
 from app.api.v1 import data_admin as data_admin_router
@@ -193,6 +195,9 @@ def create_app() -> FastAPI:
     app.include_router(
         data_public_router.router, prefix=settings.api_v1_prefix, tags=["data"]
     )
+    app.include_router(
+        analytics_public_router.router, prefix=settings.api_v1_prefix, tags=["analytics"]
+    )
     # Mounted before the admin router so GitHub-specific project routes win.
     app.include_router(
         github_router.router,
@@ -203,6 +208,11 @@ def create_app() -> FastAPI:
         admin_router.router,
         prefix=f"{settings.api_v1_prefix}/admin",
         tags=["admin"],
+    )
+    app.include_router(
+        analytics_admin_router.router,
+        prefix=f"{settings.api_v1_prefix}/admin",
+        tags=["admin:analytics"],
     )
     app.include_router(
         data_admin_router.router,

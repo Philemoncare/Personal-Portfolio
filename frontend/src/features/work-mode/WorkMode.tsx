@@ -22,7 +22,7 @@ const MODES: Array<{
     id: "build",
     label: "Build",
     description:
-      "Applications, APIs, and software systems — the engineering side of the practice.",
+      "Web applications, APIs and the software systems behind them.",
     capabilities: [
       "Full-stack applications",
       "Web platforms",
@@ -31,19 +31,19 @@ const MODES: Array<{
       "Frontend development",
     ],
     href: "/work",
-    hrefLabel: "Open the full work index",
+    hrefLabel: "See all projects",
   },
   {
     id: "data",
     label: "Data",
     description:
-      "Analysis, SQL, dashboards, and the thinking behind decisions made with data.",
+      "Analysis, SQL and dashboards, with the thinking behind them.",
     capabilities: [
       "Python",
       "SQL",
       "Excel",
       "Analytics",
-      "Data visualization",
+      "Data visualisation",
       "Dashboards",
     ],
     href: "/data-lab",
@@ -53,7 +53,7 @@ const MODES: Array<{
     id: "lead",
     label: "Lead",
     description:
-      "Communities, initiatives, and the work of making technical teams and programmes effective.",
+      "Communities, programmes and the work of helping technical teams do well.",
     capabilities: [
       "Technology communities",
       "Academic initiatives",
@@ -61,18 +61,18 @@ const MODES: Array<{
       "Project leadership",
     ],
     href: "/leadership",
-    hrefLabel: "Open the leadership record",
+    hrefLabel: "See leadership",
   },
   {
     id: "explore",
     label: "Explore",
     description:
-      "Research, prototypes, cloud work, and technologies that are still being tested and learned.",
+      "Research, prototypes, cloud work and technologies I am still learning.",
     capabilities: [
       "Research",
       "Experiments",
       "Cloud",
-      "Emerging technologies",
+      "New technologies",
       "New ideas",
     ],
     href: "/build-lab",
@@ -163,7 +163,7 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
                     selected ? "text-signal" : "text-faint",
                   )}
                 >
-                  {loading ? "—" : String(counts[mode.id]).padStart(2, "0")}
+                  {loading ? "..." : String(counts[mode.id]).padStart(2, "0")}
                 </span>
               </span>
               {selected ? (
@@ -187,7 +187,7 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
       >
         <div className="grid gap-10 p-5 sm:p-8 lg:grid-cols-[1.45fr_1fr] lg:gap-14">
           <div>
-            {loading ? <LoadingState rows={3} label="Loading work mode content" /> : null}
+            {loading ? <LoadingState rows={3} label="Loading work" /> : null}
             {!loading && error ? <ErrorState message={error} onRetry={onRetry} /> : null}
 
             {!loading && !error ? (
@@ -199,7 +199,7 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
                   exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
                   transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <p className="type-meta text-signal">{activeMode.label} mode</p>
+                  <p className="type-meta text-signal">{activeMode.label}</p>
 
                   <ul className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-2">
                     {activeMode.capabilities.map((capability, index) => (
@@ -221,7 +221,7 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
                   </ul>
 
                   <div className="mt-8">
-                    <p className="type-meta text-muted">Related records</p>
+                    <p className="type-meta text-muted">Related work</p>
 
                     {active === "lead" ? (
                       leadership.length > 0 ? (
@@ -238,7 +238,7 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
                                       {entry.title}
                                     </span>
                                     {entry.is_placeholder ? (
-                                      <Badge tone="placeholder">Placeholder</Badge>
+                                      <Badge tone="placeholder">Not finished</Badge>
                                     ) : null}
                                   </div>
                                   <p className="type-meta mt-1 text-muted">
@@ -256,8 +256,8 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
                       ) : (
                         <EmptyState
                           className="mt-4 border-0 border-t border-dashed border-line bg-transparent p-0 pt-5"
-                          title="Leadership entries are not published yet"
-                          description="Real roles and contributions will appear once they are added from the admin panel."
+                          title="No leadership entries yet"
+                          description="Roles and contributions will appear here once they are added."
                           action={
                             <Link to="/leadership" className={buttonStyles("secondary", "sm")}>
                               View leadership page
@@ -279,7 +279,7 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
                                     {project.title}
                                   </span>
                                   {project.is_placeholder ? (
-                                    <Badge tone="placeholder">Details pending</Badge>
+                                    <Badge tone="placeholder">Not finished</Badge>
                                   ) : null}
                                 </div>
                                 <p className="type-meta mt-1 text-muted">
@@ -304,13 +304,13 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
                         className="mt-4 border-0 border-t border-dashed border-line bg-transparent p-0 pt-5"
                         title={
                           active === "data"
-                            ? "No data projects published yet"
-                            : "No experiments published yet"
+                            ? "No data projects yet"
+                            : "No builds yet"
                         }
                         description={
                           active === "data"
-                            ? "The Data Lab will list datasets, methods, and findings once the first analysis is published."
-                            : "The Build Lab holds prototypes and technical experiments once they are published."
+                            ? "Data projects will appear here once the first one is published."
+                            : "Prototypes and technical experiments will appear here."
                         }
                         action={
                           <Link to={activeMode.href} className={buttonStyles("secondary", "sm")}>
@@ -327,12 +327,12 @@ export function WorkMode({ projects, leadership, loading, error, onRetry }: Work
 
           <aside className="flex flex-col justify-between gap-8 border-t border-line pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
             <div>
-              <p className="type-meta text-muted">Working mode</p>
+              <p className="type-meta text-muted">About this work</p>
               <p className="mt-4 text-pretty text-sm leading-relaxed text-paper-dim">
                 {activeMode.description}
               </p>
               <p className="mt-6 type-meta text-faint">
-                {loading ? "—" : `${String(counts[active]).padStart(2, "0")} related records`}
+                {loading ? "..." : `${String(counts[active]).padStart(2, "0")} related items`}
               </p>
             </div>
             <Link

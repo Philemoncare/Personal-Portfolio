@@ -27,15 +27,15 @@ export default function ExperienceDetailPage() {
   useSeo({
     title: entry
       ? `${entry.title} at ${entry.organization} | Experience`
-      : "Experience detail",
-    description: entry?.description ?? "A role from the professional experience record.",
+      : "Experience | Philemon Melabah",
+    description: entry?.description ?? "A role by Philemon Melabah.",
     path: slug ? `/experience/${slug}` : undefined,
   });
 
   if (experience.loading) {
     return (
       <Container className="py-16">
-        <DetailSkeleton label="Loading role detail" />
+        <DetailSkeleton label="Loading role" />
       </Container>
     );
   }
@@ -43,21 +43,21 @@ export default function ExperienceDetailPage() {
   if (experience.error) {
     return (
       <>
-        <PageIntro eyebrow="Experience / Role" title="Role detail" />
+        <PageIntro eyebrow="Experience / Role" title="Role" />
         <Container className="py-14">
           {experience.error.status === 404 ? (
             <EmptyState
               title="Role not found"
-              description="This role does not exist, or it is no longer publicly available."
+              description="This role does not exist or is no longer public."
               action={
                 <Link to="/experience" className={buttonStyles("secondary", "sm")}>
-                  Back to experience
+                  Back to Experience
                 </Link>
               }
             />
           ) : (
             <ErrorState
-              message="This role could not be loaded. The API may be unavailable — try again in a moment."
+              message="We couldn't load this role. Please try again in a moment."
               onRetry={experience.reload}
             />
           )}
@@ -78,7 +78,7 @@ export default function ExperienceDetailPage() {
             <span className="display-serif text-signal">{entry.organization}</span>
           </>
         }
-        description={entry.description ?? "A role from the professional record."}
+        description={entry.description ?? "A role from my experience."}
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
@@ -101,7 +101,7 @@ export default function ExperienceDetailPage() {
           className="inline-flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted transition-colors hover:text-paper"
         >
           <ArrowLeft className="size-3.5" aria-hidden="true" />
-          Back to experience
+          Back to Experience
         </Link>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1.4fr)_18rem] lg:gap-16">
@@ -109,20 +109,19 @@ export default function ExperienceDetailPage() {
             <h2 className="text-2xl font-medium tracking-tight text-paper">The role</h2>
             <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-paper-dim">
               {entry.description ||
-                "A longer description has not been added to this role yet. The organization, title, and dates are confirmed."}
+                "No longer description has been added yet. The organisation, title and dates are listed below."}
             </p>
 
             <div className="mt-8 border border-line bg-ink-800/40 p-5">
               <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                Continuity
+                Related work
               </p>
               <p className="mt-2 text-sm leading-relaxed text-paper-dim">
-                Projects and leadership work connected to this period are recorded in their own
-                systems rather than duplicated here.
+                Projects and leadership work from this period are listed on their own pages.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link to="/work" className={buttonStyles("secondary", "sm")}>
-                  Work index
+                  All projects
                   <ArrowUpRight className="size-3.5" aria-hidden="true" />
                 </Link>
                 <Link to="/timeline" className={buttonStyles("ghost", "sm")}>
@@ -135,13 +134,13 @@ export default function ExperienceDetailPage() {
           <aside className="h-fit border border-line bg-ink-800/40">
             <div className="border-b border-line px-5 py-3">
               <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted">
-                Record
+                Details
               </p>
             </div>
             <dl className="divide-y divide-line">
               <div className="px-5 py-4">
                 <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
-                  Organization
+                  Organisation
                 </dt>
                 <dd className="mt-1 text-sm text-paper">{entry.organization}</dd>
               </div>
@@ -151,7 +150,7 @@ export default function ExperienceDetailPage() {
                 </dt>
                 <dd className="mt-2">
                   <Badge tone={entry.is_current ? "signal" : "muted"}>
-                    {entry.is_current ? "Current" : "Past"}
+                    {entry.is_current ? "Current" : "Previous"}
                   </Badge>
                 </dd>
               </div>

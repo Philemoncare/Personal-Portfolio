@@ -58,10 +58,10 @@ export const TIMELINE_KIND_ORDER: TimelineKind[] = [
 
 export const INQUIRY_TYPE_LABELS: Record<ContactInquiryType, string> = {
   project_collaboration: "Project collaboration",
-  data_analytics: "Data / analytics",
+  data_analytics: "Data and analytics",
   development: "Development",
-  technology_community: "Technology / community",
-  speaking_workshops: "Speaking / workshops",
+  technology_community: "Technology and community",
+  speaking_workshops: "Speaking and workshops",
   general: "General inquiry",
 };
 

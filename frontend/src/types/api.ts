@@ -1715,3 +1715,102 @@ export interface GitHubImportLogList {
   items: GitHubImportLog[];
   total: number;
 }
+
+// --- Visitor Analytics ----------------------------------------------------
+
+export interface AnalyticsCollectInput {
+  path: string;
+  title?: string | null;
+  referrer?: string | null;
+  visitor_id?: string | null;
+  session_id?: string | null;
+}
+
+export interface AnalyticsOverview {
+  visitors_today: number;
+  visitors_this_week: number;
+  visitors_this_month: number;
+  total_visitors: number;
+  unique_visitors: number;
+  total_visits: number;
+  page_views: number;
+  most_viewed_page: { path: string; views: number } | null;
+  active_now: number;
+  last_visit_at: string | null;
+}
+
+export interface TrendBucket {
+  label: string;
+  timestamp: string;
+  visits: number;
+  unique_visitors: number;
+  page_views: number;
+}
+
+export interface AnalyticsTrends {
+  period: "today" | "7d" | "30d" | "12m";
+  buckets: TrendBucket[];
+}
+
+export interface PageStat {
+  path: string;
+  title: string | null;
+  views: number;
+  unique_visitors: number;
+}
+
+export interface AnalyticsPages {
+  items: PageStat[];
+  total_pages: number;
+}
+
+export interface SourceStat {
+  source: string;
+  count: number;
+  percentage: number;
+}
+
+export interface AnalyticsSources {
+  items: SourceStat[];
+}
+
+export interface DeviceStat {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+export interface AnalyticsDevices {
+  device_types: DeviceStat[];
+  browsers: DeviceStat[];
+  os_list: DeviceStat[];
+}
+
+export interface LocationStat {
+  country: string;
+  country_code: string | null;
+  count: number;
+  percentage: number;
+}
+
+export interface AnalyticsLocations {
+  items: LocationStat[];
+}
+
+export interface RecentVisit {
+  id: string;
+  path: string;
+  title: string | null;
+  referrer_source: string;
+  device_type: string;
+  browser: string;
+  os: string;
+  country: string;
+  timestamp: string;
+}
+
+export interface AnalyticsRecent {
+  items: RecentVisit[];
+  active_now: number;
+}
+

@@ -21,17 +21,17 @@ const METHOD = [
   {
     index: "01",
     title: "Start with a question",
-    body: "Define what needs to be understood, why it matters, and what a useful answer would change before opening a chart.",
+    body: "Decide what needs answering, why it matters and what a useful result would change.",
   },
   {
     index: "02",
-    title: "Work the evidence",
-    body: "Prepare the data, document assumptions, and use Python, SQL, Excel, or statistical methods where they actually fit.",
+    title: "Work through the evidence",
+    body: "Prepare the data, note assumptions and use Python, SQL, Excel or statistics where they fit.",
   },
   {
     index: "03",
     title: "Communicate the finding",
-    body: "Show the evidence, explain the limits, and turn the result into something a decision-maker can act on.",
+    body: "Show the evidence, explain the limits and say what the result means for a decision.",
   },
 ];
 
@@ -91,9 +91,9 @@ export default function DataLabPage() {
   );
 
   usePageSeo("data-lab", {
-    title: "Data Lab — Philemon Melabah",
+    title: "Data Lab | Philemon Melabah",
     description:
-      "Data analysis projects built around real questions: datasets, preparation, methodology, visualizations, and decision-ready findings.",
+      "Data projects by Philemon Melabah: the dataset, the question, the method and what the analysis found.",
     path: "/data-lab",
   });
 
@@ -130,38 +130,34 @@ export default function DataLabPage() {
   return (
     <>
       <PageIntro
-        eyebrow={page?.eyebrow || "Index / Data Lab"}
+        eyebrow={page?.eyebrow || "Data Lab"}
         title={
           page?.title ? (
             page.title
           ) : (
             <>
-              Ask the question.{" "}
-              <span className="display-serif text-signal">Interrogate the evidence.</span>
+              From data to{" "}
+              <span className="display-serif text-signal">a clear answer.</span>
             </>
           )
         }
         description={
           page?.description ||
-          "I use data to investigate problems, identify patterns, communicate findings, and support decisions. This space holds the working analysis: the question, the dataset, the method, and what the evidence actually supports."
+          "I use data to answer questions, test assumptions and explain what the evidence shows. Each project includes the question, the dataset, the method and the result."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
-              <span>Published analyses</span>
+              <span>Projects</span>
               <span className="text-paper">
-                {facets.loading ? "—" : String(totalPublished).padStart(2, "0")}
+                {facets.loading ? "..." : String(totalPublished).padStart(2, "0")}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Tools in use</span>
+              <span>Tools</span>
               <span className="text-paper">
-                {tools.loading ? "—" : String(tools.data?.length ?? 0).padStart(2, "0")}
+                {tools.loading ? "..." : String(tools.data?.length ?? 0).padStart(2, "0")}
               </span>
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Source</span>
-              <span className="text-paper">FastAPI / database</span>
             </div>
           </div>
         }
@@ -184,17 +180,17 @@ export default function DataLabPage() {
           <div className="flex flex-wrap items-end justify-between gap-3 border-t border-line pt-6">
             <div>
               <p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted">
-                Featured reading
+                Featured
               </p>
               <h2
                 id="featured-visual-heading"
                 className="mt-2 text-2xl font-medium tracking-tight text-paper sm:text-3xl"
               >
-                One view from the latest analysis
+                A chart from a recent project
               </h2>
             </div>
             <Link to="/data-lab#index" className={buttonStyles("secondary", "sm")}>
-              Jump to the index
+              See all projects
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           </div>
@@ -204,10 +200,10 @@ export default function DataLabPage() {
               <LazyDataChart visualization={heroVisualization} isDemo={heroProject.is_demo} compact />
             ) : (
               <div className="flex min-h-48 flex-col items-start justify-center border border-dashed border-line-strong bg-ink-800/30 p-8">
-                <p className="text-sm font-medium text-paper">No featured visualization yet</p>
+                <p className="text-sm font-medium text-paper">No featured chart yet</p>
                 <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
-                  Charts appear here only when a published analysis has a validated
-                  visualization. No decorative values are generated for this space.
+                  A chart appears here when a published project has one. Charts are built from
+                  saved project data.
                 </p>
               </div>
             )}
@@ -220,7 +216,7 @@ export default function DataLabPage() {
                 <>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Badge tone="outline">{DATA_PROJECT_TYPE_LABELS[heroProject.project_type]}</Badge>
-                    {heroProject.is_demo ? <Badge tone="placeholder">Demo data</Badge> : null}
+                    {heroProject.is_demo ? <Badge tone="placeholder">Sample data</Badge> : null}
                   </div>
                   <Link
                     to={`/data/${heroProject.slug}`}
@@ -247,13 +243,13 @@ export default function DataLabPage() {
                     to={`/data/${heroProject.slug}`}
                     className="mt-6 inline-flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-paper hover:text-signal"
                   >
-                    Explore Analysis
+                    Read the analysis
                     <ArrowUpRight className="size-3" aria-hidden="true" />
                   </Link>
                 </>
               ) : (
                 <p className="mt-4 text-sm leading-relaxed text-muted">
-                  Featured analyses are selected in the admin editor and served from the API.
+                  Featured projects will appear here once one is selected.
                 </p>
               )}
             </div>
@@ -264,17 +260,17 @@ export default function DataLabPage() {
           <div className="flex flex-wrap items-end justify-between gap-4 border-t border-line pt-6">
             <div>
               <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted">
-                Data project index
+                Data Lab
               </p>
               <h2
                 id="data-index-heading"
                 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
               >
-                Published analysis
+                All projects
               </h2>
             </div>
             <Link to="/contact" className={buttonStyles("secondary", "sm")}>
-              Discuss data work
+              Get in touch
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           </div>
@@ -290,7 +286,7 @@ export default function DataLabPage() {
                   id="data-filters-heading"
                   className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted"
                 >
-                  Filter the analysis index
+                  Filters
                 </h3>
               </div>
               {filtersActive ? (
@@ -311,7 +307,7 @@ export default function DataLabPage() {
                   htmlFor="data-search"
                   className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted"
                 >
-                  Search analyses
+                  Search projects
                 </label>
                 <div className="relative mt-2">
                   <Search
@@ -323,7 +319,7 @@ export default function DataLabPage() {
                     type="search"
                     value={searchInput}
                     onChange={(event) => setSearchInput(event.target.value)}
-                    placeholder="Name, description, tool, category, keyword…"
+                    placeholder="Name, description, tool, category, keyword..."
                     autoComplete="off"
                     className="h-11 w-full border border-line bg-ink-900 pl-9 pr-9 font-sans text-sm text-paper placeholder:text-faint focus:border-line-strong focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
                   />
@@ -339,8 +335,7 @@ export default function DataLabPage() {
                   ) : null}
                 </div>
                 <p className="mt-2 text-[0.68rem] leading-relaxed text-faint">
-                  Searches names, descriptions, categories, tools, and keywords. Requests are
-                  debounced.
+                  Searches names, descriptions, categories and tools.
                 </p>
               </form>
 
@@ -365,7 +360,7 @@ export default function DataLabPage() {
                   ))}
                 </select>
                 <p className="mt-2 text-[0.68rem] leading-relaxed text-faint">
-                  Only tools used by published analyses appear here.
+                  Only tools used by published projects are listed.
                 </p>
               </div>
 
@@ -374,7 +369,7 @@ export default function DataLabPage() {
                   htmlFor="data-type"
                   className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted"
                 >
-                  Analysis type
+                  Project type
                 </label>
                 <select
                   id="data-type"
@@ -390,7 +385,7 @@ export default function DataLabPage() {
                   ))}
                 </select>
                 <p className="mt-2 text-[0.68rem] leading-relaxed text-faint">
-                  EDA, SQL, Excel, dashboards, research, and more.
+                  For example analysis, SQL, Excel, dashboards or research.
                 </p>
               </div>
             </div>
@@ -479,8 +474,8 @@ export default function DataLabPage() {
               ) : null}
               {!filtersActive ? (
                 <span className="type-meta text-faint">
-                  {String(totalPublished).padStart(2, "0")} published analysis
-                  {totalPublished === 1 ? "" : "es"}
+                  {String(totalPublished).padStart(2, "0")} published project
+                  {totalPublished === 1 ? "" : "s"}
                 </span>
               ) : (
                 <span className="type-meta text-muted">
@@ -489,17 +484,17 @@ export default function DataLabPage() {
               )}
             </div>
             <span className="type-meta text-faint">
-              Sorted by curation order / newest publication
+              Newest first
             </span>
           </div>
 
           <div className="mt-8">
             {projects.loading && items.length === 0 ? (
-              <LoadingState rows={4} label="Loading data projects" />
+              <LoadingState rows={4} label="Loading projects" />
             ) : null}
             {!projects.loading && projects.error ? (
               <ErrorState
-                message="The Data Lab index could not be loaded. The API may be unavailable — try again in a moment."
+                message="We couldn't load these projects. Please try again in a moment."
                 onRetry={projects.reload}
               />
             ) : null}
@@ -507,13 +502,13 @@ export default function DataLabPage() {
               <EmptyState
                 title={
                   filtersActive
-                    ? "No analyses match those filters"
-                    : "I'm currently preparing new analysis projects for this space"
+                    ? "No projects match those filters"
+                    : "No data projects yet"
                 }
                 description={
                   filtersActive
-                    ? "Try a broader search or clear one of the filters. Nothing is hidden behind a fake result."
-                    : "Real analyses appear here once the dataset, method, and findings are ready to publish. No placeholder results are presented as completed work."
+                    ? "Try a broader search or clear one of the filters."
+                    : "Data projects will appear here once they are published."
                 }
                 action={
                   filtersActive ? (
@@ -526,7 +521,7 @@ export default function DataLabPage() {
                     </button>
                   ) : (
                     <Link to="/contact" className={buttonStyles("secondary", "sm")}>
-                      Talk about a data problem
+                      Get in touch
                       <ArrowUpRight className="size-3.5" aria-hidden="true" />
                     </Link>
                   )
@@ -545,10 +540,10 @@ export default function DataLabPage() {
           <p className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
             <span>
               {projects.data
-                ? `${resultCount} analysis record${resultCount === 1 ? "" : "s"} / loaded from the data API`
-                : "Published analyses are served by the FastAPI data layer"}
+                ? `${resultCount} project${resultCount === 1 ? "" : "s"}`
+                : "No projects loaded yet"}
             </span>
-            <span>Filter state is kept in the URL</span>
+            <span>Filters are saved in the address bar</span>
           </p>
         </section>
       </Container>

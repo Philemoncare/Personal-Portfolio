@@ -25,14 +25,14 @@ export function SelectedWork() {
           eyebrow="Selected work"
           title={
             <span id="selected-work-heading">
-              Systems built for{" "}
-              <span className="display-serif text-signal">real use.</span>
+              Projects I have{" "}
+              <span className="display-serif text-signal">built and run.</span>
             </span>
           }
-          description="A short edit of the work that best represents the practice. Each record links to the project, its context, and the technical decisions behind it."
+          description="A small selection of projects. Each one links to what it does and how it was built."
           action={
             <Link to="/work" className={buttonStyles("secondary", "sm")}>
-              Full work index
+              All projects
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           }
@@ -43,8 +43,8 @@ export function SelectedWork() {
           {!loading && error ? <ErrorState message={error.detail} onRetry={reload} /> : null}
           {!loading && !error && projects.length === 0 ? (
             <EmptyState
-              title="No featured projects are published"
-              description="Selected work appears here once projects are marked as featured and published from the admin panel."
+              title="No featured projects yet"
+              description="Featured projects will appear here when they are marked as featured."
               action={
                 <Link to="/work" className={buttonStyles("secondary", "sm")}>
                   Browse all projects
@@ -84,10 +84,10 @@ export function SelectedWork() {
 
         <p className="mt-10 border-t border-line pt-4 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
           {loading
-            ? "Reading the project index"
-            : `${String(projects.length).padStart(2, "0")} selected record${
+            ? "Loading projects"
+            : `${String(projects.length).padStart(2, "0")} selected project${
                 projects.length === 1 ? "" : "s"
-              } / served by the content API`}
+              }`}
         </p>
       </Container>
     </section>

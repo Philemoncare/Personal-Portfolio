@@ -124,7 +124,7 @@ export default function AdminArticleEditorPage() {
   const save = async (status?: PublishStatus) => {
     if (!form) return;
     if (!form.title.trim()) {
-      setNotice({ tone: "error", text: "A title is required." });
+      setNotice({ tone: "error", text: "Please add a title." });
       return;
     }
     setBusy(true);
@@ -135,7 +135,7 @@ export default function AdminArticleEditorPage() {
         const created = await adminContentService.createArticle(toPayload(form, appliedStatus));
         setForm(fromArticle(created));
         navigate(`/admin/articles/${created.id}`, { replace: true });
-        setNotice({ tone: "ok", text: "Article created." });
+        setNotice({ tone: "ok", text: "Article added." });
       } else if (id) {
         const updated = await adminContentService.updateArticle(id, toPayload(form, appliedStatus));
         setForm(fromArticle(updated));
@@ -147,7 +147,7 @@ export default function AdminArticleEditorPage() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The article could not be saved.",
+        text: error instanceof Error ? error.message : "We couldn't save this article. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -156,7 +156,7 @@ export default function AdminArticleEditorPage() {
 
   const remove = async () => {
     if (!id || !form) return;
-    if (!window.confirm(`Delete "${form.title}" permanently?`)) return;
+    if (!window.confirm(`Delete "${form.title}"? This cannot be undone.`)) return;
     setBusy(true);
     try {
       await adminContentService.deleteArticle(id);
@@ -164,7 +164,7 @@ export default function AdminArticleEditorPage() {
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "The article could not be deleted.",
+        text: error instanceof Error ? error.message : "We couldn't delete this article. Please try again.",
       });
     } finally {
       setBusy(false);
@@ -176,7 +176,12 @@ export default function AdminArticleEditorPage() {
   }
 
   if (article.error) {
-    return <ErrorState message={article.error.detail} onRetry={article.reload} />;
+    return (
+      <ErrorState
+        message="We couldn't load this article. Please try again."
+        onRetry={article.reload}
+      />
+    );
   }
 
   if (!form) return null;
@@ -212,12 +217,12 @@ export default function AdminArticleEditorPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-              {isNew ? "New article" : form.title || "Untitled article"}
+              {isNew ? "Write article" : form.title || "Untitled article"}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
               {isNew
                 ? "Start as a draft. Nothing is public until you publish it."
-                : "Edit the article. Social metadata falls back to the title and excerpt when empty."}
+                : "Edit the article. Search and sharing text falls back to the title and summary when empty."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -239,7 +244,7 @@ export default function AdminArticleEditorPage() {
               className={buttonStyles("secondary", "sm")}
             >
               <Save className="size-3.5" aria-hidden="true" />
-              {busy ? "Saving…" : "Save draft"}
+              {busy ? "Saving..." : "Save draft"}
             </button>
             <button
               type="button"
@@ -271,10 +276,10 @@ export default function AdminArticleEditorPage() {
         <div className="space-y-6">
           <AdminPanel
             title="Article"
-            description="The title, slug, excerpt, and body shown on the public article page."
+            description="The title, web address, summary and content shown on your website."
           >
             <div className="space-y-4">
-              <Field label="Title" htmlFor="article-title" required>
+              <Field label="Article title" htmlFor="article-title" required>
                 <TextInput
                   id="article-title"
                   value={form.title}
@@ -282,9 +287,9 @@ export default function AdminArticleEditorPage() {
                 />
               </Field>
               <Field
-                label="Slug"
+                label="Web address"
                 htmlFor="article-slug"
-                hint="Leave blank to generate one. The public URL is /articles/{slug}."
+                hint="Leave blank to create one from the title."
               >
                 <TextInput
                   id="article-slug"
@@ -292,7 +297,7 @@ export default function AdminArticleEditorPage() {
                   onChange={(event) => update("slug", event.target.value)}
                 />
               </Field>
-              <Field label="Excerpt" htmlFor="article-excerpt" hint={`${form.excerpt.length}/400 characters`}>
+              <Field label="Short summary" htmlFor="article-excerpt" hint={`${form.excerpt.length}/400 characters`}>
                 <TextArea
                   id="article-excerpt"
                   rows={3}
@@ -302,7 +307,7 @@ export default function AdminArticleEditorPage() {
                 />
               </Field>
               <Field
-                label="Body"
+                label="Article content"
                 htmlFor="article-body"
                 hint="Plain text or Markdown. Blank lines separate paragraphs."
               >
@@ -317,18 +322,18 @@ export default function AdminArticleEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Search and social"
-            description="Optional explicit metadata. Empty fields fall back to the title and excerpt."
+            title="Search and sharing"
+            description="Optional text for search results and shared links. Empty fields use the title and summary."
           >
             <div className="space-y-4">
-              <Field label="SEO title" htmlFor="article-seo-title">
+              <Field label="Search title" htmlFor="article-seo-title">
                 <TextInput
                   id="article-seo-title"
                   value={form.seo_title}
                   onChange={(event) => update("seo_title", event.target.value)}
                 />
               </Field>
-              <Field label="SEO description" htmlFor="article-seo-description">
+              <Field label="Search description" htmlFor="article-seo-description">
                 <TextArea
                   id="article-seo-description"
                   rows={3}
@@ -341,7 +346,7 @@ export default function AdminArticleEditorPage() {
         </div>
 
         <aside className="h-fit space-y-6 lg:sticky lg:top-24">
-          <AdminPanel title="Cover" description="Uploaded through the media library.">
+          <AdminPanel title="Cover image" description="You can also upload it in the Media Library.">
             <MediaField
               value={form.cover_image_url}
               onChange={(value) => update("cover_image_url", value)}
@@ -355,17 +360,17 @@ export default function AdminArticleEditorPage() {
             />
           </AdminPanel>
 
-          <AdminPanel title="Classification">
+          <AdminPanel title="Category and tags">
             <div className="space-y-4">
               <Field label="Category" htmlFor="article-category">
                 <TextInput
                   id="article-category"
                   value={form.category}
                   onChange={(event) => update("category", event.target.value)}
-                  placeholder="Engineering, Data, Notes…"
+                  placeholder="Engineering, Data, Notes"
                 />
               </Field>
-              <Field label="Tags" htmlFor="article-tags" hint="Comma separated. Up to 12.">
+              <Field label="Tags" htmlFor="article-tags" hint="Separate each tag with a comma. Up to 12.">
                 <TextInput
                   id="article-tags"
                   value={form.tags}
@@ -373,15 +378,15 @@ export default function AdminArticleEditorPage() {
                   placeholder="fastapi, design, testing"
                 />
               </Field>
-              <Field label="External URL" htmlFor="article-external" hint="Optional canonical source.">
+              <Field label="Other link" htmlFor="article-external" hint="Optional link to where this was first published.">
                 <TextInput
                   id="article-external"
                   value={form.external_url}
                   onChange={(event) => update("external_url", event.target.value)}
-                  placeholder="https://…"
+                  placeholder="https://example.com"
                 />
               </Field>
-              <Field label="Sort order" htmlFor="article-order" hint="Lower numbers appear first.">
+              <Field label="Display order" htmlFor="article-order" hint="Lower numbers appear first.">
                 <TextInput
                   id="article-order"
                   type="number"
@@ -394,7 +399,7 @@ export default function AdminArticleEditorPage() {
 
           <AdminPanel title="Publishing">
             <div className="space-y-4">
-              <Field label="Status" htmlFor="article-status">
+              <Field label="Visibility" htmlFor="article-status">
                 <Select
                   id="article-status"
                   value={form.publish_status}
@@ -402,20 +407,20 @@ export default function AdminArticleEditorPage() {
                     update("publish_status", event.target.value as PublishStatus)
                   }
                   options={[
-                    { value: "draft", label: "Draft — private" },
-                    { value: "published", label: "Published — public" },
+                    { value: "draft", label: "Draft (private)" },
+                    { value: "published", label: "Published (visible on your website)" },
                     { value: "archived", label: "Archived" },
                   ]}
                 />
               </Field>
               <Checkbox
-                label="Featured"
+                label="Feature this article"
                 checked={form.featured}
                 onChange={(next) => update("featured", next)}
-                hint="Featured articles can be surfaced on the homepage and index."
+                hint="Featured articles can appear on your homepage and articles page."
               />
               <Checkbox
-                label="Mark as placeholder"
+                label="This article is not finished yet"
                 checked={form.is_placeholder}
                 onChange={(next) => update("is_placeholder", next)}
               />

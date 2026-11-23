@@ -46,14 +46,14 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   dataset: "Dataset",
   preparation: "Data preparation",
   analysis: "Exploratory analysis",
-  methodology: "Methodology",
-  visualizations: "Visualizations",
+  methodology: "Method",
+  visualizations: "Charts",
   storytelling: "What the data shows",
   findings: "Key findings",
   recommendations: "Recommendations",
   limitations: "Limitations",
   tools: "Tools",
-  resources: "Files / resources",
+  resources: "Files and links",
 };
 
 const SECTION_IDS: Record<SectionKey, string> = {
@@ -143,16 +143,16 @@ export default function DataProjectDetailPage() {
 
   useSeo({
     title: data
-      ? data.seo_title || `${data.title} — Data Lab | Philemon Melabah`
-      : "Data project — Philemon Melabah",
+      ? data.seo_title || `${data.title} | Data Lab | Philemon Melabah`
+      : "Data project | Philemon Melabah",
     description:
       data?.seo_description ||
       data?.short_description ||
-      "Data analysis project from Philemon Melabah's Data Lab.",
+      "A data project by Philemon Melabah.",
     path: slug ? `${basePath}/${slug}` : undefined,
     type: "article",
     image: data?.cover_image_url ?? null,
-    imageAlt: data ? `${data.title} analysis cover` : null,
+    imageAlt: data ? `${data.title} project cover` : null,
   });
 
   if (data) {
@@ -168,8 +168,8 @@ export default function DataProjectDetailPage() {
             <div className="space-y-4 border-t border-line pt-4">
               <div className="flex flex-wrap gap-2">
                 <Badge tone="outline">{DATA_PROJECT_TYPE_LABELS[data.project_type]}</Badge>
-                {data.is_demo ? <Badge tone="placeholder">Demo data</Badge> : null}
-                {data.is_placeholder ? <Badge tone="muted">Analysis pending</Badge> : null}
+                {data.is_demo ? <Badge tone="placeholder">Sample data</Badge> : null}
+                {data.is_placeholder ? <Badge tone="muted">Not finished</Badge> : null}
               </div>
               <dl className="space-y-2.5 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
                 {data.year ? (
@@ -204,9 +204,6 @@ export default function DataProjectDetailPage() {
               <ArrowLeft className="size-3.5" aria-hidden="true" />
               Back to Data Lab
             </Link>
-            <span className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-faint">
-              /data/{data.slug}
-            </span>
           </div>
 
           {data.is_demo ? (
@@ -214,13 +211,12 @@ export default function DataProjectDetailPage() {
               <div className="flex items-center gap-2">
                 <FlaskConical className="size-4 text-signal" aria-hidden="true" />
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-signal">
-                  Demo data
+                  Sample data
                 </p>
               </div>
               <p className="mt-3 max-w-3xl text-sm leading-relaxed text-paper-dim">
-                This project uses a synthetic dataset generated to test the Data Lab's
-                analysis and visualization interface. It is not a record of real clients,
-                revenue, or personal results.
+                This project uses a sample dataset made to test the Data Lab. It is not a
+                record of real clients, revenue or personal results.
               </p>
             </div>
           ) : null}
@@ -228,11 +224,11 @@ export default function DataProjectDetailPage() {
           {data.is_placeholder && !data.is_demo ? (
             <div className="mt-8 border border-signal/30 bg-signal/5 p-5 sm:p-6">
               <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-signal">
-                Analysis in progress
+                This analysis is not finished
               </p>
               <p className="mt-3 max-w-3xl text-sm leading-relaxed text-paper-dim">
-                Sections appear here only when real, verified content has been added from
-                the admin editor. Nothing is invented to fill the gap.
+                Sections appear here as they are written and confirmed. Nothing is added just
+                to fill the space.
               </p>
             </div>
           ) : null}
@@ -241,7 +237,7 @@ export default function DataProjectDetailPage() {
             <figure className="mt-8 overflow-hidden border border-line">
               <PortfolioImage
                 src={data.cover_image_url}
-                alt={`${data.title} analysis cover`}
+                alt={`${data.title} project cover`}
                 aspect="auto"
                 sizes="(max-width: 1024px) 100vw, 70vw"
               />
@@ -251,10 +247,10 @@ export default function DataProjectDetailPage() {
           <div className="mt-10 grid gap-10 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-16">
             <aside className="h-fit lg:sticky lg:top-24">
               <p className="font-mono text-[0.56rem] uppercase tracking-[0.2em] text-muted">
-                Contents
+                On this page
               </p>
               {sections.length > 0 ? (
-                <nav aria-label="Data project contents" className="mt-4">
+                <nav aria-label="On this page" className="mt-4">
                   <ol className="space-y-2">
                     {sections.map((key, index) => (
                       <li key={key}>
@@ -273,7 +269,7 @@ export default function DataProjectDetailPage() {
                 </nav>
               ) : (
                 <p className="mt-4 text-sm leading-relaxed text-muted">
-                  Sections appear as the analysis is written.
+                  Sections will appear as they are written.
                 </p>
               )}
 
@@ -281,7 +277,7 @@ export default function DataProjectDetailPage() {
                 to="/contact"
                 className="mt-8 inline-flex items-center gap-2 border-t border-line pt-4 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-paper-dim hover:text-paper"
               >
-                Discuss this work
+                Get in touch
                 <ArrowUpRight className="size-3" aria-hidden="true" />
               </Link>
             </aside>
@@ -289,8 +285,8 @@ export default function DataProjectDetailPage() {
             <article className="min-w-0">
               {sections.length === 0 ? (
                 <EmptyState
-                  title="Analysis write-up pending"
-                  description="The project record exists, but no narrative sections have been published yet. Empty space is left honestly."
+                  title="Nothing written yet"
+                  description="This project has no written sections yet."
                   action={
                     <Link to="/data-lab" className={buttonStyles("secondary", "sm")}>
                       Back to Data Lab
@@ -370,19 +366,19 @@ export default function DataProjectDetailPage() {
                                 code={data.sql_query ?? ""}
                                 language="sql"
                                 label="SQL query"
-                                caption="Stored with the project for reading. The public site never executes arbitrary SQL."
+                                caption="Saved with the project for reference. The public site does not run queries."
                               />
                               {data.sql_result.length > 0 ? (
                                 <div>
                                   <div className="mb-2 flex items-center gap-2">
                                     <Database className="size-3.5 text-signal" aria-hidden="true" />
                                     <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                                      Stored result example
+                                      Saved result
                                     </p>
                                   </div>
                                   <DataTable
                                     rows={data.sql_result}
-                                    caption="Stored query result"
+                                    caption="Saved query result"
                                     pageSize={6}
                                     searchable
                                     columnToggle={false}
@@ -396,7 +392,7 @@ export default function DataProjectDetailPage() {
                               code={data.python_snippet ?? ""}
                               language="python"
                               label="Python excerpt"
-                              caption="A short excerpt, not private project code."
+                              caption="A short excerpt from the project code."
                             />
                           ) : null}
                         </div>
@@ -405,8 +401,8 @@ export default function DataProjectDetailPage() {
                       {key === "visualizations" ? (
                         <div className="space-y-6">
                           <p className="max-w-2xl text-sm leading-relaxed text-muted">
-                            Each chart is generated from stored data and includes a readable
-                            data-table alternative. Color is never the only signal.
+                            Each chart is built from saved data and has a data table alternative.
+                            Colour is never the only signal.
                           </p>
                           {data.visualizations.map((visualization) => (
                             <LazyDataChart
@@ -476,8 +472,8 @@ export default function DataProjectDetailPage() {
                       {key === "resources" ? (
                         <div className="space-y-3">
                           <p className="max-w-2xl text-sm leading-relaxed text-muted">
-                            Only resources that exist are listed. A resource without a public
-                            URL is shown as unavailable rather than linked to something broken.
+                            Only files that exist are listed. A file without a public link is shown
+                            as unavailable.
                           </p>
                           <ResourceList resources={data.resources} />
                           <ul className="flex flex-wrap gap-x-4 gap-y-2">
@@ -528,7 +524,7 @@ export default function DataProjectDetailPage() {
                               {data.resources.filter((resource) => !resource.url).length === 1
                                 ? ""
                                 : "s"}{" "}
-                              without a public URL:{" "}
+                              without a public link:{" "}
                               {data.resources
                                 .filter((resource) => !resource.url)
                                 .map(
@@ -549,10 +545,10 @@ export default function DataProjectDetailPage() {
               <div className="mt-14 flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
                   {data.is_demo
-                    ? "Demo analysis / synthetic data"
+                    ? "Sample data"
                     : data.is_placeholder
-                      ? "Draft content / pending verification"
-                      : "Published analysis"}
+                      ? "Draft"
+                      : "Published"}
                 </p>
                 <Link to="/data-lab" className={buttonStyles("secondary", "sm")}>
                   <ArrowLeft className="size-3.5" aria-hidden="true" />
@@ -568,7 +564,7 @@ export default function DataProjectDetailPage() {
 
   return (
     <>
-      <PageIntro eyebrow="Data Lab / Project" title={project.loading ? "Loading analysis…" : "Data project"} />
+      <PageIntro eyebrow="Data Lab / Project" title={project.loading ? "Loading project..." : "Data project"} />
       <Container className="py-10 sm:py-14">
         <Link
           to="/data-lab"
@@ -580,7 +576,7 @@ export default function DataProjectDetailPage() {
 
         {project.loading ? (
           <div className="mt-10">
-            <LoadingState rows={5} label="Loading data project" />
+            <LoadingState rows={5} label="Loading project" />
           </div>
         ) : null}
 
@@ -589,7 +585,7 @@ export default function DataProjectDetailPage() {
             {project.error.status === 404 ? (
               <EmptyState
                 title="Data project not found"
-                description="This analysis may be unpublished, archived, or the URL may be incorrect."
+                description="This project does not exist or is no longer public."
                 action={
                   <Link to="/data-lab" className={buttonStyles("secondary", "sm")}>
                     Back to Data Lab
@@ -598,7 +594,7 @@ export default function DataProjectDetailPage() {
               />
             ) : (
               <ErrorState
-                message="This analysis could not be loaded. The API may be unavailable — try again in a moment."
+                message="We couldn't load this project. Please try again in a moment."
                 onRetry={project.reload}
               />
             )}

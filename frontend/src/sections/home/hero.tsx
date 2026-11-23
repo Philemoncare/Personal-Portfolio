@@ -15,17 +15,17 @@ const DISCIPLINES = [
   {
     index: "01",
     label: "Full-stack development",
-    detail: "Products, APIs, and the systems that hold them together.",
+    detail: "Web apps, APIs and the systems behind them.",
   },
   {
     index: "02",
-    label: "Data & analytics",
-    detail: "Python, SQL, and analysis that supports real decisions.",
+    label: "Data and analytics",
+    detail: "Python, SQL and analysis that supports real decisions.",
   },
   {
     index: "03",
-    label: "Technology building",
-    detail: "Communities, programmes, and technical initiatives.",
+    label: "Technology leadership",
+    detail: "Communities, programmes and technical projects.",
   },
 ];
 
@@ -46,7 +46,7 @@ export function Hero() {
     page?.description ||
     person?.short_bio ||
     settings?.hero_intro ||
-    "I build software products, work with data, and turn ideas into working systems.";
+    "I build web software, work with data and help teams finish technical projects.";
 
   const location = person?.location || settings?.location || "Ghana";
   const role = person?.professional_title || settings?.role_title || "Full-Stack Developer";
@@ -66,7 +66,7 @@ export function Hero() {
           </p>
           <p className="type-meta hidden items-center gap-2 text-faint sm:flex">
             <span className="size-1.5 bg-signal" aria-hidden="true" />
-            Portfolio 001 — 2026
+            Portfolio 2026
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export function Hero() {
               >
                 <span>Selected work</span>
                 <span className="text-faint">/</span>
-                <span>Technical case studies</span>
+                <span>Case studies</span>
                 <span className="text-faint">/</span>
                 <span className="text-signal">{settings?.availability || "Open to collaboration"}</span>
               </motion.p>
@@ -114,9 +114,9 @@ export function Hero() {
               >
                 <span>{role}</span>
                 <span className="text-faint">/</span>
-                <span>Data &amp; analytics</span>
+                <span>Data and analytics</span>
                 <span className="text-faint">/</span>
-                <span>Technology builder</span>
+                <span>Technology leader</span>
               </motion.p>
             </div>
 
@@ -141,7 +141,7 @@ export function Hero() {
 
                 {settings?.cv_url ? (
                   <a href={settings.cv_url} download className={buttonStyles("secondary", "lg")}>
-                    Download CV
+                    Download resume
                     <Download className="size-4" aria-hidden="true" />
                   </a>
                 ) : (
@@ -152,16 +152,10 @@ export function Hero() {
                 )}
               </div>
 
-              {!settings?.cv_url ? (
-                <p className="mt-3 font-mono text-[0.56rem] uppercase tracking-[0.13em] text-faint">
-                  CV not uploaded yet. Available from the site settings record.
-                </p>
-              ) : null}
-
               {error ? (
                 <div className="mt-7 max-w-lg">
                   <ErrorState
-                    message={`Profile settings could not load: ${error}. Fallback copy is shown.`}
+                    message="We couldn't load the profile details. Showing the default text."
                     onRetry={reload}
                     className="p-5"
                   />
@@ -191,7 +185,7 @@ export function Hero() {
                     aria-hidden="true"
                   >
                     <p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-faint">
-                      Portrait unavailable
+                      No profile photo yet
                     </p>
                   </div>
                 }
@@ -209,7 +203,7 @@ export function Hero() {
               <figcaption className="flex items-start justify-between gap-4 border-x border-b border-line bg-surface/70 px-4 py-3">
                 <div>
                   <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-                    Studio portrait
+                    Profile photo
                   </p>
                   <p className="mt-1 text-xs text-paper-dim">
                     {fullName}, {location}

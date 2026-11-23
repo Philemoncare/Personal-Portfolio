@@ -18,34 +18,34 @@ export function PracticeIndex() {
     {
       label: "Build Lab",
       to: "/build-lab",
-      detail: "Smaller builds, prototypes, and technical experiments.",
+      detail: "Smaller builds, prototypes and technical experiments.",
       meta: "Experiments",
     },
     {
       label: "Leadership",
       to: "/leadership",
-      detail: "Technical community and program work with stated outcomes.",
+      detail: "Community work and technical programmes.",
       meta: leadership.loading
-        ? "—"
-        : `${leadership.data?.length ?? 0} published`,
+        ? "Loading"
+        : `${leadership.data?.length ?? 0} entries`,
     },
     {
       label: "Experience",
       to: "/experience",
-      detail: "The professional record, kept separate from the profile.",
+      detail: "Jobs, roles and what I did in them.",
       meta: experience.loading
-        ? "—"
+        ? "Loading"
         : `${experience.data?.length ?? 0} roles`,
     },
     {
       label: "Resume",
       to: "/resume",
-      detail: "The online record, plus a managed PDF when one is published.",
+      detail: "My experience in one place, plus a PDF when available.",
       meta: profile.loading
-        ? "—"
+        ? "Loading"
         : profile.data?.current_resume
           ? "PDF available"
-          : "Online record",
+          : "Online",
     },
   ];
 
@@ -59,12 +59,11 @@ export function PracticeIndex() {
               id="practice-index-heading"
               className="mt-4 text-2xl font-medium tracking-tight text-paper sm:text-3xl"
             >
-              The rest of the record.
+              More of my work.
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
-            Every section draws from its own published records. Nothing here is a marketing
-            summary.
+            Each section shows published projects and experience.
           </p>
         </div>
 

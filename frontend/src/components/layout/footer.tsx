@@ -119,7 +119,7 @@ export function Footer() {
 
             <p className="mt-7 max-w-sm text-pretty text-sm leading-relaxed text-muted">
               {settings?.footer_text ||
-                "A personal technology practice: software products, data work, and the systems that connect them."}
+                "Software, data work and the systems behind them."}
             </p>
           </div>
 
@@ -184,7 +184,7 @@ export function Footer() {
                     to="/resume"
                     className="inline-flex items-center gap-2 text-paper-dim transition-colors hover:text-paper"
                   >
-                    Online resume
+                    Resume
                   </Link>
                 </li>
               )}
@@ -192,7 +192,7 @@ export function Footer() {
 
             {socials.length === 0 ? (
               <p className="mt-5 max-w-xs text-xs leading-relaxed text-muted">
-                No public social links are configured. The contact form is the reliable channel.
+                No public social links yet. Use the contact form to get in touch.
               </p>
             ) : null}
           </div>

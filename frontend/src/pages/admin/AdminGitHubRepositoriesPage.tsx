@@ -38,7 +38,7 @@ const VIEWS: Array<{ value: View; label: string }> = [
   { value: "archived", label: "Archived" },
   { value: "active", label: "Active" },
   { value: "forks", label: "Forks" },
-  { value: "originals", label: "Originals" },
+  { value: "originals", label: "Not forks" },
 ];
 
 function filtersFor(view: View): Pick<RepositoryQuery, "visibility" | "archived" | "fork"> {
@@ -85,7 +85,7 @@ function repositoryStatus(repo: GitHubRepository): { label: string; tone: "defau
 
 function syncStatus(repo: GitHubRepository): { label: string; tone: "good" | "warn" } | null {
   if (!repo.linked_project_id) return null;
-  if (repo.sync_available) return { label: "Sync available", tone: "warn" };
+  if (repo.sync_available) return { label: "Update available", tone: "warn" };
   if (repo.last_synced_at) return { label: "Synced", tone: "good" };
   return null;
 }
@@ -130,11 +130,11 @@ function RepositoryRow({ repo }: { repo: GitHubRepository }) {
           {sync ? <StatusPill label={sync.label} tone={sync.tone} /> : null}
         </div>
         <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-paper-dim">
-          {repo.description || "No description provided on GitHub."}
+          {repo.description || "No description on GitHub."}
         </p>
         {repo.fork ? (
           <p className="mt-1.5 text-[0.68rem] leading-relaxed text-warning">
-            Fork of another repository. Attribute the original work before publishing.
+            Fork of another repository. Credit the original work before publishing.
           </p>
         ) : null}
         {repo.topics.length > 0 ? (
@@ -165,11 +165,11 @@ function RepositoryRow({ repo }: { repo: GitHubRepository }) {
           <GitBranch className="size-3" aria-hidden="true" />
           {repo.default_branch}
         </p>
-        <p>License: {repo.license || "Not specified"}</p>
+        <p>Licence: {repo.license || "Not specified"}</p>
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <p className="text-paper-dim">{repo.language || "No primary language"}</p>
+        <p className="text-paper-dim">{repo.language || "No main language"}</p>
         <div className="flex flex-wrap gap-3">
           <Metric icon={Star} value={repo.stargazers_count} label="stars" />
           <Metric icon={GitFork} value={repo.forks_count} label="forks" />
@@ -204,7 +204,7 @@ function RepositoryRow({ repo }: { repo: GitHubRepository }) {
           className={buttonStyles(repo.linked_project_id ? "outline" : "primary", "sm")}
         >
           <FileSearch className="size-3.5" aria-hidden="true" />
-          {repo.linked_project_id ? "Inspect" : "Inspect & import"}
+          {repo.linked_project_id ? "Review" : "Review and import"}
         </Link>
         {repo.linked_project_id ? (
           <Link
@@ -322,7 +322,7 @@ function RepositoryBrowser() {
             <option value="updated">Recently updated</option>
             <option value="created">Newest</option>
             <option value="stars">Most stars</option>
-            <option value="name">Name A–Z</option>
+            <option value="name">Name A to Z</option>
           </select>
           <label className="sr-only" htmlFor="github-language">
             Filter by language
@@ -349,7 +349,7 @@ function RepositoryBrowser() {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search name, description, topics, language…"
+              placeholder="Search name, description, topics or language..."
               aria-label="Search repositories"
               className="h-10 w-full border border-line bg-background pl-9 pr-3 text-sm text-paper placeholder:text-faint focus:border-line-strong focus:outline-none"
             />
@@ -358,7 +358,7 @@ function RepositoryBrowser() {
             type="button"
             onClick={() => setNonce((value) => value + 1)}
             className={buttonStyles("outline", "md")}
-            title="Refresh repository metadata from GitHub"
+            title="Reload repository details from GitHub"
           >
             <RefreshCw className={cn("size-3.5", query.loading && "animate-spin")} aria-hidden="true" />
             Refresh
@@ -369,7 +369,10 @@ function RepositoryBrowser() {
       {query.loading ? <LoadingState rows={4} label="Loading GitHub repositories" className="mt-6" /> : null}
       {!query.loading && query.error ? (
         <div className="mt-6">
-          <ErrorState message={query.error.message} onRetry={query.reload} />
+          <ErrorState
+            message="We couldn't load your repositories. Please try again."
+            onRetry={query.reload}
+          />
         </div>
       ) : null}
       {!query.loading && !query.error && repositories.length === 0 ? (
@@ -378,8 +381,8 @@ function RepositoryBrowser() {
             title="No repositories found"
             description={
               term || view !== "all" || language
-                ? "Change the search, filter, or language to see more repositories."
-                : "This GitHub account has no repositories visible to the granted scopes."
+                ? "Change the search, filter or language to see more repositories."
+                : "This GitHub account has no repositories that this connection can see."
             }
             action={
               term || view !== "all" || language ? (
@@ -404,7 +407,7 @@ function RepositoryBrowser() {
         <div className="mt-6 border border-line">
           <div className="hidden grid-cols-[minmax(0,1fr)_12rem_11rem_10rem_11rem] gap-4 border-b border-line bg-ink-800/50 px-4 py-3 font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted xl:grid">
             <span>Repository</span>
-            <span>Access</span>
+            <span>Visibility</span>
             <span>Stats</span>
             <span>Dates</span>
             <span className="text-right">Actions</span>
@@ -430,15 +433,15 @@ function RepositoryBrowser() {
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
         <span>
-          Showing {shown.length} of {visible.length} loaded repositories
+          Showing {shown.length} of {visible.length} repositories
           {query.data?.truncated ? " · result limit reached" : ""}
         </span>
         <span className="flex flex-wrap items-center gap-3">
           {query.data?.rate_limit_remaining != null ? (
-            <span>Rate limit remaining: {query.data.rate_limit_remaining}</span>
+            <span>GitHub requests left: {query.data.rate_limit_remaining}</span>
           ) : null}
           <Link to="/admin/integrations/github" className="inline-flex items-center gap-1.5 hover:text-paper">
-            Integration settings
+            GitHub settings
             <ArrowUpRight className="size-3" aria-hidden="true" />
           </Link>
         </span>
@@ -461,8 +464,8 @@ export default function AdminGitHubRepositoriesPage() {
             Repositories
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Metadata is listed first. README, files, and images are only fetched when you inspect a
-            repository. Imports always create drafts and never publish.
+            Repository details are listed first. Files, the README and images are only fetched
+            when you open a repository. Imports always create drafts and never publish.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -501,15 +504,18 @@ export default function AdminGitHubRepositoriesPage() {
       <div className="mt-6">
         {status.loading ? <LoadingState rows={3} label="Checking GitHub connection" /> : null}
         {!status.loading && status.error ? (
-          <ErrorState message={status.error.message} onRetry={status.reload} />
+          <ErrorState
+            message="We couldn't check the GitHub connection. Please try again."
+            onRetry={status.reload}
+          />
         ) : null}
         {!status.loading && status.data && !status.data.configured ? (
           <EmptyState
-            title="GitHub is not configured"
-            description="Add the OAuth client ID, secret, and redirect URI to the backend environment, then restart the API."
+            title="GitHub is not set up"
+            description="Add the GitHub client ID, client secret and callback URL to the server settings, then restart the server."
             action={
               <Link to="/admin/integrations/github" className={buttonStyles("primary", "sm")}>
-                Open integration settings
+                Open GitHub settings
               </Link>
             }
           />
@@ -517,7 +523,7 @@ export default function AdminGitHubRepositoriesPage() {
         {!status.loading && status.data && status.data.configured && !status.data.connected ? (
           <EmptyState
             title="Connect GitHub to browse repositories"
-            description="The backend stores the OAuth token encrypted. This browser never receives it."
+            description="The server stores the access token encrypted. This browser never receives it."
             action={
               <Link to="/admin/integrations/github" className={buttonStyles("primary", "sm")}>
                 <GitBranch className="size-3.5" aria-hidden="true" />
@@ -532,14 +538,14 @@ export default function AdminGitHubRepositoriesPage() {
       {status.data?.connection?.private_repository_access ? (
         <p className="mt-6 flex items-start gap-2 border border-warning/40 bg-warning/10 px-4 py-3 text-xs leading-relaxed text-paper-dim">
           <Lock className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden="true" />
-          Private repositories are visible to this admin. Importing one creates a private draft;
-          nothing becomes public until you explicitly publish the project.
+          Private repositories are visible here. Importing one creates a private draft. Nothing
+          becomes public until you publish it.
         </p>
       ) : null}
 
       <div className="mt-8 flex items-center gap-2 font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
         <Archive className="size-3" aria-hidden="true" />
-        Archived and forked repositories are labelled and can still be inspected.
+        Archived and forked repositories are labelled and can still be reviewed.
       </div>
     </>
   );

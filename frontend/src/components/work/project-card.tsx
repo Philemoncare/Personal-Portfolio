@@ -18,7 +18,7 @@ function TechnologyList({
   limit?: number;
 }) {
   if (project.technologies.length === 0) {
-    return <span className="type-meta text-faint">Stack being documented</span>;
+    return <span className="type-meta text-faint">No technologies listed</span>;
   }
   const visible = project.technologies.slice(0, limit);
   const remainder = project.technologies.length - visible.length;
@@ -128,7 +128,7 @@ export function ProjectCard({
             </span>
             {project.is_placeholder ? (
               <span className="font-mono text-[0.52rem] uppercase tracking-[0.14em] text-signal/80">
-                Details pending
+                Not finished
               </span>
             ) : null}
           </div>

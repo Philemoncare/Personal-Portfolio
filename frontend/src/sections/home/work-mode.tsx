@@ -18,11 +18,11 @@ export function WorkModeSection() {
           eyebrow="How I work"
           title={
             <span id="how-i-work-heading">
-              Four modes.{" "}
-              <span className="display-serif text-signal">One practice.</span>
+              Engineering, data,{" "}
+              <span className="display-serif text-signal">leadership and experiments.</span>
             </span>
           }
-          description="Choose the lens that matches what you need to evaluate — engineering, analysis, leadership, or experimentation. The panel changes without reloading the page."
+          description="Switch between the different kinds of work I do. The panel changes without reloading the page."
         />
 
         <WorkMode

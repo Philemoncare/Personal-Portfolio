@@ -1,10 +1,12 @@
-import { ArrowUpRight, FileText, Inbox, Layers, Mail } from "lucide-react";
+import { ArrowUpRight, BarChart3, Eye, FileText, Globe, Inbox, Layers, Mail, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { useApiQuery } from "@/hooks/useApiQuery";
 import { useApiResource } from "@/hooks/useApiResource";
+import { analyticsService } from "@/services/analytics.service";
 import type { AdminOverview } from "@/types/api";
 import { relativeTime } from "@/utils/format";
 
@@ -21,6 +23,7 @@ const WORKSPACES = [
 
 export default function AdminDashboardPage() {
   const overview = useApiResource<AdminOverview>("/api/v1/admin/overview");
+  const analytics = useApiQuery((signal) => analyticsService.overview("30d", signal), []);
   const data = overview.data;
 
   return (
@@ -86,6 +89,60 @@ export default function AdminDashboardPage() {
               </div>
             ))}
           </div>
+
+          {/* Website Traffic Overview */}
+          <section className="mt-8 border border-line bg-surface/50 p-5 sm:p-6" aria-labelledby="traffic-heading">
+            <div className="flex items-center justify-between gap-4 border-b border-line pb-4">
+              <div>
+                <h2 id="traffic-heading" className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-signal">
+                  Website Traffic Overview
+                </h2>
+                <p className="mt-1 text-xs text-muted">
+                  Real visitor activity across your public website (Last 30 Days).
+                </p>
+              </div>
+              <Link
+                to="/admin/analytics"
+                className="inline-flex items-center gap-1.5 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
+              >
+                Full Analytics Report
+                <ArrowUpRight className="size-3" aria-hidden="true" />
+              </Link>
+            </div>
+
+            {analytics.loading ? (
+              <div className="mt-4">
+                <LoadingState rows={1} label="Loading traffic stats" />
+              </div>
+            ) : analytics.data ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                <div className="border border-line bg-ink-950 p-3.5">
+                  <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">Visitors Today</p>
+                  <p className="mt-2 text-2xl font-semibold text-paper">{analytics.data.visitors_today.toLocaleString()}</p>
+                </div>
+                <div className="border border-line bg-ink-950 p-3.5">
+                  <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">This Week</p>
+                  <p className="mt-2 text-2xl font-semibold text-paper">{analytics.data.visitors_this_week.toLocaleString()}</p>
+                </div>
+                <div className="border border-line bg-ink-950 p-3.5">
+                  <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">This Month</p>
+                  <p className="mt-2 text-2xl font-semibold text-paper">{analytics.data.visitors_this_month.toLocaleString()}</p>
+                </div>
+                <div className="border border-line bg-ink-950 p-3.5">
+                  <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">Total Visitors</p>
+                  <p className="mt-2 text-2xl font-semibold text-paper">{analytics.data.total_visitors.toLocaleString()}</p>
+                </div>
+                <div className="border border-line bg-ink-950 p-3.5">
+                  <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">Page Views</p>
+                  <p className="mt-2 text-2xl font-semibold text-accent">{analytics.data.page_views.toLocaleString()}</p>
+                </div>
+                <div className="border border-line bg-ink-950 p-3.5">
+                  <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">Active Now</p>
+                  <p className="mt-2 text-2xl font-semibold text-signal">{analytics.data.active_now.toLocaleString()}</p>
+                </div>
+              </div>
+            ) : null}
+          </section>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <section className="border border-line bg-surface/50" aria-labelledby="recent-projects-heading">

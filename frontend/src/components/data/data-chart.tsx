@@ -357,7 +357,7 @@ export function DataChart({
         <div className="flex items-center gap-2">
           {isDemo ? (
             <span className="border border-signal/40 bg-signal/5 px-2 py-1 font-mono text-[0.5rem] uppercase tracking-[0.14em] text-signal-soft">
-              Demo data
+              Sample data
             </span>
           ) : null}
           <span className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">
@@ -370,7 +370,7 @@ export function DataChart({
         {issue ? (
           <div className="border border-warning/30 bg-warning/5 px-4 py-5">
             <p className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-warning">
-              Visualization unavailable
+              Chart unavailable
             </p>
             <p className="mt-2 text-sm text-paper-dim">{issue}</p>
           </div>
@@ -382,7 +382,7 @@ export function DataChart({
       {!issue && visualization.chart_type !== "table" && visualization.chart_type !== "kpi" ? (
         <details className="border-t border-line px-4 py-3 sm:px-5">
           <summary className="cursor-pointer font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted hover:text-paper">
-            View data table
+            View as table
           </summary>
           <div className="mt-3">
             <DataTable

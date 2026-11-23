@@ -15,9 +15,9 @@ export default function LeadershipPage() {
   const entries = useApiResource<LeadershipEntry[]>("/api/v1/leadership");
 
   usePageSeo("leadership", {
-    title: "Leadership — Phill",
+    title: "Leadership | Philemon Melabah",
     description:
-      "Technical leadership, community initiatives, and programs documented with role, contribution, and outcome.",
+      "Leadership roles and community work, with the responsibility, contribution and result for each.",
     path: "/leadership",
   });
 
@@ -34,40 +34,40 @@ export default function LeadershipPage() {
             page.title
           ) : (
             <>
-              Technical work beyond{" "}
-              <span className="display-serif text-signal">the editor.</span>
+              Communities, programmes{" "}
+              <span className="display-serif text-signal">and technical leadership.</span>
             </>
           )
         }
         description={
           page?.description ||
-          "Roles in technology communities, academic initiatives, and programs. Every entry is written with the same rule as the project work: state the responsibility, the contribution, and the outcome."
+          "Roles in technology communities, academic work and programmes. Each entry covers the responsibility, what I did and the result."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
-              <span>Published entries</span>
+              <span>Entries</span>
               <span className="text-paper">
-                {entries.loading ? "—" : String(items.length).padStart(2, "0")}
+                {entries.loading ? "..." : String(items.length).padStart(2, "0")}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Format</span>
-              <span className="text-paper">Role / Contribution / Outcome</span>
+              <span>Includes</span>
+              <span className="text-paper">Role, contribution, result</span>
             </div>
           </div>
         }
       />
 
       <Container className="py-12 sm:py-16">
-        {entries.loading ? <LoadingState rows={3} label="Loading leadership entries" /> : null}
+        {entries.loading ? <LoadingState rows={3} label="Loading leadership" /> : null}
         {!entries.loading && entries.error ? (
-          <ErrorState message={entries.error.detail} onRetry={entries.reload} />
+          <ErrorState message="We couldn't load the leadership entries. Please try again in a moment." onRetry={entries.reload} />
         ) : null}
         {!entries.loading && !entries.error && items.length === 0 ? (
           <EmptyState
-            title="Leadership record in progress"
-            description="No roles have been published yet. Real organizations, responsibilities, and outcomes will be documented here without inflated titles."
+            title="No leadership entries yet"
+            description="Roles and community work will appear here once they are added."
             action={
               <Link to="/contact" className={buttonStyles("secondary", "sm")}>
                 Get in touch
@@ -94,7 +94,7 @@ export default function LeadershipPage() {
                     </p>
                     {entry.is_placeholder ? (
                       <div className="mt-4">
-                        <Badge tone="placeholder">Placeholder</Badge>
+                        <Badge tone="placeholder">Not finished</Badge>
                       </div>
                     ) : null}
                   </div>
@@ -116,7 +116,7 @@ export default function LeadershipPage() {
                             to={`/leadership/${entry.slug}`}
                             className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-paper hover:text-signal"
                           >
-                            Full entry
+                            Read more
                             <ArrowUpRight className="size-3" aria-hidden="true" />
                           </Link>
                         ) : null}
@@ -127,7 +127,7 @@ export default function LeadershipPage() {
                             rel="noreferrer noopener"
                             className="inline-flex items-center gap-1.5 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted hover:text-paper"
                           >
-                            Organization
+                            Visit website
                             <ArrowUpRight className="size-3" aria-hidden="true" />
                           </a>
                         ) : null}

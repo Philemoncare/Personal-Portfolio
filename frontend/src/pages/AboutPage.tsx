@@ -80,7 +80,7 @@ export default function AboutPage() {
       : "About | Portfolio",
     description:
       person?.short_bio ||
-      "A professional profile: what I build, how I work, and the direction of the practice.",
+      "About Philemon Melabah: what I build, how I work and what I am working towards.",
     path: "/about",
     image: person?.profile_image ?? null,
     imageAlt: person ? `${person.display_name} profile` : null,
@@ -94,7 +94,7 @@ export default function AboutPage() {
     return (
       <Container className="py-20">
         <ErrorState
-          message="The profile could not be loaded. The API may be unavailable — try again in a moment."
+          message="We couldn't load the profile. Please try again in a moment."
           onRetry={profile.reload}
         />
       </Container>
@@ -105,11 +105,11 @@ export default function AboutPage() {
     return (
       <Container className="py-20">
         <EmptyState
-          title="Profile not configured yet"
-          description="The site owner has not published a profile. Public work and contact are still available."
+          title="No profile yet"
+          description="The profile has not been added yet. You can still browse the work and get in touch."
           action={
             <Link to="/work" className={buttonStyles("secondary", "sm")}>
-              See the work index
+              Browse projects
             </Link>
           }
         />
@@ -133,7 +133,7 @@ export default function AboutPage() {
             <>
               {person.display_name}.{" "}
               <span className="display-serif text-signal">
-                {person.professional_title ?? "Building systems."}
+                {person.professional_title ?? "Software, data and technology."}
               </span>
             </>
           )
@@ -141,12 +141,12 @@ export default function AboutPage() {
         description={
           page?.description ||
           person.short_bio ||
-          "A short professional introduction. The longer story, working approach, and current direction are below."
+          "A short introduction. The longer story, how I work and what I am working towards are below."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
-              <span>Base</span>
+              <span>Location</span>
               <span className="text-right text-paper">{person.location || "Not listed"}</span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
@@ -156,9 +156,9 @@ export default function AboutPage() {
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Current focus</span>
+              <span>Now</span>
               <Link to="/now" className="text-paper underline decoration-line underline-offset-4 hover:text-signal">
-                Now
+                Read more
               </Link>
             </div>
           </div>
@@ -169,12 +169,12 @@ export default function AboutPage() {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.55fr)_20rem] lg:gap-20">
           <div>
             <section aria-labelledby="story-heading">
-              <Eyebrow>The longer story</Eyebrow>
+              <Eyebrow>About me</Eyebrow>
               <h2
                 id="story-heading"
                 className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
               >
-                More than a stack.
+                In more detail.
               </h2>
               <div className="mt-6">
                 {person.long_bio?.trim() ? (
@@ -182,16 +182,16 @@ export default function AboutPage() {
                 ) : (
                   <p className="max-w-xl text-sm leading-relaxed text-muted">
                     The longer biography has not been written yet. The short introduction above is
-                    the confirmed profile copy.
+                    all there is for now.
                   </p>
                 )}
               </div>
               {person.is_placeholder ? (
                 <div className="mt-6 flex items-start gap-3 border border-signal/25 bg-signal/5 p-4">
-                  <Badge tone="placeholder">Placeholder</Badge>
+                  <Badge tone="placeholder">Not finished</Badge>
                   <p className="text-xs leading-relaxed text-paper-dim">
-                    Some profile copy is still a placeholder. Confirmed details replace it from the
-                    admin panel; nothing here is invented.
+                    Some of this profile is still being written. Details will be updated as they are
+                    confirmed.
                   </p>
                 </div>
               ) : null}
@@ -201,23 +201,23 @@ export default function AboutPage() {
               <NarrativeSection
                 id="build-heading"
                 eyebrow="What I build"
-                title="Products, systems, and analyses."
+                title="Software, data and technical work."
                 body={person.what_i_build ?? ""}
-                placeholder="No summary of the work has been published yet. The work index and Data Lab carry the actual records."
+                placeholder="No summary has been added yet. The projects and Data Lab show the actual work."
               />
               <NarrativeSection
                 id="work-heading"
                 eyebrow="How I work"
-                title="Method over improvisation."
+                title="How I approach the work."
                 body={person.how_i_work ?? ""}
-                placeholder="The working approach has not been written yet. Case studies and project records show the process in detail."
+                placeholder="This has not been written yet. The case studies and project pages show how each project was done."
               />
               <NarrativeSection
                 id="direction-heading"
                 eyebrow="Current direction"
-                title="Where the work is heading."
+                title="What I am working towards."
                 body={person.current_direction ?? ""}
-                placeholder="The current direction has not been published. The Now page holds the live snapshot instead."
+                placeholder="This has not been added yet. The Now page has the latest update."
               />
             </div>
 
@@ -228,7 +228,7 @@ export default function AboutPage() {
                   id="interests-heading"
                   className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
                 >
-                  Genuine interests.
+                  Outside work.
                 </h2>
                 <div className="mt-6 max-w-2xl border-l border-signal pl-5">
                   <Paragraphs value={person.personal_interests ?? ""} />
@@ -257,7 +257,7 @@ export default function AboutPage() {
             <div className="border border-line bg-ink-800/40">
               <div className="border-b border-line px-5 py-3">
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted">
-                  Profile record
+                  Profile
                 </p>
               </div>
               <dl className="divide-y divide-line">
@@ -296,7 +296,7 @@ export default function AboutPage() {
                 </div>
                 <div className="flex items-start justify-between gap-4 px-5 py-4">
                   <dt className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
-                    Profile updated
+                    Last updated
                   </dt>
                   <dd className="text-right text-sm text-paper">
                     {new Date(person.updated_at).toLocaleDateString(undefined, {
@@ -321,7 +321,7 @@ export default function AboutPage() {
 
             <div className="space-y-3 border border-line p-5">
               <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-                Go deeper
+                More pages
               </p>
               {[
                 { label: "Work index", to: "/work" },
@@ -353,31 +353,31 @@ export default function AboutPage() {
                 id="about-work-heading"
                 className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
               >
-                The work behind the profile.
+                Selected projects.
               </h2>
             </div>
             <Link to="/work" className={buttonStyles("secondary", "sm")}>
-              Full work index
+              All projects
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           </div>
 
           {projects.loading ? (
-            <p className="mt-6 text-sm text-muted">Loading selected work…</p>
+            <p className="mt-6 text-sm text-muted">Loading projects...</p>
           ) : null}
           {!projects.loading && projects.error ? (
             <div className="mt-6">
               <ErrorState
-                message="Selected work could not be loaded. The rest of the profile is still available."
+                message="We couldn't load the selected projects. The rest of the profile is still available."
                 onRetry={projects.reload}
               />
             </div>
           ) : null}
           {!projects.loading && !projects.error && featured.length === 0 ? (
             <p className="mt-6 max-w-xl text-sm leading-relaxed text-muted">
-              No featured projects are published yet. The{" "}
+              No featured projects yet. The{" "}
               <Link to="/work" className="text-paper underline decoration-line underline-offset-4">
-                work index
+                projects page
               </Link>{" "}
               will list them once they are available.
             </p>
@@ -430,7 +430,7 @@ export default function AboutPage() {
                   id="record-heading"
                   className="mt-5 text-3xl font-medium tracking-tight text-paper sm:text-4xl"
                 >
-                  The chronology.
+                  Timeline.
                 </h2>
               </div>
               <Link to="/timeline" className={buttonStyles("secondary", "sm")}>
@@ -440,11 +440,11 @@ export default function AboutPage() {
             </div>
             <div className="mt-8">
               {timeline.loading ? (
-                <p className="text-sm text-muted">Loading timeline…</p>
+                <p className="text-sm text-muted">Loading timeline...</p>
               ) : null}
               {!timeline.loading && timeline.error ? (
                 <ErrorState
-                  message="The timeline could not be loaded."
+                  message="We couldn't load the timeline."
                   onRetry={timeline.reload}
                 />
               ) : null}
@@ -452,8 +452,8 @@ export default function AboutPage() {
                 <Timeline
                   entries={timelineEntries.slice(0, 5)}
                   showFilters={false}
-                  emptyTitle="Timeline entries are not published yet"
-                  emptyDescription="Milestones appear once they are confirmed and published."
+                  emptyTitle="No timeline entries yet"
+                  emptyDescription="Milestones will appear here once they are added."
                 />
               ) : null}
             </div>
@@ -466,8 +466,7 @@ export default function AboutPage() {
                 Experience
               </p>
               <p className="mt-2 text-sm leading-relaxed text-paper-dim">
-                The professional record is kept separate from this profile so roles and dates stay
-                accurate.
+                Roles, dates and responsibilities are listed on a separate page.
               </p>
               <Link
                 to="/experience"
@@ -484,10 +483,10 @@ export default function AboutPage() {
               </p>
               <p className="mt-2 text-sm leading-relaxed text-paper-dim">
                 {leadershipEntries.length > 0
-                  ? `${leadershipEntries.length} published ${
+                  ? `${leadershipEntries.length} ${
                       leadershipEntries.length === 1 ? "entry" : "entries"
-                    } with responsibility, contribution, and outcome.`
-                  : "No leadership entries are published yet. The section stays open rather than padded with invented roles."}
+                    } covering the role, what I did and the result.`
+                  : "No leadership entries yet."}
               </p>
               <Link
                 to="/leadership"
@@ -501,7 +500,7 @@ export default function AboutPage() {
             {person.current_resume ? (
               <div className="border border-line bg-ink-800/40 p-6">
                 <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-                  Managed resume
+                  Resume
                 </p>
                 <p className="mt-2 text-sm text-paper">{person.current_resume.title}</p>
                 <p className="mt-1 font-mono text-[0.56rem] uppercase tracking-[0.12em] text-faint">
@@ -523,16 +522,16 @@ export default function AboutPage() {
 
         <div className="mt-16 flex flex-col gap-5 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            The current focus is maintained on the Now page, and the professional record is
-            available as an online resume and a managed PDF.
+            The latest update is on the Now page. My full experience is available as an online resume
+            and, when uploaded, as a PDF.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link to="/resume" className={buttonStyles("secondary", "sm")}>
-              Online resume
+              Resume
               <FileText className="size-3.5" aria-hidden="true" />
             </Link>
             <Link to="/contact" className={buttonStyles("primary", "sm")}>
-              Start a conversation
+              Get in touch
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           </div>

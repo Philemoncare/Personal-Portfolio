@@ -22,7 +22,7 @@ function ProjectMeta({ project }: { project: ProjectSummary }) {
       <span className="type-meta text-muted">{project.category.name}</span>
       <span className="size-1 bg-signal" aria-hidden="true" />
       <span className="type-meta text-muted">{MODE_LABELS[project.primary_mode]}</span>
-      {project.is_placeholder ? <Badge tone="placeholder">Details pending</Badge> : null}
+      {project.is_placeholder ? <Badge tone="placeholder">Not finished</Badge> : null}
     </div>
   );
 }
@@ -79,7 +79,7 @@ export function FeaturedProject({
               aria-hidden="true"
             />
           </span>
-          <span className="type-meta text-faint">Record {String(index).padStart(2, "0")}</span>
+          <span className="type-meta text-faint">Project {String(index).padStart(2, "0")}</span>
         </div>
       </div>
 

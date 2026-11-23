@@ -70,7 +70,7 @@ function RelatedLinks({ item }: { item: NowItem }) {
           rel="noreferrer noopener"
           className="inline-flex items-center gap-1.5 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-paper-dim underline decoration-line underline-offset-4 hover:text-paper"
         >
-          External reference
+          External link
           <span aria-hidden="true">↗</span>
         </a>
       ) : null}
@@ -84,7 +84,7 @@ function NowCard({ item, index }: { item: NowItem; index: number }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <StatusPill status={item.status} />
         <div className="flex items-center gap-2">
-          {item.is_placeholder ? <Badge tone="placeholder">Placeholder</Badge> : null}
+          {item.is_placeholder ? <Badge tone="placeholder">Not finished</Badge> : null}
           <span className="font-mono text-[0.54rem] tabular-nums text-faint">
             {String(index + 1).padStart(2, "0")}
           </span>
@@ -112,14 +112,14 @@ export default function NowPage() {
   const page = usePageContent("now");
 
   usePageSeo("now", {
-    title: "Now | Current focus",
+    title: "Now | Philemon Melabah",
     description:
-      "A live snapshot of what is being built, learned, explored, and led. Maintained through the portfolio admin and grouped by category.",
+      "What I am working on, learning and thinking about right now.",
     path: "/now",
   });
 
   if (now.loading && !now.data) {
-    return <PageSkeleton label="Loading current focus" />;
+    return <PageSkeleton label="Loading Now" />;
   }
 
   const items = now.data ?? [];
@@ -137,39 +137,39 @@ export default function NowPage() {
   return (
     <>
       <PageIntro
-        eyebrow={page?.eyebrow || "Now / Live snapshot"}
+        eyebrow={page?.eyebrow || "Now"}
         title={
           page?.title ? (
             page.title
           ) : (
             <>
-              This is what has my{" "}
-              <span className="display-serif text-signal">attention.</span>
+              What I am working on{" "}
+              <span className="display-serif text-signal">right now.</span>
             </>
           )
         }
         description={
           page?.description ||
-          "A current record of the work in progress, grouped by what it actually is. It is updated from the admin panel rather than left to age as a static biography."
+          "Current projects, things I am learning and open questions, grouped by type. Updated by hand."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
               <span>Last updated</span>
               <span className="text-right text-paper">
-                {lastUpdated ? formatDate(lastUpdated, { withDay: true }) : "—"}
+                {lastUpdated ? formatDate(lastUpdated, { withDay: true }) : "No updates yet"}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Active items</span>
+              <span>Updates</span>
               <span className="text-paper">
-                {now.loading ? "—" : String(items.length).padStart(2, "0")}
+                {now.loading ? "..." : String(items.length).padStart(2, "0")}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
               <span>Categories</span>
               <span className="text-paper">
-                {now.loading ? "—" : String(grouped.length).padStart(2, "0")}
+                {now.loading ? "..." : String(grouped.length).padStart(2, "0")}
               </span>
             </div>
           </div>
@@ -179,15 +179,15 @@ export default function NowPage() {
       <Container className="py-12 sm:py-16">
         {!now.loading && now.error ? (
           <ErrorState
-            message="The Now page could not be loaded. The API may be unavailable — try again in a moment."
+            message="We couldn't load the Now page. Please try again in a moment."
             onRetry={now.reload}
           />
         ) : null}
 
         {!now.loading && !now.error && items.length === 0 ? (
           <EmptyState
-            title="No current focus has been published"
-            description="The Now page is intentionally quiet until real updates are added. Add the current build, learning focus, or goal from the admin panel."
+            title="No updates yet"
+            description="Updates will appear here once they are added."
             action={
               <Link to="/contact" className={buttonStyles("secondary", "sm")}>
                 Get in touch
@@ -201,11 +201,11 @@ export default function NowPage() {
             {hasPlaceholders ? (
               <div className="mb-10 border border-signal/25 bg-signal/5 p-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
                 <p className="text-sm leading-relaxed text-paper-dim">
-                  A few entries are still being confirmed. They carry a placeholder label until the
-                  real detail lands.
+                  Some entries are still being written. They are marked as not finished until the
+                  details are added.
                 </p>
                 <Badge tone="placeholder" className="mt-3 shrink-0 sm:mt-0">
-                  Placeholder content
+                  Not finished
                 </Badge>
               </div>
             ) : null}
@@ -244,24 +244,23 @@ export default function NowPage() {
             </div>
 
             <p className="mt-10 border-t border-line pt-5 font-mono text-[0.54rem] uppercase tracking-[0.13em] text-faint">
-              Status is maintained manually / only active, published items are shown / timestamps
-              reflect the last edit, not a claimed start date
+              Updated by hand / only published items are shown / dates show the last edit
             </p>
           </>
         ) : null}
 
         <div className="mt-14 flex flex-col gap-5 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            Looking for the longer record? The About page holds the profile, and the Timeline page
-            holds the chronology.
+            For more background, the About page has the full profile and the Timeline page lists
+            milestones by year.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link to="/about" className={buttonStyles("secondary", "sm")}>
-              Read the profile
+              About
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
             <Link to="/timeline" className={buttonStyles("ghost", "sm")}>
-              View timeline
+              Timeline
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           </div>

@@ -59,7 +59,7 @@ function RepositoryOverview({ repository }: { repository: GitHubRepository }) {
         <div className="min-w-0">
           <h2 className="text-xl font-medium text-paper">{repository.full_name}</h2>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-paper-dim">
-            {repository.description || "No description provided on GitHub."}
+            {repository.description || "No description on GitHub."}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[0.52rem] uppercase tracking-[0.12em]">
             <span className="inline-flex items-center gap-1 border border-line px-2 py-1 text-muted">
@@ -82,14 +82,14 @@ function RepositoryOverview({ repository }: { repository: GitHubRepository }) {
           </div>
           {repository.fork ? (
             <p className="mt-3 max-w-2xl border border-warning/40 bg-warning/10 px-3 py-2 text-xs leading-relaxed text-paper-dim">
-              This repository is a fork. Credit the original repository and do not present forked
-              work as your own.
+              This is a fork. Credit the original repository and do not present forked work as
+              your own.
             </p>
           ) : null}
           {repository.private ? (
             <p className="mt-3 max-w-2xl border border-line bg-ink-800/40 px-3 py-2 text-xs leading-relaxed text-paper-dim">
-              Private repository. The draft starts without a public source link, and imported
-              screenshots and README content must be reviewed before publishing.
+              Private repository. The draft starts without a public source link. Check imported
+              screenshots and README text before publishing.
             </p>
           ) : null}
         </div>
@@ -107,16 +107,16 @@ function RepositoryOverview({ repository }: { repository: GitHubRepository }) {
 
       <dl className="grid gap-4 border-t border-line pt-4 sm:grid-cols-3 lg:grid-cols-4">
         <Stat label="Default branch" value={repository.default_branch} />
-        <Stat label="Primary language" value={repository.language || "Not specified"} />
+        <Stat label="Main language" value={repository.language || "Not specified"} />
         <Stat label="Stars" value={repository.stargazers_count.toLocaleString()} />
         <Stat label="Forks" value={repository.forks_count.toLocaleString()} />
         <Stat label="Watchers" value={repository.watchers_count.toLocaleString()} />
         <Stat label="Open issues" value={repository.open_issues_count.toLocaleString()} />
-        <Stat label="License" value={repository.license || "Not specified"} />
+        <Stat label="Licence" value={repository.license || "Not specified"} />
         <Stat label="Repository size" value={`${repository.size_kb.toLocaleString()} KB`} />
         <Stat label="Created" value={repository.created_at ? formatDate(repository.created_at) : "Not available"} />
         <Stat label="Updated" value={repository.updated_at ? formatDate(repository.updated_at) : "Not available"} />
-        <Stat label="Last push" value={repository.pushed_at ? formatDate(repository.pushed_at) : "Not available"} />
+        <Stat label="Last pushed" value={repository.pushed_at ? formatDate(repository.pushed_at) : "Not available"} />
         <Stat
           label="Homepage"
           value={
@@ -125,7 +125,7 @@ function RepositoryOverview({ repository }: { repository: GitHubRepository }) {
                 {repository.homepage.replace(/^https?:\/\//, "")}
               </a>
             ) : (
-              "Not provided"
+              "Not added"
             )
           }
         />
@@ -173,7 +173,7 @@ function StructureTree({
       const listing = await githubService.getContents(repositoryId, entry.path);
       setChildren((current) => ({ ...current, [entry.path]: listing.entries }));
     } catch (caught) {
-      setErrorPath(caught instanceof Error ? caught.message : "The folder could not be opened.");
+      setErrorPath(caught instanceof Error ? caught.message : "We couldn't open this folder.");
     } finally {
       setLoadingPath(null);
     }
@@ -252,8 +252,8 @@ function ReadmePreview({ inspection }: { inspection: RepositoryInspection }) {
         </p>
         <p className="mt-2">
           No safe README content was found, or the file was withheld because it may contain a
-          secret. Narrative sections remain{" "}
-          <span className="text-paper">“Not documented in repository.”</span>
+          secret. Sections stay marked as{" "}
+          <span className="text-paper">"Not documented in the repository".</span>
         </p>
       </div>
     );
@@ -278,10 +278,10 @@ function ReadmePreview({ inspection }: { inspection: RepositoryInspection }) {
       </div>
       <pre className="max-h-[26rem] overflow-auto whitespace-pre-wrap break-words border border-line bg-ink-950/60 p-4 font-mono text-[0.72rem] leading-relaxed text-paper-dim">
         {readme.content.slice(0, MAX_PREVIEW_CHARS)}
-        {readme.content.length > MAX_PREVIEW_CHARS ? "\n\n… preview truncated" : ""}
+        {readme.content.length > MAX_PREVIEW_CHARS ? "\n\n... preview shortened" : ""}
       </pre>
       {readme.truncated ? (
-        <p className="text-xs text-warning">GitHub reports that this README is truncated.</p>
+        <p className="text-xs text-warning">GitHub says this README is shortened.</p>
       ) : null}
     </div>
   );
@@ -297,7 +297,7 @@ function TechnologyList({
   onToggle: (name: string) => void;
 }) {
   if (inspection.technologies.length === 0) {
-    return <p className="text-sm text-muted">No technologies could be detected from repository metadata.</p>;
+    return <p className="text-sm text-muted">No technologies were detected in this repository.</p>;
   }
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
@@ -315,7 +315,12 @@ function TechnologyList({
                     tech.confidence === "low" && "text-muted",
                   )}
                 >
-                  {tech.confidence} confidence
+                  {tech.confidence === "high"
+                    ? "High"
+                    : tech.confidence === "medium"
+                      ? "Medium"
+                      : "Low"}{" "}
+                  confidence
                 </span>
               </span>
             }
@@ -331,7 +336,7 @@ function TechnologyList({
 
 function ArchitectureList({ inspection }: { inspection: RepositoryInspection }) {
   if (inspection.architecture.length === 0) {
-    return <p className="text-sm text-muted">Architecture could not be inferred from the inspected files.</p>;
+    return <p className="text-sm text-muted">No architecture details were found in the inspected files.</p>;
   }
   return (
     <dl className="space-y-3">
@@ -363,8 +368,8 @@ function ImagePicker({
   if (inspection.images.items.length === 0) {
     return (
       <p className="text-sm text-muted">
-        No supported repository images were found in the README or in common asset folders.
-        External images and badges are not imported.
+        No usable images were found in the README or asset folders. External images and badges
+        are not imported.
       </p>
     );
   }
@@ -454,7 +459,7 @@ function LinkedProjectBanner({ repository }: { repository: GitHubRepository }) {
       const result = await githubService.syncProject(repository.linked_project_id!);
       setNotice(result.message);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The project could not be synchronized.");
+      setError(caught instanceof Error ? caught.message : "We couldn't update this project. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -481,13 +486,13 @@ function LinkedProjectBanner({ repository }: { repository: GitHubRepository }) {
           className={buttonStyles("outline", "sm")}
         >
           {busy ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" /> : <RefreshCw className="size-3.5" aria-hidden="true" />}
-          Sync metadata
+          Sync from GitHub
         </button>
       </div>
       {notice ? <p className="mt-3 text-xs text-signal">{notice}</p> : null}
       {error ? <p className="mt-3 text-xs text-error">{error}</p> : null}
       <p className="mt-2 text-xs text-muted">
-        Duplicate imports are blocked. Use the linked project or synchronize GitHub-owned metadata.
+        Duplicate imports are blocked. Open the linked project or update its GitHub details.
       </p>
     </div>
   );
@@ -593,7 +598,7 @@ export default function AdminGitHubRepositoryPage() {
     if (!inspection.data) return;
     setError(null);
     if (!categoryId) {
-      setError("Choose the portfolio category for this project before creating the draft.");
+      setError("Choose a category before creating the draft.");
       return;
     }
     const payload: GitHubImportRequest = {
@@ -628,19 +633,19 @@ export default function AdminGitHubRepositoryPage() {
         // inspection so the page stops offering a duplicate import.
         inspection.reload();
       }
-      setError(caught instanceof Error ? caught.message : "The draft could not be created.");
+      setError(caught instanceof Error ? caught.message : "We couldn't create the draft. Please try again.");
     } finally {
       setBusy(false);
     }
   };
 
   if (inspection.loading) {
-    return <LoadingState rows={5} label="Inspecting GitHub repository" />;
+    return <LoadingState rows={5} label="Loading repository" />;
   }
   if (inspection.error) {
     return (
       <ErrorState
-        message={inspection.error.message}
+        message="We couldn't load this repository. Please try again."
         onRetry={inspection.reload}
       />
     );
@@ -666,12 +671,12 @@ export default function AdminGitHubRepositoryPage() {
             {repository.name}
           </h1>
           <p className="mt-2 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
-            {repository.full_name} · inspected {relativeTime(data.fetched_at)}
+            {repository.full_name} · checked {relativeTime(data.fetched_at)}
           </p>
         </div>
         <button type="button" onClick={inspection.reload} className={buttonStyles("outline", "md")}>
           <RefreshCw className="size-3.5" aria-hidden="true" />
-          Re-inspect
+          Check again
         </button>
       </div>
 
@@ -692,18 +697,18 @@ export default function AdminGitHubRepositoryPage() {
           </div>
         ) : null}
 
-        <AdminPanel title="Repository overview" description="Live metadata from GitHub. Missing values are never fabricated.">
+        <AdminPanel title="Repository details" description="Details from GitHub. Missing values are left blank.">
           <RepositoryOverview repository={repository} />
         </AdminPanel>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <AdminPanel title="Repository structure" description="Expand folders to inspect one level at a time.">
+          <AdminPanel title="Folder structure" description="Open a folder to see one level at a time.">
             <StructureTree repositoryId={repository.id} entries={data.structure.entries} />
           </AdminPanel>
 
           <AdminPanel
-            title="Inspected files"
-            description="Only an explicit allow-list of documentation and manifest files is read."
+            title="Files read"
+            description="Only a fixed list of documentation and setup files is read."
           >
             {data.inspected_files.length > 0 ? (
               <ul className="space-y-1 font-mono text-[0.62rem] text-paper-dim">
@@ -715,7 +720,7 @@ export default function AdminGitHubRepositoryPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted">No allow-listed files were available.</p>
+              <p className="text-sm text-muted">No allowed files were available.</p>
             )}
             {data.skipped_files.length > 0 ? (
               <div className="mt-4 border-t border-line pt-3">
@@ -734,13 +739,13 @@ export default function AdminGitHubRepositoryPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <AdminPanel title="README preview" description="Rendered as plain text. README images and badges are stripped from the narrative.">
+          <AdminPanel title="README preview" description="Shown as plain text. README images and badges are removed.">
             <ReadmePreview inspection={data} />
           </AdminPanel>
 
           <AdminPanel
             title="Use README information"
-            description="Choose which documented sections become the draft body. Everything stays editable after import."
+            description="Choose which documented sections go into the draft. You can edit everything after import."
           >
             <ul className="space-y-2">
               {data.readme_sections.map((section) => (
@@ -753,25 +758,25 @@ export default function AdminGitHubRepositoryPage() {
                     hint={
                       section.documented
                         ? section.content.replace(/\s+/g, " ").slice(0, 160)
-                        : "Not documented in repository."
+                        : "Not documented in the repository."
                     }
                   />
                 </li>
               ))}
             </ul>
             <p className="mt-4 border-t border-line pt-3 text-xs leading-relaxed text-muted">
-              Selected sections are composed into the project body. Missing facts remain explicit
-              rather than invented.
+              Selected sections are added to the project text. Missing facts are left out rather
+              than invented.
             </p>
           </AdminPanel>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <AdminPanel title="Detected technologies" description="Select the technologies to attach. Each claim includes its evidence.">
+          <AdminPanel title="Technologies found" description="Choose the technologies to add. Each one shows where it was found.">
             <TechnologyList inspection={data} selected={selectedTechnologies} onToggle={toggleTechnology} />
           </AdminPanel>
 
-          <AdminPanel title="Architecture signals" description="Categories are suggestions only. The final category is your choice.">
+          <AdminPanel title="Architecture" description="These are only suggestions. The final category is your choice.">
             <ArchitectureList inspection={data} />
             <div className="mt-5 border-t border-line pt-4">
               <p className="font-mono text-[0.52rem] uppercase tracking-[0.14em] text-muted">Category suggestions</p>
@@ -807,11 +812,11 @@ export default function AdminGitHubRepositoryPage() {
           </AdminPanel>
         </div>
 
-        <AdminPanel title="Live and documentation URLs" description="Only the GitHub homepage or links documented in the README are suggested.">
+        <AdminPanel title="Live website and documentation" description="Only the GitHub homepage or links in the README are suggested.">
           <div className="space-y-4">
             {data.live_url_candidates.length === 0 ? (
               <p className="border border-line bg-ink-800/40 px-4 py-3 text-sm text-paper-dim">
-                No deployment URL detected. Enter one manually if the project is hosted elsewhere.
+                No live website found. Add one if the project is hosted elsewhere.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -828,7 +833,13 @@ export default function AdminGitHubRepositoryPage() {
                       <span className="min-w-0">
                         <span className="block break-all text-paper-dim">{candidate.url}</span>
                         <span className="mt-1 block font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">
-                          {candidate.source} · {candidate.confidence} confidence
+                          {candidate.source} ·{" "}
+                          {candidate.confidence === "high"
+                            ? "High"
+                            : candidate.confidence === "medium"
+                              ? "Medium"
+                              : "Low"}{" "}
+                          confidence
                         </span>
                       </span>
                     </label>
@@ -837,29 +848,29 @@ export default function AdminGitHubRepositoryPage() {
               </ul>
             )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Live URL" htmlFor="github-live-url" hint="Leave empty when no deployment exists.">
+              <Field label="Live website" htmlFor="github-live-url" hint="Leave blank if there is no live website.">
                 <TextInput
                   id="github-live-url"
                   type="url"
                   value={liveUrl}
                   onChange={(event) => setLiveUrl(event.target.value)}
-                  placeholder="https://…"
+                  placeholder="https://example.com"
                 />
               </Field>
-              <Field label="Documentation URL" htmlFor="github-docs-url">
+              <Field label="Documentation" htmlFor="github-docs-url">
                 <TextInput
                   id="github-docs-url"
                   type="url"
                   value={documentationUrl}
                   onChange={(event) => setDocumentationUrl(event.target.value)}
-                  placeholder="https://…"
+                  placeholder="https://example.com"
                 />
               </Field>
             </div>
           </div>
         </AdminPanel>
 
-        <AdminPanel title="README images" description="Preview repository images and choose a role. Imported images are copied into the media library with their repository path recorded.">
+        <AdminPanel title="README images" description="Choose what each image is used for. Imported images are copied to the Media Library with their repository path recorded.">
           <ImagePicker inspection={data} roles={imageRoles} onRole={setImageRole} />
           {data.images.ignored.length > 0 ? (
             <div className="mt-4 border-t border-line pt-3">
@@ -878,7 +889,7 @@ export default function AdminGitHubRepositoryPage() {
         {!alreadyLinked ? (
           <AdminPanel
             title="Create draft project"
-            description="Importing never publishes. Review the generated draft in the project editor before making it public."
+            description="Importing never publishes. Review the draft in the project editor before making it public."
           >
             <div className="mb-5 border border-line bg-ink-800/30 p-4">
               <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
@@ -887,7 +898,7 @@ export default function AdminGitHubRepositoryPage() {
               <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Title</dt>
-                  <dd className="mt-1 text-paper-dim">{title || "—"}</dd>
+                  <dd className="mt-1 text-paper-dim">{title || "Untitled"}</dd>
                 </div>
                 <div>
                   <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Category</dt>
@@ -903,7 +914,7 @@ export default function AdminGitHubRepositoryPage() {
                 <div>
                   <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">README sections</dt>
                   <dd className="mt-1 text-paper-dim">
-                    {useReadmeSections.size} documented section(s)
+                    {useReadmeSections.size} chosen
                   </dd>
                 </div>
                 <div>
@@ -913,9 +924,9 @@ export default function AdminGitHubRepositoryPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Live URL</dt>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Live website</dt>
                   <dd className="mt-1 truncate text-paper-dim" title={liveUrl}>
-                    {liveUrl || "No deployment URL detected."}
+                    {liveUrl || "No live website found."}
                   </dd>
                 </div>
                 <div>
@@ -926,20 +937,20 @@ export default function AdminGitHubRepositoryPage() {
                 </div>
                 <div>
                   <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">
-                    Detected architecture
+                    Architecture found
                   </dt>
                   <dd className="mt-1 text-paper-dim">
                     {data.architecture.length > 0
                       ? data.architecture.map((layer) => layer.layer).join(", ")
-                      : "No architecture signals detected."}
+                      : "No architecture details found."}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Status</dt>
+                  <dt className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">Visibility</dt>
                   <dd className="mt-1 text-paper-dim">
                     {data.repository.private
-                      ? "Draft · hidden from public until you enable visibility"
-                      : "Draft · never published automatically"}
+                      ? "Draft (hidden until you make it visible)"
+                      : "Draft (never published automatically)"}
                   </dd>
                 </div>
               </dl>
@@ -948,7 +959,7 @@ export default function AdminGitHubRepositoryPage() {
               <Field label="Project title" htmlFor="github-title" required>
                 <TextInput id="github-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} />
               </Field>
-              <Field label="Category" htmlFor="github-category" required hint="Suggestions are advisory; choose the final category.">
+              <Field label="Category" htmlFor="github-category" required hint="Suggestions are only a guide. Choose the final category.">
                 <Select
                   id="github-category"
                   value={categoryId}
@@ -971,7 +982,7 @@ export default function AdminGitHubRepositoryPage() {
                   placeholder="Short project summary"
                 />
               </Field>
-              <Field label="Primary mode" htmlFor="github-mode">
+              <Field label="Main focus" htmlFor="github-mode">
                 <Select
                   id="github-mode"
                   value={primaryMode}
@@ -995,18 +1006,18 @@ export default function AdminGitHubRepositoryPage() {
                   label="Create a draft case study"
                   checked={createCaseStudy}
                   onChange={setCreateCaseStudy}
-                  hint="Uses documented README sections only. Results remain “Not documented in repository.”"
+                  hint="Uses documented README sections only. Results stay marked 'Not documented in the repository'."
                 />
                 <Checkbox
-                  label="Feature this project on the portfolio once published"
+                  label="Feature on the homepage once published"
                   checked={featured}
                   onChange={setFeatured}
                 />
                 <Checkbox
-                  label="Capture a homepage preview from the deployed site"
+                  label="Take a homepage preview from the live website"
                   checked={generatePreview}
                   onChange={setGeneratePreview}
-                  hint="Only runs when a live URL was discovered. The project stays a draft."
+                  hint="Only runs when a live website was found. The project stays a draft."
                 />
                 <p className="text-xs leading-relaxed text-muted">
                   {coverImage ? `Cover: ${coverImage}. ` : "No cover image selected. "}
@@ -1032,7 +1043,7 @@ export default function AdminGitHubRepositoryPage() {
                 Cancel
               </Link>
               <span className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-faint">
-                Draft only · no automatic publishing
+                Draft only · nothing is published
               </span>
             </div>
           </AdminPanel>
@@ -1062,7 +1073,7 @@ export default function AdminGitHubRepositoryPage() {
             </ul>
           ) : (
             <p className="text-sm text-muted">
-              Commit history is not available for this repository or connection.
+              Commit history is not available for this repository.
             </p>
           )}
         </AdminPanel>

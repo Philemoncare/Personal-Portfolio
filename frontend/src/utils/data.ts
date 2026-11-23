@@ -8,15 +8,15 @@ import type {
 } from "@/types/api";
 
 export const DATA_PROJECT_TYPE_LABELS: Record<DataProjectType, string> = {
-  eda: "Exploratory Data Analysis",
-  sql: "SQL Analysis",
-  excel: "Excel Analysis",
+  eda: "Exploratory analysis",
+  sql: "SQL analysis",
+  excel: "Excel analysis",
   dashboard: "Dashboard",
-  bi: "Business Intelligence",
-  statistical: "Statistical Analysis",
-  cleaning: "Data Cleaning",
+  bi: "Business intelligence",
+  statistical: "Statistical analysis",
+  cleaning: "Data cleaning",
   research: "Research",
-  visualization: "Visualization",
+  visualization: "Chart",
 };
 
 export const DATA_PROJECT_STATUS_LABELS: Record<DataProjectStatus, string> = {
@@ -36,7 +36,7 @@ export const DATA_CHART_TYPE_LABELS: Record<DataChartType, string> = {
   histogram: "Histogram",
   heatmap: "Heatmap",
   table: "Table",
-  kpi: "KPI cards",
+  kpi: "Key numbers",
 };
 
 export const DATA_RESOURCE_TYPE_LABELS: Record<DataResourceType, string> = {
@@ -91,7 +91,7 @@ export function displayValue(value: unknown): string {
 export function visualizationIssue(
   visualization: DataVisualization | null | undefined,
 ): string | null {
-  if (!visualization) return "This visualization is not configured yet.";
+  if (!visualization) return "This chart is not set up yet.";
   const chartTypes: DataChartType[] = [
     "bar",
     "line",
@@ -105,39 +105,39 @@ export function visualizationIssue(
     "kpi",
   ];
   if (!chartTypes.includes(visualization.chart_type)) {
-    return "Unsupported chart type.";
+    return "This chart type is not supported.";
   }
   if (!Array.isArray(visualization.data) || visualization.data.length === 0) {
-    return "No data rows are attached to this visualization.";
+    return "This chart has no data.";
   }
   if (visualization.data.length > 500) {
-    return "This visualization has more rows than the public renderer accepts.";
+    return "This chart has too many rows to display.";
   }
   const hasKey = (key: string | null) =>
     Boolean(key && visualization.data.some((row) => key in row));
 
   if (["bar", "line", "area", "pie", "donut", "histogram"].includes(visualization.chart_type)) {
     if (!visualization.x_axis || !hasKey(visualization.x_axis)) {
-      return "The category column is missing from the data.";
+      return "The category column is missing.";
     }
     if (visualization.series.length === 0 && !visualization.y_axis) {
-      return "No value column is configured.";
+      return "No value column is selected.";
     }
     if (visualization.y_axis && !hasKey(visualization.y_axis)) {
-      return "The value column is missing from the data.";
+      return "The value column is missing.";
     }
     if (visualization.series.some((key) => !hasKey(key))) {
-      return "One or more series columns are missing from the data.";
+      return "One or more series columns are missing.";
     }
   }
   if (visualization.chart_type === "scatter") {
     if (!hasKey(visualization.x_axis) || !hasKey(visualization.y_axis)) {
-      return "The scatter axes are missing from the data.";
+      return "The scatter axes are missing.";
     }
   }
   if (visualization.chart_type === "heatmap") {
     if (!hasKey(visualization.x_axis) || !hasKey(visualization.y_axis)) {
-      return "The heatmap axes are missing from the data.";
+      return "The heatmap axes are missing.";
     }
     if (visualization.series.length !== 1 || !hasKey(visualization.series[0])) {
       return "The heatmap needs one numeric value column.";

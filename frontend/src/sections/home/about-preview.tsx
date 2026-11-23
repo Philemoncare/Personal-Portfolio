@@ -8,7 +8,7 @@ import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 
 const FALLBACK_BIO =
-  "I work across software development, data analytics, technology projects, and technical leadership. The common thread is building systems that make a real task easier.";
+  "I work on software, data and technical projects, and I help run the teams and communities behind them.";
 
 export function AboutPreview() {
   const { settings } = useSiteSettings();
@@ -27,9 +27,9 @@ export function AboutPreview() {
               id="about-preview-heading"
               className="mt-7 max-w-3xl text-balance text-[clamp(2.4rem,5.2vw,4.8rem)] font-medium leading-[0.96] tracking-[-0.045em] text-paper"
             >
-              A developer who enjoys building{" "}
-              <span className="display-serif text-signal">systems</span> and working with{" "}
-              <span className="display-serif text-signal">data.</span>
+              I build{" "}
+              <span className="display-serif text-signal">software</span>, work with{" "}
+              <span className="display-serif text-signal">data</span> and help teams ship.
             </h2>
           </div>
 
@@ -44,22 +44,21 @@ export function AboutPreview() {
                   Profile note
                 </Badge>
                 <p className="min-w-0 flex-1 text-xs leading-relaxed text-muted">
-                  The longer biography and professional record are still being reviewed, so this
-                  preview stays short for now.
+                  The longer biography is still being written, so this preview is short for now.
                 </p>
               </div>
             ) : null}
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link to="/about" className={buttonStyles("secondary", "sm")}>
-                More about me
+                About me
                 <ArrowUpRight className="size-3.5" aria-hidden="true" />
               </Link>
               <Link
                 to="/now"
                 className="inline-flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-muted transition-colors hover:text-paper"
               >
-                Current focus
+                Now
                 <ArrowUpRight className="size-3" aria-hidden="true" />
               </Link>
             </div>

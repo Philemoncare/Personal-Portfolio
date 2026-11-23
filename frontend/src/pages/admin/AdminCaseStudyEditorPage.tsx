@@ -63,28 +63,28 @@ const EXTRA_KEYS: CaseStudySectionKey[] = [
 
 const HINTS: Partial<Record<CaseStudySectionKey, string>> = {
   overview: "What the project is, in two or three short paragraphs.",
-  problem: "What was actually missing or broken? Avoid marketing language.",
-  context: "Constraints, environment, team, timeline, or academic setting.",
-  goals: "What the work was meant to achieve. Keep them honest and specific.",
-  research: "What you read, compared, tested, or asked before building.",
-  planning: "How the work was scoped and sequenced.",
-  architecture: "Explain the real system. Upload architecture diagrams in the project editor; they appear here automatically.",
-  design: "Interface, data, or system design decisions.",
+  problem: "What was missing or broken? Describe it plainly.",
+  context: "The setting, constraints, team and timeline.",
+  goals: "What the work was meant to achieve. Keep it specific.",
+  research: "What you read, compared or tested before building.",
+  planning: "How the work was planned and ordered.",
+  architecture: "Explain the real system. Diagrams added in the project editor appear here automatically.",
+  design: "Interface, data or system design decisions.",
   implementation: "How it was built, in plain language.",
   challenges:
-    "Use the labels below so the public page can format them:\nCHALLENGE: what was difficult?\nAPPROACH: how did you address it?\nOUTCOME: what changed?",
+    "Use the labels below so the page can format them:\nCHALLENGE: what was difficult?\nAPPROACH: how did you handle it?\nOUTCOME: what changed?",
   technical_decisions:
-    "Explain why, not just what. For example: why FastAPI, why PostgreSQL, why this schema, why this deployment shape.",
-  testing: "What you actually tested and how. Unit, integration, manual, load — only what happened.",
+    "Explain why, not just what. For example, why this database or this hosting setup.",
+  testing: "What you tested and how. Only include checks that actually happened.",
   results:
-    "Only real outcomes. If you have no metric, describe a qualitative or technical outcome honestly.",
+    "Only real outcomes. If you have no numbers, describe the result in words.",
   lessons: "What you would do differently, or what the work taught you.",
   future_improvements: "What is still incomplete or planned.",
-  idea: "Optional early concept or framing.",
+  idea: "Optional early idea or starting point.",
   solution: "Optional summary of the final solution.",
-  role: "Optional detail about your specific contribution.",
-  technology: "Optional notes about the stack. The structured stack comes from the project record.",
-  key_features: "Optional feature list or walkthrough.",
+  role: "Optional details about your part in the work.",
+  technology: "Optional notes about the tools used. The main list comes from the project.",
+  key_features: "Optional list of main features.",
 };
 
 interface StudyFormState {
@@ -249,7 +249,7 @@ export default function AdminCaseStudyEditorPage() {
   const save = async (mode: "keep" | "draft" | "publish") => {
     if (!form) return;
     if (!form.title.trim()) {
-      setNotice("A case-study title is required.");
+      setNotice("Please add a case study title.");
       return;
     }
     const status: PublishStatus =
@@ -261,7 +261,7 @@ export default function AdminCaseStudyEditorPage() {
         const created = await adminProjectsService.createCaseStudy(toPayload(form, status));
         navigate(`/admin/case-studies/${created.id}`, {
           replace: true,
-          state: { notice: "Case study created." },
+          state: { notice: "Case study added." },
         });
       } else if (id) {
         const updated = await adminProjectsService.updateCaseStudy(
@@ -278,7 +278,7 @@ export default function AdminCaseStudyEditorPage() {
         );
       }
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The case study could not be saved.");
+      setNotice(error instanceof Error ? error.message : "We couldn't save this case study. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -287,7 +287,7 @@ export default function AdminCaseStudyEditorPage() {
   const remove = async () => {
     if (!id || !form) return;
     const confirmed = window.confirm(
-      `Delete "${form.title}" permanently? The linked project is not deleted.`,
+      `Delete "${form.title}"? The linked project is kept. This cannot be undone.`,
     );
     if (!confirmed) return;
     setSaving(true);
@@ -295,7 +295,7 @@ export default function AdminCaseStudyEditorPage() {
       await adminProjectsService.deleteCaseStudy(id);
       navigate("/admin/case-studies", { replace: true });
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The case study could not be deleted.");
+      setNotice(error instanceof Error ? error.message : "We couldn't delete this case study. Please try again.");
       setSaving(false);
     }
   };
@@ -306,7 +306,10 @@ export default function AdminCaseStudyEditorPage() {
         {study.error.status === 404 ? (
           <ErrorState message="This case study no longer exists." />
         ) : (
-          <ErrorState message={study.error.detail} onRetry={study.reload} />
+          <ErrorState
+            message="We couldn't load this case study. Please try again."
+            onRetry={study.reload}
+          />
         )}
         <Link to="/admin/case-studies" className={`${buttonStyles("secondary", "sm")} mt-4`}>
           Back to case studies
@@ -318,7 +321,10 @@ export default function AdminCaseStudyEditorPage() {
   if (reference.error) {
     return (
       <div className="mt-6">
-        <ErrorState message={reference.error.detail} onRetry={reference.reload} />
+        <ErrorState
+          message="We couldn't load the case study options. Please try again."
+          onRetry={reference.reload}
+        />
       </div>
     );
   }
@@ -326,7 +332,7 @@ export default function AdminCaseStudyEditorPage() {
   if ((!isNew && study.loading) || !reference.data || !form) {
     return (
       <div className="mt-6">
-        <LoadingState rows={6} label="Loading case-study editor" />
+        <LoadingState rows={6} label="Loading case study" />
       </div>
     );
   }
@@ -345,7 +351,7 @@ export default function AdminCaseStudyEditorPage() {
             Case studies
           </Link>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            {isNew ? "New case study" : form.title || "Untitled case study"}
+            {isNew ? "Add case study" : form.title || "Untitled case study"}
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <StatusBadge status={form.status} />
@@ -363,7 +369,7 @@ export default function AdminCaseStudyEditorPage() {
               className={buttonStyles("secondary", "sm")}
             >
               <Eye className="size-3.5" aria-hidden="true" />
-              Public page
+              View website
               <ArrowUpRight className="size-3" aria-hidden="true" />
             </a>
           ) : null}
@@ -382,7 +388,7 @@ export default function AdminCaseStudyEditorPage() {
             disabled={saving}
             className={buttonStyles("primary", "sm")}
           >
-            {saving ? "Saving…" : "Publish"}
+            {saving ? "Saving..." : "Publish"}
           </button>
         </div>
       </div>
@@ -396,8 +402,8 @@ export default function AdminCaseStudyEditorPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
         <div className="space-y-6">
           <AdminPanel
-            title="Identity"
-            description="The case study is linked to a project record. Only sections with content are shown publicly."
+            title="Case study details"
+            description="Link this case study to a project. Only sections with content appear on your website."
           >
             <div className="grid gap-5">
               <Field label="Project" htmlFor="project">
@@ -409,23 +415,29 @@ export default function AdminCaseStudyEditorPage() {
                     { value: "", label: "Not linked" },
                     ...(projects.data ?? []).map((project) => ({
                       value: project.id,
-                      label: `${project.title} (${project.status})`,
+                      label: `${project.title} (${
+                        project.status === "published"
+                          ? "published"
+                          : project.status === "draft"
+                            ? "draft"
+                            : "archived"
+                      })`,
                     })),
                   ]}
                 />
               </Field>
-              <Field label="Title" htmlFor="study-title" required>
+              <Field label="Case study title" htmlFor="study-title" required>
                 <TextInput
                   id="study-title"
                   value={form.title}
                   onChange={(event) => update("title", event.target.value)}
-                  placeholder="SchooMA — building a multi-tenant school platform"
+                  placeholder="How I built..."
                 />
               </Field>
               <Field
-                label="Slug"
+                label="Web address"
                 htmlFor="study-slug"
-                hint="Leave blank to generate one. The public URL is /case-studies/{slug}."
+                hint="Leave blank to create one from the title."
               >
                 <TextInput
                   id="study-slug"
@@ -439,7 +451,7 @@ export default function AdminCaseStudyEditorPage() {
                   rows={3}
                   value={form.summary}
                   onChange={(event) => update("summary", event.target.value)}
-                  placeholder="One sentence that explains the engineering story."
+                  placeholder="One sentence that explains the project."
                 />
               </Field>
               <Field label="Cover image" className="sm:col-span-2">
@@ -459,8 +471,8 @@ export default function AdminCaseStudyEditorPage() {
           </AdminPanel>
 
           <AdminPanel
-            title="Narrative"
-            description="Open a section to write it. Sections with no text are skipped on the public page; the visibility control lets you keep text but hide the section."
+            title="Sections"
+            description="Open a section to write it. Sections with no text are skipped on your website. You can hide a section without deleting its text."
           >
             <div className="space-y-3">
               {[...PRIMARY_KEYS, ...EXTRA_KEYS].map((key) => {
@@ -490,7 +502,7 @@ export default function AdminCaseStudyEditorPage() {
                         ) : null}
                       </span>
                       <span className="font-mono text-[0.5rem] uppercase tracking-[0.12em] text-faint">
-                        {value.trim().length} chars
+                        {value.trim().length} characters
                       </span>
                     </summary>
                     <div className="border-t border-line p-4">
@@ -503,7 +515,7 @@ export default function AdminCaseStudyEditorPage() {
                       />
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <Checkbox
-                          label="Visible on the public page"
+                          label="Show this section on my website"
                           checked={visible}
                           onChange={(next) => toggleSection(key, next)}
                         />
@@ -522,19 +534,19 @@ export default function AdminCaseStudyEditorPage() {
         <aside className="space-y-6 lg:sticky lg:top-24">
           <AdminPanel title="Publishing">
             <div className="grid gap-4">
-              <Field label="Status" htmlFor="study-status">
+              <Field label="Visibility" htmlFor="study-status">
                 <Select
                   id="study-status"
                   value={form.status}
                   onChange={(event) => update("status", event.target.value as PublishStatus)}
                   options={[
-                    { value: "draft", label: "Draft — private" },
-                    { value: "published", label: "Published — public" },
-                    { value: "archived", label: "Archived — hidden" },
+                    { value: "draft", label: "Draft (private)" },
+                    { value: "published", label: "Published (visible on your website)" },
+                    { value: "archived", label: "Archived (hidden)" },
                   ]}
                 />
               </Field>
-              <Field label="Result type" htmlFor="result-type" hint="How the results section should be labelled. Qualitative outcomes are valid.">
+              <Field label="Result type" htmlFor="result-type" hint="How the results section is labelled. Descriptive outcomes are fine.">
                 <Select
                   id="result-type"
                   value={form.result_type}
@@ -548,7 +560,7 @@ export default function AdminCaseStudyEditorPage() {
                   ]}
                 />
               </Field>
-              <Field label="Sort order" htmlFor="study-sort">
+              <Field label="Display order" htmlFor="study-sort">
                 <TextInput
                   id="study-sort"
                   type="number"
@@ -557,15 +569,15 @@ export default function AdminCaseStudyEditorPage() {
                 />
               </Field>
               <Checkbox
-                label="Featured case study"
+                label="Feature this case study"
                 checked={form.featured}
                 onChange={(next) => update("featured", next)}
               />
               <Checkbox
-                label="Mark as in progress"
+                label="This case study is not finished yet"
                 checked={form.is_placeholder}
                 onChange={(next) => update("is_placeholder", next)}
-                hint="Shows an honest pending note on the public page."
+                hint="Your website will show a note until it is final."
               />
               <button
                 type="button"
@@ -574,7 +586,7 @@ export default function AdminCaseStudyEditorPage() {
                 className={buttonStyles("secondary", "md", "w-full")}
               >
                 <Save className="size-3.5" aria-hidden="true" />
-                {saving ? "Saving…" : "Save changes"}
+                {saving ? "Saving..." : "Save changes"}
               </button>
               <button
                 type="button"
@@ -588,7 +600,7 @@ export default function AdminCaseStudyEditorPage() {
           </AdminPanel>
 
           {!isNew ? (
-            <AdminPanel title="Record">
+            <AdminPanel title="Details">
               <dl className="space-y-3 text-xs">
                 <div className="flex items-center justify-between gap-3">
                   <dt className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted">

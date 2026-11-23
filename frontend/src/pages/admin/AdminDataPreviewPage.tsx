@@ -15,7 +15,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useApiResource } from "@/hooks/useApiResource";
 import { useSeo } from "@/hooks/useSeo";
 import type { AdminDataProject } from "@/types/api";
-import { DATA_PROJECT_TYPE_LABELS } from "@/utils/data";
+import { DATA_PROJECT_STATUS_LABELS, DATA_PROJECT_TYPE_LABELS } from "@/utils/data";
 
 function hasText(value: string | null | undefined): boolean {
   return Boolean(value && value.trim());
@@ -50,7 +50,7 @@ export default function AdminDataPreviewPage() {
   if (project.loading) {
     return (
       <>
-        <PageIntro eyebrow="Data Lab / Preview" title="Loading preview…" />
+        <PageIntro eyebrow="Data Lab / Preview" title="Loading preview..." />
         <Container className="py-10">
           <LoadingState rows={5} label="Loading data project preview" />
         </Container>
@@ -66,16 +66,16 @@ export default function AdminDataPreviewPage() {
           {project.error.status === 404 ? (
             <EmptyState
               title="Data project not found"
-              description="This analysis record no longer exists."
+              description="This data project no longer exists."
               action={
                 <Link to="/admin/data" className={buttonStyles("secondary", "sm")}>
-                  Back to data projects
+                  Back to Data Lab
                 </Link>
               }
             />
           ) : (
             <ErrorState
-              message="The preview could not be loaded. The API may be unavailable — try again in a moment."
+              message="We couldn't load the preview. Please try again in a moment."
               onRetry={project.reload}
             />
           )}
@@ -114,13 +114,13 @@ export default function AdminDataPreviewPage() {
           <div className="space-y-4 border-t border-line pt-4">
             <div className="flex flex-wrap gap-2">
               <Badge tone="outline">{DATA_PROJECT_TYPE_LABELS[data.project_type]}</Badge>
-              <Badge tone="muted">{data.status}</Badge>
-              {data.is_demo ? <Badge tone="placeholder">Demo data</Badge> : null}
+              <Badge tone="muted">{DATA_PROJECT_STATUS_LABELS[data.status]}</Badge>
+              {data.is_demo ? <Badge tone="placeholder">Sample data</Badge> : null}
               {data.featured ? <Badge tone="signal">Featured</Badge> : null}
             </div>
             <dl className="space-y-2.5 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
               <div className="flex items-center justify-between gap-6">
-                <dt>Slug</dt>
+                <dt>Web address</dt>
                 <dd className="text-paper">/{data.slug}</dd>
               </div>
               <div className="flex items-center justify-between gap-6">
@@ -140,11 +140,10 @@ export default function AdminDataPreviewPage() {
         {data.is_demo ? (
           <div className="mb-8 border border-signal/35 bg-signal/5 p-5">
             <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-signal">
-              Demo data
+              Sample data
             </p>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-paper-dim">
-              This preview contains synthetic data. It must remain labelled as demo content
-              if it is published.
+              This project uses sample data. The label stays visible if you publish it.
             </p>
           </div>
         ) : null}
@@ -192,20 +191,20 @@ export default function AdminDataPreviewPage() {
           ) : null}
 
           {hasText(data.methodology) || hasText(data.sql_query) || hasText(data.python_snippet) ? (
-            <Block title="Methodology">
+            <Block title="Method">
               {hasText(data.methodology) ? <Paragraphs text={data.methodology ?? ""} /> : null}
               {hasText(data.sql_query) ? (
                 <CodeBlock
                   code={data.sql_query ?? ""}
                   language="sql"
                   label="SQL query"
-                  caption="Stored with the project for reading. Never executed publicly."
+                  caption="Shown as text. It is never run on your website."
                 />
               ) : null}
               {data.sql_result.length > 0 ? (
                 <DataTable
                   rows={data.sql_result}
-                  caption="Stored query result"
+                  caption="Saved query result"
                   pageSize={6}
                   searchable
                   columnToggle={false}
@@ -222,7 +221,7 @@ export default function AdminDataPreviewPage() {
           ) : null}
 
           {data.visualizations.length > 0 ? (
-            <Block title="Visualizations">
+            <Block title="Charts">
               <div className="space-y-6">
                 {data.visualizations.map((visualization) => (
                   <LazyDataChart
@@ -238,7 +237,7 @@ export default function AdminDataPreviewPage() {
           {hasText(data.what_the_data_shows) ||
           hasText(data.why_the_findings_matter) ||
           hasText(data.what_i_would_do_next) ? (
-            <Block title="What the data shows / why it matters / what next">
+            <Block title="What the data shows">
               <div className="grid gap-px border border-line bg-line md:grid-cols-3">
                 {[
                   ["What the data shows", data.what_the_data_shows],
@@ -299,7 +298,7 @@ export default function AdminDataPreviewPage() {
           ) : null}
 
           {data.resources.length > 0 ? (
-            <Block title="Files / resources">
+            <Block title="Files and links">
               <ResourceList resources={data.resources} />
             </Block>
           ) : null}

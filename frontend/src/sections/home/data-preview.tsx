@@ -29,14 +29,14 @@ export function DataPreview() {
           eyebrow="Data Lab"
           title={
             <span id="data-preview-heading">
-              Find the pattern.{" "}
-              <span className="display-serif text-signal">Explain it clearly.</span>
+              From data to{" "}
+              <span className="display-serif text-signal">a clear answer.</span>
             </span>
           }
-          description="I work with data to answer questions, test assumptions, and communicate what the evidence actually supports."
+          description="I use data to answer questions, test assumptions and explain what the evidence shows."
           action={
             <Link to="/data-lab" className={buttonStyles("secondary", "sm")}>
-              Explore Data Lab
+              Visit Data Lab
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
           }
@@ -46,8 +46,8 @@ export function DataPreview() {
           <Reveal>
             <div>
               <p className="text-pretty text-lg leading-relaxed text-paper-dim sm:text-xl">
-                The Data Lab is the analysis side of the practice: the dataset, the question, the
-                method, and the finding — written so a decision can be made from it.
+                The Data Lab is where I publish data work: the dataset, the question, the method
+                and what I found, written so it can be used.
               </p>
 
               {featured.loading ? (
@@ -62,7 +62,7 @@ export function DataPreview() {
                     <Badge tone="outline">
                       {DATA_PROJECT_TYPE_LABELS[project.project_type]}
                     </Badge>
-                    {project.is_demo ? <Badge tone="placeholder">Demo data</Badge> : null}
+                    {project.is_demo ? <Badge tone="placeholder">Sample data</Badge> : null}
                   </div>
                   <Link
                     to={`/data/${project.slug}`}
@@ -79,7 +79,7 @@ export function DataPreview() {
                     to={`/data/${project.slug}`}
                     className="mt-5 inline-flex items-center gap-2 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-paper transition-colors hover:text-signal"
                   >
-                    Explore Analysis
+                    Read the analysis
                     <ArrowUpRight className="size-3.5" aria-hidden="true" />
                   </Link>
                 </div>
@@ -87,8 +87,7 @@ export function DataPreview() {
 
               {!featured.loading && !project ? (
                 <p className="mt-8 max-w-xl text-sm leading-relaxed text-muted">
-                  Featured analyses appear here once a published Data Lab project has a
-                  validated visualization. No values are invented to fill this space.
+                  No featured analysis yet. Published Data Lab projects with a chart appear here.
                 </p>
               ) : null}
 
@@ -107,9 +106,9 @@ export function DataPreview() {
 
               <div className="mt-8 grid gap-px border border-line bg-line sm:grid-cols-3">
                 {[
-                  { label: "Method", value: "Reproducible" },
-                  { label: "Output", value: "Decision-ready" },
-                  { label: "Limit", value: "Stated openly" },
+                  { label: "Method", value: "Shown" },
+                  { label: "Result", value: "Explained" },
+                  { label: "Limits", value: "Stated" },
                 ].map((item) => (
                   <div key={item.label} className="bg-background p-4">
                     <p className="type-meta text-faint">{item.label}</p>
@@ -128,12 +127,12 @@ export function DataPreview() {
                 <div>
                   <p className="type-meta text-signal">Data Lab / Featured view</p>
                   <h3 className="mt-4 text-xl font-medium tracking-tight text-paper">
-                    {featured.loading ? "Loading featured analysis…" : "No featured chart yet"}
+                    {featured.loading ? "Loading featured analysis..." : "No featured chart yet"}
                   </h3>
                   <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
                     {featured.loading
-                      ? "Fetching the latest published analysis from the Data Lab API."
-                      : "Charts are only rendered from stored analysis data. Publish a project with a validated visualization to feature it here."}
+                      ? "Loading the latest published analysis."
+                      : "Charts are built from saved project data. A featured project with a chart appears here."}
                   </p>
                 </div>
                 <Link

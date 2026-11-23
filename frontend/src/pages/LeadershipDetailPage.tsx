@@ -29,14 +29,14 @@ export default function LeadershipDetailPage() {
     description:
       entry?.outcome ??
       entry?.description ??
-      "A leadership role with responsibility, contribution, and outcome.",
+      "A leadership role by Philemon Melabah.",
     path: slug ? `/leadership/${slug}` : undefined,
   });
 
   if (leadership.loading) {
     return (
       <Container className="py-16">
-        <DetailSkeleton label="Loading leadership detail" />
+        <DetailSkeleton label="Loading role" />
       </Container>
     );
   }
@@ -44,21 +44,21 @@ export default function LeadershipDetailPage() {
   if (leadership.error) {
     return (
       <>
-        <PageIntro eyebrow="Leadership / Role" title="Leadership detail" />
+        <PageIntro eyebrow="Leadership / Role" title="Role" />
         <Container className="py-14">
           {leadership.error.status === 404 ? (
             <EmptyState
-              title="Leadership entry not found"
-              description="This entry does not exist, or it is no longer publicly available."
+              title="Role not found"
+              description="This role does not exist or is no longer public."
               action={
                 <Link to="/leadership" className={buttonStyles("secondary", "sm")}>
-                  Back to leadership
+                  Back to Leadership
                 </Link>
               }
             />
           ) : (
             <ErrorState
-              message="This leadership entry could not be loaded. The API may be unavailable — try again in a moment."
+              message="We couldn't load this role. Please try again in a moment."
               onRetry={leadership.reload}
             />
           )}
@@ -81,7 +81,7 @@ export default function LeadershipDetailPage() {
         }
         description={
           entry.description ??
-          "A leadership role recorded with responsibility, contribution, and outcome."
+          "The responsibility, contribution and result for this role."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
@@ -92,7 +92,7 @@ export default function LeadershipDetailPage() {
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Organization</span>
+              <span>Organisation</span>
               <span className="text-right text-paper">{entry.organization}</span>
             </div>
           </div>
@@ -105,15 +105,14 @@ export default function LeadershipDetailPage() {
           className="inline-flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted transition-colors hover:text-paper"
         >
           <ArrowLeft className="size-3.5" aria-hidden="true" />
-          Back to leadership
+          Back to Leadership
         </Link>
 
         {entry.is_placeholder ? (
           <div className="mt-8 flex items-start gap-3 border border-signal/25 bg-signal/5 p-4">
-            <Badge tone="placeholder">Placeholder</Badge>
+            <Badge tone="placeholder">Not finished</Badge>
             <p className="text-xs leading-relaxed text-paper-dim">
-              This entry is still being confirmed. The confirmed responsibility and outcome will
-              replace it.
+              Some details for this role are still being confirmed.
             </p>
           </div>
         ) : null}
@@ -129,7 +128,7 @@ export default function LeadershipDetailPage() {
               </h2>
               <p className="mt-3 max-w-2xl text-pretty text-base leading-relaxed text-paper-dim">
                 {entry.description ||
-                  "A written responsibility statement has not been added yet."}
+                  "Not added yet."}
               </p>
             </section>
 
@@ -142,7 +141,7 @@ export default function LeadershipDetailPage() {
               </h2>
               <p className="mt-3 max-w-2xl text-pretty text-base leading-relaxed text-paper-dim">
                 {entry.contribution ||
-                  "The specific contribution has not been written yet."}
+                  "Not added yet."}
               </p>
             </section>
 
@@ -154,7 +153,7 @@ export default function LeadershipDetailPage() {
                 Outcome
               </h2>
               <p className="mt-3 max-w-2xl border-l border-signal pl-4 text-pretty text-base leading-relaxed text-paper-dim">
-                {entry.outcome || "The outcome has not been documented yet."}
+                {entry.outcome || "Not added yet."}
               </p>
             </section>
           </div>
@@ -162,7 +161,7 @@ export default function LeadershipDetailPage() {
           <aside className="h-fit border border-line bg-ink-800/40">
             <div className="border-b border-line px-5 py-3">
               <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted">
-                Record
+                Details
               </p>
             </div>
             <dl className="divide-y divide-line">
@@ -177,7 +176,7 @@ export default function LeadershipDetailPage() {
               {entry.url ? (
                 <div className="px-5 py-4">
                   <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
-                    Organization link
+                    Organisation website
                   </dt>
                   <dd className="mt-1">
                     <a
@@ -186,7 +185,7 @@ export default function LeadershipDetailPage() {
                       rel="noreferrer noopener"
                       className="inline-flex items-center gap-1.5 text-sm text-paper underline decoration-line underline-offset-4 hover:text-signal"
                     >
-                      Visit
+                      Open website
                       <ArrowUpRight className="size-3.5" aria-hidden="true" />
                     </a>
                   </dd>
@@ -198,12 +197,12 @@ export default function LeadershipDetailPage() {
 
         <div className="mt-14 flex flex-col gap-5 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            The leadership index lists every published role. The timeline places this work in
-            chronological context.
+            All published roles are listed on the Leadership page. The timeline places this work
+            in date order.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link to="/leadership" className={buttonStyles("secondary", "sm")}>
-              Leadership index
+              All roles
             </Link>
             <Link to="/timeline" className={buttonStyles("ghost", "sm")}>
               Timeline

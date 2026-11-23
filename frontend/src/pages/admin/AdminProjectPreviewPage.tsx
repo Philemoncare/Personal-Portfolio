@@ -51,7 +51,7 @@ export default function AdminProjectPreviewPage() {
 
       {project.loading ? (
         <>
-          <PageIntro eyebrow="Work / Preview" title="Loading preview…" />
+          <PageIntro eyebrow="Work / Preview" title="Loading preview..." />
           <Container className="py-10">
             <LoadingState rows={5} label="Loading project preview" />
           </Container>
@@ -65,7 +65,7 @@ export default function AdminProjectPreviewPage() {
             {project.error.status === 404 ? (
               <EmptyState
                 title="Project not found"
-                description="This project record no longer exists."
+                description="This project no longer exists."
                 action={
                   <Link to="/admin/projects" className={buttonStyles("secondary", "sm")}>
                     Back to projects
@@ -74,7 +74,7 @@ export default function AdminProjectPreviewPage() {
               />
             ) : (
               <ErrorState
-                message="The preview could not be loaded. The API may be unavailable — try again in a moment."
+                message="We couldn't load the preview. Please try again in a moment."
                 onRetry={project.reload}
               />
             )}

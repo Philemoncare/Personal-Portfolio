@@ -23,12 +23,12 @@ export default function ProjectDetailPage() {
 
   useSeo({
     title: data
-      ? data.seo_title || `${data.title} — ${data.category.name} | Philemon Melabah`
+      ? data.seo_title || `${data.title} | ${data.category.name} | Philemon Melabah`
       : "Project — Philemon Melabah",
     description:
       data?.seo_description ??
       data?.summary ??
-      "Project record from Philemon Melabah's portfolio.",
+      "A project by Philemon Melabah.",
     path: slug ? `${basePath}/${slug}` : undefined,
     image: data?.og_image ?? data?.cover_image_url ?? null,
     imageAlt: data ? `${data.title} project cover` : null,
@@ -40,7 +40,7 @@ export default function ProjectDetailPage() {
         data={data}
         basePath={basePath}
         backTo={basePath}
-        backLabel={isBuildLab ? "Back to Build Lab" : "Back to work"}
+        backLabel={isBuildLab ? "Back to Build Lab" : "Back to projects"}
       />
     );
   }
@@ -49,7 +49,7 @@ export default function ProjectDetailPage() {
     <>
       <PageIntro
         eyebrow={isBuildLab ? "Build Lab / Project" : "Work / Project"}
-        title={project.loading ? "Loading project…" : "Project"}
+        title={project.loading ? "Loading project..." : "Project"}
       />
 
       <Container className="py-10 sm:py-14">
@@ -58,7 +58,7 @@ export default function ProjectDetailPage() {
           className="inline-flex items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted transition-colors hover:text-paper"
         >
           <ArrowLeft className="size-3.5" aria-hidden="true" />
-          {isBuildLab ? "Back to Build Lab" : "Back to work"}
+          {isBuildLab ? "Back to Build Lab" : "Back to projects"}
         </Link>
 
         {project.loading ? (
@@ -72,16 +72,16 @@ export default function ProjectDetailPage() {
             {project.error.status === 404 ? (
               <EmptyState
                 title="Project not found"
-                description="The project you're looking for doesn't exist, or it is no longer publicly available."
+                description="This project does not exist or is no longer public."
                 action={
                   <Link to={basePath} className={buttonStyles("secondary", "sm")}>
-                    {isBuildLab ? "Back to Build Lab" : "Back to work"}
+                    {isBuildLab ? "Back to Build Lab" : "Back to projects"}
                   </Link>
                 }
               />
             ) : (
               <ErrorState
-                message="This project could not be loaded. The API may be unavailable — try again in a moment."
+                message="We couldn't load this project. Please try again in a moment."
                 onRetry={project.reload}
               />
             )}

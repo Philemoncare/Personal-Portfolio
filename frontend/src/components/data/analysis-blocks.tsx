@@ -70,7 +70,7 @@ export function InsightCard({ insight, index }: { insight: DataInsight; index: n
             {String(index).padStart(2, "0")}
           </span>
           <h3 className="text-base font-medium text-paper">
-            {insight.title?.trim() || "Key insight"}
+            {insight.title?.trim() || "Insight"}
           </h3>
         </div>
         <span className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-faint">
@@ -80,7 +80,7 @@ export function InsightCard({ insight, index }: { insight: DataInsight; index: n
       <div className="grid gap-px bg-line sm:grid-cols-3">
         <div className="bg-ink-900 p-5">
           <p className="font-mono text-[0.54rem] uppercase tracking-[0.16em] text-signal">
-            Key insight
+            Finding
           </p>
           <p className="mt-3 text-sm leading-relaxed text-paper-dim">{insight.key_insight}</p>
         </div>
@@ -89,7 +89,7 @@ export function InsightCard({ insight, index }: { insight: DataInsight; index: n
             Possible explanation
           </p>
           <p className="mt-3 text-sm leading-relaxed text-paper-dim">
-            {insight.possible_explanation?.trim() || "Not stated."}
+            {insight.possible_explanation?.trim() || "Not added."}
           </p>
         </div>
         <div className="bg-ink-900 p-5">
@@ -97,7 +97,7 @@ export function InsightCard({ insight, index }: { insight: DataInsight; index: n
             Recommendation
           </p>
           <p className="mt-3 text-sm leading-relaxed text-paper-dim">
-            {insight.recommendation?.trim() || "Not stated."}
+            {insight.recommendation?.trim() || "Not added."}
           </p>
         </div>
       </div>
@@ -113,7 +113,7 @@ export function DatasetPanel({ project }: { project: Omit<DataProjectDetail, "he
     { label: "Columns", value: project.dataset_columns?.toLocaleString("en") ?? null },
     { label: "Time period", value: project.dataset_time_period },
     { label: "Data type", value: project.dataset_type },
-    { label: "License / usage", value: project.dataset_license },
+    { label: "Licence and usage", value: project.dataset_license },
   ].filter((item) => item.value && String(item.value).trim().length > 0);
 
   if (fields.length === 0 && !project.dataset_description && !project.dataset_note) {
@@ -128,13 +128,13 @@ export function DatasetPanel({ project }: { project: Omit<DataProjectDetail, "he
         <div className="flex items-center gap-2">
           <Database className="size-3.5 text-signal" aria-hidden="true" />
           <span className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted">
-            Dataset information
+            Dataset
           </span>
         </div>
         {!project.dataset_is_public ? (
           <span className="inline-flex items-center gap-1.5 border border-warning/40 px-2 py-1 font-mono text-[0.5rem] uppercase tracking-[0.12em] text-warning">
             <Lock className="size-3" aria-hidden="true" />
-            Private / unavailable
+            Not public
           </span>
         ) : null}
       </div>
@@ -187,7 +187,7 @@ export function ResourceList({ resources }: { resources: DataResource[] }) {
   return (
     <ul className="divide-y divide-line border border-line bg-ink-900/40">
       {resources.map((resource) => {
-        const label = DATA_RESOURCE_TYPE_LABELS[resource.resource_type] ?? "Resource";
+        const label = DATA_RESOURCE_TYPE_LABELS[resource.resource_type] ?? "File";
         const external = resource.url ? isExternalUrl(resource.url) : false;
         const content = (
           <>

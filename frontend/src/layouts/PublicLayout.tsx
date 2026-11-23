@@ -4,10 +4,13 @@ import { Outlet, useLocation } from "react-router-dom";
 
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 export function PublicLayout() {
   const location = useLocation();
   const reduceMotion = useReducedMotion();
+
+  usePageTracking();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });

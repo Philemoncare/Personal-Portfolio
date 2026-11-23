@@ -34,7 +34,7 @@ const DEPLOYMENT_LABELS: Record<string, string> = {
   not_deployed: "Not deployed",
   deploying: "Deploying",
   live: "Live",
-  failed: "Deployment failed",
+  failed: "Failed",
   offline: "Offline",
 };
 
@@ -120,11 +120,11 @@ function projectActions(project: ProjectDetail): ActionLink[] {
   const live =
     project.deployment_url || project.live_url || project.demo_url || null;
   const actions: ActionLink[] = [];
-  if (live) actions.push({ href: live, label: "Live project", icon: Globe, primary: true });
+  if (live) actions.push({ href: live, label: "Live website", icon: Globe, primary: true });
   if (project.github_url || project.repository_url) {
     actions.push({
       href: (project.github_url || project.repository_url) as string,
-      label: "Source code",
+      label: "GitHub repository",
       icon: GitBranch,
     });
   }
@@ -136,7 +136,7 @@ function projectActions(project: ProjectDetail): ActionLink[] {
     });
   }
   if (project.video_url) {
-    actions.push({ href: project.video_url, label: "Watch demo", icon: Play });
+    actions.push({ href: project.video_url, label: "Watch video", icon: Play });
   }
   if (project.download_url) {
     actions.push({ href: project.download_url, label: "Download", icon: Download });
@@ -144,7 +144,7 @@ function projectActions(project: ProjectDetail): ActionLink[] {
   if (project.external_project_url || project.external_url) {
     actions.push({
       href: (project.external_project_url || project.external_url) as string,
-      label: "External project",
+      label: "External link",
       icon: ExternalLink,
     });
   }
@@ -172,9 +172,9 @@ function narrativeSections(study: CaseStudyDetail | null): NarrativeSection[] {
     { id: "implementation", label: "Implementation", text: study.implementation },
     { id: "challenges", label: "Challenges", text: study.challenges },
     { id: "technical_decisions", label: "Technical decisions", text: study.technical_decisions },
-    { id: "testing", label: "Testing and verification", text: study.testing },
+    { id: "testing", label: "Testing", text: study.testing },
     { id: "results", label: "Results", text: study.results },
-    { id: "lessons", label: "Lessons", text: study.lessons },
+    { id: "lessons", label: "Lessons learned", text: study.lessons },
     { id: "future_improvements", label: "Future improvements", text: study.future_improvements },
   ];
   return sections.filter((section) => hasText(section.text) && !hidden.has(section.id));
@@ -202,7 +202,7 @@ function GitHubMeta({ project }: { project: ProjectDetail }) {
       ) : null}
       {project.github_language ? <span>{project.github_language}</span> : null}
       <span className="ml-auto normal-case tracking-normal text-faint">
-        Public GitHub metadata
+        From GitHub
         {project.github_metadata_checked_at
           ? ` · checked ${formatDate(project.github_metadata_checked_at)}`
           : ""}
@@ -222,7 +222,7 @@ interface ProjectDetailContentProps {
 export function ProjectDetailContent({
   data,
   backTo = "/work",
-  backLabel = "Back to work",
+  backLabel = "Back to projects",
   basePath = "/work",
   preview = false,
 }: ProjectDetailContentProps) {
@@ -250,7 +250,7 @@ export function ProjectDetailContent({
   return (
     <>
       <PageIntro
-        eyebrow={`Work / ${data.category.name}`}
+        eyebrow={`Project / ${data.category.name}`}
         title={data.title}
         description={data.summary ?? undefined}
         aside={
@@ -259,12 +259,12 @@ export function ProjectDetailContent({
             <div className="mt-3 flex items-center justify-between gap-4 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
               <span>{data.year ?? data.published_at?.slice(0, 4) ?? "No year"}</span>
               <span>
-                {preview ? "Preview" : data.is_placeholder ? "Draft content" : "Published"}
+                {preview ? "Preview" : data.is_placeholder ? "Draft" : "Published"}
               </span>
             </div>
             {data.deployment_status !== "not_deployed" ? (
               <div className="mt-3 flex items-center justify-between gap-4 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted">
-                <span>Deployment</span>
+                <span>Hosting</span>
                 <span
                   className={cn(
                     data.deployment_status === "live"
@@ -312,7 +312,7 @@ export function ProjectDetailContent({
 
           <div className="mt-8 flex flex-col gap-5 border-y border-line py-6 lg:flex-row lg:items-center lg:justify-between">
             <dl className="grid flex-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <MetaItem label="Discipline">
+              <MetaItem label="Category">
                 <span>{data.category.name}</span>
                 {data.secondary_categories.length > 0 ? (
                   <span className="mt-1 block text-xs text-muted">
@@ -327,7 +327,7 @@ export function ProjectDetailContent({
                     : "Not recorded")}
               </MetaItem>
               <MetaItem label="Role">{data.role ?? "Not recorded"}</MetaItem>
-              <MetaItem label="Stage">
+              <MetaItem label="Status">
                 <ProjectStatus status={data.project_status} />
               </MetaItem>
             </dl>
@@ -354,11 +354,11 @@ export function ProjectDetailContent({
           {data.is_placeholder ? (
             <div className="mt-8 border border-signal/30 bg-signal/5 p-5 sm:p-6">
               <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-signal">
-                Record still being written
+                This page is not finished
               </p>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-paper-dim">
-                This project is marked as placeholder content. Sections without verified
-                information are hidden rather than filled with invented detail.
+                Some details are still being added. Sections without confirmed information are
+                hidden until they are ready.
               </p>
             </div>
           ) : null}
@@ -373,7 +373,7 @@ export function ProjectDetailContent({
             {previewUrl && data.embed_enabled && !hasPreviewImage ? (
               <Section
                 id="live-preview"
-                label="Interactive preview"
+                label="Live preview"
                 meta={
                   data.last_verified_at ? (
                     <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
@@ -461,13 +461,13 @@ export function ProjectDetailContent({
               ))}
 
             {gallery.length > 0 ? (
-              <Section id="gallery" label="Screens and artefacts">
+              <Section id="gallery" label="Screenshots and files">
                 <ProjectGallery media={gallery} />
               </Section>
             ) : null}
 
             {techGroups.length > 0 ? (
-              <Section id="technology" label="Stack">
+              <Section id="technology" label="Technologies">
                 <div
                   className={`grid gap-px border border-line bg-line sm:grid-cols-2 ${
                     techGroups.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
@@ -512,10 +512,10 @@ export function ProjectDetailContent({
                     <FileText className="mt-1 size-5 text-signal" aria-hidden="true" />
                     <div>
                       <p className="font-medium text-paper">
-                        The longer engineering story is available
+                        There is a full case study for this project
                       </p>
                       <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted">
-                        Problem, context, decisions, architecture, implementation, and what
+                        The problem, context, decisions, architecture, implementation and what
                         changed.
                       </p>
                     </div>
@@ -524,7 +524,7 @@ export function ProjectDetailContent({
                     to={`/case-studies/${data.case_study_slug}`}
                     className={buttonStyles("secondary", "sm", "shrink-0")}
                   >
-                    Read case study
+                    Read the case study
                     <ArrowUpRight className="size-3.5" aria-hidden="true" />
                   </Link>
                 </div>
@@ -535,13 +535,13 @@ export function ProjectDetailContent({
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
                 <p className="inline-flex items-center gap-2 text-sm text-muted">
                   <Sparkles className="size-4 text-signal" aria-hidden="true" />
-                  This project has a standalone case study.
+                  This project also has a case study.
                 </p>
                 <Link
                   to={`/case-studies/${data.case_study_slug}`}
                   className={buttonStyles("secondary", "sm")}
                 >
-                  Read the full case study
+                  Read the case study
                   <ArrowUpRight className="size-3.5" aria-hidden="true" />
                 </Link>
               </div>
@@ -556,7 +556,7 @@ export function ProjectDetailContent({
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-muted">
-                    More work
+                    Related
                   </p>
                   <h2
                     id="related-heading"
@@ -569,7 +569,7 @@ export function ProjectDetailContent({
                   to={basePath}
                   className="hidden items-center gap-2 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-muted transition-colors hover:text-paper sm:inline-flex"
                 >
-                  Full index
+                  All projects
                   <ArrowUpRight className="size-3" aria-hidden="true" />
                 </Link>
               </div>

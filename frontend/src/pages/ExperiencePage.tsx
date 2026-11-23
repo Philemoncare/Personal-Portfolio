@@ -16,9 +16,9 @@ export default function ExperiencePage() {
   const experience = useApiQuery((signal) => experienceService.getEntries(signal), []);
 
   usePageSeo("experience", {
-    title: "Experience | Professional record",
+    title: "Experience | Philemon Melabah",
     description:
-      "The professional record: roles, organizations, periods, and responsibilities, with detail pages where a role has more to say.",
+      "Roles, organisations and dates, with more detail where there is more to say.",
     path: "/experience",
   });
 
@@ -39,26 +39,26 @@ export default function ExperiencePage() {
             page.title
           ) : (
             <>
-              The professional{" "}
-              <span className="display-serif text-signal">record.</span>
+              Where I have{" "}
+              <span className="display-serif text-signal">worked.</span>
             </>
           )
         }
         description={
           page?.description ||
-          "Roles are listed only once the organization, title, and dates are confirmed. Entries link to a fuller record where there is more to say; nothing is padded to fill the page."
+          "Roles are listed with the organisation, title and dates. Where there is more to say, the entry links to a longer page."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
-              <span>Published roles</span>
+              <span>Roles</span>
               <span className="text-paper">
-                {experience.loading ? "—" : String(entries.length).padStart(2, "0")}
+                {experience.loading ? "..." : String(entries.length).padStart(2, "0")}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Format</span>
-              <span className="text-right text-paper">Organization / Period / Work</span>
+              <span>Includes</span>
+              <span className="text-right text-paper">Organisation, dates, work</span>
             </div>
           </div>
         }
@@ -67,18 +67,18 @@ export default function ExperiencePage() {
       <Container className="py-12 sm:py-16">
         {!experience.loading && experience.error ? (
           <ErrorState
-            message="The experience record could not be loaded. The API may be unavailable — try again in a moment."
+            message="We couldn't load the experience. Please try again in a moment."
             onRetry={experience.reload}
           />
         ) : null}
 
         {!experience.loading && !experience.error && entries.length === 0 ? (
           <EmptyState
-            title="Experience record not published yet"
-            description="No roles have been published. Real organizations, titles, and dates will be recorded here rather than inferred."
+            title="No experience yet"
+            description="Roles will appear here once they are added."
             action={
               <Link to="/resume" className={buttonStyles("secondary", "sm")}>
-                View the online resume
+                View resume
               </Link>
             }
           />
@@ -122,7 +122,7 @@ export default function ExperiencePage() {
                           to={`/experience/${entry.slug}`}
                           className={buttonStyles("secondary", "sm")}
                         >
-                          Role detail
+                          Read more
                           <ArrowUpRight className="size-3.5" aria-hidden="true" />
                         </Link>
                       ) : null}
@@ -141,16 +141,16 @@ export default function ExperiencePage() {
 
         <div className="mt-14 flex flex-col gap-5 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            The resume brings the experience record together with projects, leadership, skills, and
+            The resume brings this experience together with projects, leadership, skills and
             certificates.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link to="/resume" className={buttonStyles("secondary", "sm")}>
-              Online resume
+              Resume
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </Link>
             <Link to="/timeline" className={buttonStyles("ghost", "sm")}>
-              See the timeline
+              Timeline
             </Link>
           </div>
         </div>

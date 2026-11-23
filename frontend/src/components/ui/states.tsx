@@ -94,7 +94,7 @@ export function ErrorState({
     >
       <AlertTriangle className="size-5 text-error" aria-hidden="true" />
       <div>
-        <p className="font-medium text-paper">This section could not load</p>
+        <p className="font-medium text-paper">We couldn't load this section</p>
         <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-paper-dim">{message}</p>
       </div>
       {onRetry ? (

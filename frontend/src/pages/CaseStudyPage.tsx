@@ -34,10 +34,10 @@ const SECTIONS: Array<{ key: CaseStudySectionKey; label: string }> = [
   { key: "results", label: "Results" },
   { key: "lessons", label: "Lessons learned" },
   { key: "future_improvements", label: "Future improvements" },
-  { key: "idea", label: "The idea" },
+  { key: "idea", label: "Approach" },
   { key: "solution", label: "Solution" },
-  { key: "role", label: "My role" },
-  { key: "technology", label: "Technology" },
+  { key: "role", label: "Role" },
+  { key: "technology", label: "Technologies" },
   { key: "key_features", label: "Key features" },
 ];
 
@@ -45,8 +45,8 @@ const RESULT_TYPE_LABELS: Record<string, string> = {
   text: "Outcome",
   metric: "Metric",
   achievement: "Achievement",
-  technical: "Technical outcome",
-  qualitative: "Qualitative outcome",
+  technical: "Technical result",
+  qualitative: "Result",
 };
 
 function slugify(value: string): string {
@@ -123,7 +123,7 @@ function TechStack({ technologies }: { technologies: Technology[] }) {
   if (groups.length === 0) {
     return (
       <p className="text-sm leading-relaxed text-muted">
-        The technology stack has not been documented for this project yet.
+        No technologies have been listed for this project yet.
       </p>
     );
   }
@@ -177,8 +177,8 @@ export default function CaseStudyPage() {
   const projectData = project.data;
 
   useSeo({
-    title: data ? `${data.title} — Case study | Philemon Melabah` : "Case study — Philemon Melabah",
-    description: data?.summary ?? "Engineering and product case study.",
+    title: data ? `${data.title} | Case study | Philemon Melabah` : "Case study | Philemon Melabah",
+    description: data?.summary ?? "A project case study by Philemon Melabah.",
     path: slug ? `/case-studies/${slug}` : undefined,
     type: "article",
     image: projectData?.cover_image_url ?? null,
@@ -206,7 +206,7 @@ export default function CaseStudyPage() {
     <>
       <PageIntro
         eyebrow={projectData ? `Case study / ${projectData.title}` : "Case study"}
-        title={data?.title ?? (study.loading ? "Loading case study…" : "Case study")}
+        title={data?.title ?? (study.loading ? "Loading case study..." : "Case study")}
         description={data?.summary ?? undefined}
         aside={
           data ? (
@@ -217,7 +217,7 @@ export default function CaseStudyPage() {
                   {RESULT_TYPE_LABELS[data.result_type] ?? data.result_type}
                 </Badge>
               ) : null}
-              {data.is_placeholder ? <Badge tone="placeholder">In progress</Badge> : null}
+              {data.is_placeholder ? <Badge tone="placeholder">Not finished</Badge> : null}
             </div>
           ) : null
         }
@@ -230,7 +230,7 @@ export default function CaseStudyPage() {
             className="inline-flex items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted transition-colors hover:text-paper"
           >
             <ArrowLeft className="size-3.5" aria-hidden="true" />
-            {data?.project_slug ? "Back to project" : "Back to work"}
+            {data?.project_slug ? "Back to project" : "Back to projects"}
           </Link>
         </div>
 
@@ -245,16 +245,16 @@ export default function CaseStudyPage() {
             {study.error.status === 404 ? (
               <EmptyState
                 title="Case study not found"
-                description="This case study may be unpublished or the URL may be incorrect."
+                description="This case study does not exist or is no longer public."
                 action={
                   <Link to="/work" className={buttonStyles("secondary", "sm")}>
-                    Back to work
+                    Back to projects
                   </Link>
                 }
               />
             ) : (
               <ErrorState
-                message="This case study could not be loaded. The API may be unavailable — try again in a moment."
+                message="We couldn't load this case study. Please try again in a moment."
                 onRetry={study.reload}
               />
             )}
@@ -265,10 +265,10 @@ export default function CaseStudyPage() {
           <div className="mt-10 grid gap-10 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-16">
             <aside className="h-fit lg:sticky lg:top-24">
               <p className="font-mono text-[0.56rem] uppercase tracking-[0.2em] text-muted">
-                Contents
+                On this page
               </p>
               {visibleSections.length > 0 ? (
-                <nav aria-label="Case study contents" className="mt-4">
+                <nav aria-label="On this page" className="mt-4">
                   <ol className="space-y-2">
                     {visibleSections.map((section, index) => (
                       <li key={section.key}>
@@ -287,7 +287,7 @@ export default function CaseStudyPage() {
                 </nav>
               ) : (
                 <p className="mt-4 text-sm leading-relaxed text-muted">
-                  Sections appear as the study is written.
+                  Sections will appear as they are written.
                 </p>
               )}
 
@@ -296,7 +296,7 @@ export default function CaseStudyPage() {
                   to={`/work/${data.project_slug}`}
                   className="mt-8 inline-flex items-center gap-2 border-t border-line pt-4 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-paper-dim hover:text-paper"
                 >
-                  Project record
+                  View project
                   <ArrowUpRight className="size-3" aria-hidden="true" />
                 </Link>
               ) : null}
@@ -306,19 +306,19 @@ export default function CaseStudyPage() {
               {data.is_placeholder ? (
                 <div className="mb-10 border border-signal/30 bg-signal/5 p-5 sm:p-6">
                   <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-signal">
-                    Case study in progress
+                    This case study is not finished
                   </p>
                   <p className="mt-3 max-w-2xl text-sm leading-relaxed text-paper-dim">
-                    The case-study structure is live. Sections will appear here only when
-                    real, verified content has been added from the admin editor.
+                    Sections will appear here as they are written. Details are added only once they
+                    are confirmed.
                   </p>
                 </div>
               ) : null}
 
               {visibleSections.length === 0 ? (
                 <EmptyState
-                  title="Case study write-up pending"
-                  description="No sections have been published yet. The structure is ready for the full engineering narrative."
+                  title="Nothing written yet"
+                  description="This case study does not have any sections yet."
                 />
               ) : (
                 <div className="space-y-12">
@@ -378,14 +378,14 @@ export default function CaseStudyPage() {
 
               <div className="mt-14 flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <p className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
-                  {data.is_placeholder ? "Draft content / pending verification" : "Published case study"}
+                  {data.is_placeholder ? "Draft" : "Published"}
                 </p>
                 <Link
                   to={data.project_slug ? `/work/${data.project_slug}` : "/work"}
                   className={buttonStyles("secondary", "sm")}
                 >
                   <ArrowLeft className="size-3.5" aria-hidden="true" />
-                  {data.project_slug ? "Back to project" : "Back to work"}
+                  {data.project_slug ? "Back to project" : "Back to projects"}
                 </Link>
               </div>
             </article>

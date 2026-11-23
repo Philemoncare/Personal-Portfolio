@@ -23,15 +23,15 @@ import { cn } from "@/utils/cn";
 import { relativeTime } from "@/utils/format";
 
 const SETUP_VARIABLES = [
-  { name: "GITHUB_CLIENT_ID", hint: "OAuth app client ID" },
-  { name: "GITHUB_CLIENT_SECRET", hint: "OAuth app client secret" },
+  { name: "GITHUB_CLIENT_ID", hint: "Client ID from your GitHub OAuth app" },
+  { name: "GITHUB_CLIENT_SECRET", hint: "Client secret from your GitHub OAuth app" },
   {
     name: "GITHUB_REDIRECT_URI",
     hint: "Must be https://your-api/api/v1/integrations/github/callback",
   },
   {
     name: "GITHUB_ALLOW_PRIVATE_REPOSITORIES",
-    hint: "Optional. Enables the wider repo scope for private repositories.",
+    hint: "Optional. Also allows access to private repositories.",
   },
 ];
 
@@ -59,16 +59,16 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
       <div className="flex flex-col gap-4">
         <p className="max-w-2xl text-sm leading-relaxed text-paper-dim">
           Connect a GitHub account to browse repositories and create draft projects. The
-          connection is stored encrypted in the backend; the access token is never sent to this
-          browser.
+          connection is stored encrypted on the server, and the access token is never sent to
+          this browser.
         </p>
         {!status.configured ? (
           <div className="border border-warning/40 bg-warning/10 p-4 text-sm leading-relaxed text-paper-dim">
-            GitHub OAuth is not configured on the server. Add the variables below to
+            GitHub sign-in is not set up on the server. Add the settings below to
             <code className="mx-1 border border-line bg-ink-950 px-1.5 py-0.5 font-mono text-[0.7em]">
               backend/.env
             </code>
-            and restart the API. Never put these values in frontend code.
+            and restart the server. Never put these values in frontend code.
           </div>
         ) : null}
         <ul className="divide-y divide-line border border-line">
@@ -149,15 +149,15 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
         </div>
         <div>
           <dt className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
-            Last activity
+            Updated
           </dt>
           <dd className="mt-1 text-sm text-paper">
-            {connection.updated_at ? relativeTime(connection.updated_at) : "—"}
+            {connection.updated_at ? relativeTime(connection.updated_at) : "Unknown"}
           </dd>
         </div>
         <div>
           <dt className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
-            Scopes
+            Permissions
           </dt>
           <dd className="mt-1 flex flex-wrap gap-1">
             {connection.scopes.length > 0 ? (
@@ -170,7 +170,7 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
                 </code>
               ))
             ) : (
-              <span className="text-sm text-muted">No scopes reported</span>
+              <span className="text-sm text-muted">No permissions listed</span>
             )}
           </dd>
         </div>
@@ -190,7 +190,7 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
                 <ArrowUpRight className="size-3" aria-hidden="true" />
               </a>
             ) : (
-              <span className="text-muted">—</span>
+              <span className="text-muted">Unknown</span>
             )}
           </dd>
         </div>
@@ -205,15 +205,15 @@ function ImportHistory() {
 
   return (
     <AdminPanel
-      title="Recent import activity"
-      description="Successful and failed imports, syncs, and disconnects. No repository file contents or credentials are stored here."
+      title="Recent imports"
+      description="Successful and failed imports, syncs and disconnects."
     >
       {logs.loading ? <LoadingState rows={2} label="Loading import history" /> : null}
       {!logs.loading && logs.error ? (
-        <ErrorState message="Import history could not be loaded." onRetry={logs.reload} />
+        <ErrorState message="We couldn't load the import history." onRetry={logs.reload} />
       ) : null}
       {!logs.loading && !logs.error && items.length === 0 ? (
-        <p className="text-sm text-muted">No GitHub imports yet.</p>
+        <p className="text-sm text-muted">No imports yet.</p>
       ) : null}
       {items.length > 0 ? (
         <ul className="divide-y divide-line">
@@ -302,7 +302,7 @@ export default function AdminGitHubIntegrationPage() {
       status.reload();
       setNotice(message);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The action failed.");
+      setError(caught instanceof Error ? caught.message : "Something went wrong. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -315,20 +315,20 @@ export default function AdminGitHubIntegrationPage() {
       const result = await githubService.connect();
       window.location.assign(result.authorize_url);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "GitHub connection could not start.");
+      setError(caught instanceof Error ? caught.message : "We couldn't start the GitHub connection. Please try again.");
       setBusy(null);
     }
   };
 
   const disconnect = () => {
     const confirmed = window.confirm(
-      "Disconnect GitHub? Existing projects keep their imported content and links. Import history is retained.",
+      "Disconnect GitHub? Existing projects keep their imported content and links. Import history is kept.",
     );
     if (!confirmed) return;
     void run(
       "disconnect",
       () => githubService.disconnect(),
-      "GitHub disconnected. Existing projects were left untouched.",
+      "GitHub disconnected. Existing projects were not changed.",
     );
   };
 
@@ -354,9 +354,9 @@ export default function AdminGitHubIntegrationPage() {
             GitHub
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-            Browse authorized repositories, review their documentation, and create portfolio
-            drafts. Import never publishes automatically and private repository content is never
-            made public on its own.
+            Browse repositories you have allowed, read their documentation, and create draft
+            projects. Imports never publish automatically, and private repository content stays
+            private.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -410,7 +410,7 @@ export default function AdminGitHubIntegrationPage() {
       <div className="mt-6 space-y-6">
         <AdminPanel
           title="Connection"
-          description="OAuth only. No personal access token is pasted into this application."
+          description="Sign in with GitHub. You do not need to paste an access token."
           actions={
             status.data ? (
               <div className="flex flex-wrap items-center gap-2">
@@ -427,7 +427,7 @@ export default function AdminGitHubIntegrationPage() {
                       ) : (
                         <KeyRound className="size-3.5" aria-hidden="true" />
                       )}
-                      Reauthorize
+                      Reconnect
                     </button>
                     <button
                       type="button"
@@ -472,7 +472,10 @@ export default function AdminGitHubIntegrationPage() {
         >
           {status.loading ? <LoadingState rows={2} label="Loading GitHub connection" /> : null}
           {!status.loading && status.error ? (
-            <ErrorState message={status.error.message} onRetry={status.reload} />
+            <ErrorState
+              message="We couldn't load the GitHub connection. Please try again."
+              onRetry={status.reload}
+            />
           ) : null}
           {!status.loading && status.data ? (
             <div className="space-y-5">
@@ -485,38 +488,38 @@ export default function AdminGitHubIntegrationPage() {
         </AdminPanel>
 
         <AdminPanel
-          title="Security model"
-          description="How the integration keeps repository access contained."
+          title="How your data is protected"
+          description="What the integration does to keep repository access safe."
         >
           <ul className="grid gap-4 text-sm leading-relaxed text-paper-dim sm:grid-cols-2">
             <li className="flex gap-3">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-signal" aria-hidden="true" />
               <span>
-                Access tokens are encrypted at rest with AES-256-GCM and are never written to logs
-                or returned to the browser.
+                Access tokens are stored encrypted and are never written to logs or sent to this
+                browser.
               </span>
             </li>
             <li className="flex gap-3">
               <Link2 className="mt-0.5 size-4 shrink-0 text-signal" aria-hidden="true" />
               <span>
-                Only an allow-list of documentation and manifest files is read. Files such as
-                <code className="mx-1 font-mono text-[0.72em]">.env</code>, keys, and credentials
-                are rejected before a request is made.
+                Only a fixed list of documentation and setup files is read. Files such as
+                <code className="mx-1 font-mono text-[0.72em]">.env</code>, keys and credentials
+                are blocked before any request is made.
               </span>
             </li>
             <li className="flex gap-3">
               <GitBranch className="mt-0.5 size-4 shrink-0 text-signal" aria-hidden="true" />
               <span>
-                Minimum scopes are requested. Private repositories require the wider
-                <code className="mx-1 font-mono text-[0.72em]">repo</code> scope and must be enabled
-                deliberately on the server.
+                Only the permissions needed are requested. Private repositories need the wider
+                <code className="mx-1 font-mono text-[0.72em]">repo</code> permission and must be
+                enabled on the server.
               </span>
             </li>
             <li className="flex gap-3">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-signal" aria-hidden="true" />
               <span>
-                Import always creates a draft. Publishing, categories, case-study wording, and
-                images remain editorial decisions.
+                An import always creates a draft. You decide whether to publish it, and you
+                edit the categories, case study and images.
               </span>
             </li>
           </ul>
