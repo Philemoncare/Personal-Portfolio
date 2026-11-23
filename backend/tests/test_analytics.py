@@ -97,3 +97,26 @@ def test_admin_analytics_reporting(admin_client: TestClient, client: TestClient)
     recent = admin_client.get("/api/v1/admin/analytics/recent")
     assert recent.status_code == 200
     assert len(recent.json()["items"]) >= 2
+
+
+def test_admin_analytics_export_and_cleanup(admin_client: TestClient, client: TestClient):
+    client.post(
+        "/api/v1/analytics/collect",
+        json={"path": "/about", "visitor_id": "export_v1", "session_id": "export_s1"},
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
+
+    csv_res = admin_client.post("/api/v1/admin/analytics/export?format=csv&period=30d")
+    assert csv_res.status_code == 200
+    assert "text/csv" in csv_res.headers["content-type"]
+    assert "Timestamp,Path,Title" in csv_res.text
+
+    json_res = admin_client.post("/api/v1/admin/analytics/export?format=json&period=30d")
+    assert json_res.status_code == 200
+    assert "application/json" in json_res.headers["content-type"]
+    exported_json = json_res.json()
+    assert isinstance(exported_json, list)
+
+    cleanup_res = admin_client.delete("/api/v1/admin/analytics/cleanup?retention_days=90")
+    assert cleanup_res.status_code == 200
+    assert "deleted_count" in cleanup_res.json()

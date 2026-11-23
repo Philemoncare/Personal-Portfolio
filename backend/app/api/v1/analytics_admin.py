@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import logging
 from datetime import datetime
 
@@ -128,7 +129,7 @@ def export_analytics(
             for row in rows
         ]
         return Response(
-            content=data,
+            content=json.dumps(data),
             media_type="application/json",
             headers={"Content-Disposition": f"attachment; filename=analytics_{period}.json"},
         )

@@ -1,13 +1,11 @@
 import {
   Activity,
   BarChart3,
-  Calendar,
   Download,
   Eye,
   Globe,
   Globe2,
   Laptop,
-  Layers,
   RefreshCw,
   Smartphone,
   TrendingUp,

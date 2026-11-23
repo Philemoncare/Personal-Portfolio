@@ -1,4 +1,4 @@
-import { ArrowUpRight, BarChart3, Eye, FileText, Globe, Inbox, Layers, Mail, Users } from "lucide-react";
+import { ArrowUpRight, FileText, Inbox, Layers, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
