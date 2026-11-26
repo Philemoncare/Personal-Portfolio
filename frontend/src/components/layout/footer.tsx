@@ -125,7 +125,7 @@ export function Footer() {
           </div>
 
           <nav aria-label="Footer">
-            <p className="type-meta text-muted">Index</p>
+            <p className="type-meta text-muted">Pages</p>
             <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3">
               {INDEX_LINKS.map((link) => (
                 <li key={link.to}>
@@ -141,7 +141,7 @@ export function Footer() {
           </nav>
 
           <div>
-            <p className="type-meta text-muted">Elsewhere</p>
+            <p className="type-meta text-muted">Links</p>
             <ul className="mt-5 space-y-3 text-sm">
               {socials.map((social) => (
                 <li key={social.label}>
@@ -165,7 +165,7 @@ export function Footer() {
                   to="/contact"
                   className="inline-flex items-center gap-2 text-paper-dim transition-colors hover:text-paper"
                 >
-                  Start a conversation
+                  Get in touch
                   <ArrowUpRight className="size-3.5" aria-hidden="true" />
                 </Link>
               </li>
@@ -201,7 +201,7 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col gap-3 border-t border-line pt-6 font-mono text-[0.58rem] uppercase tracking-[0.15em] text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>{settings?.copyright_text || `© ${year} ${displayName}`}</p>
-          <p>React / TypeScript / FastAPI / SQLAlchemy</p>
+          <p>Software, data and technical projects</p>
         </div>
       </Container>
     </footer>

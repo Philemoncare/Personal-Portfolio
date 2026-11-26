@@ -137,7 +137,7 @@ def get_page(
 ) -> PageContentAdminOut:
     page = site_content.get_page(db, page_key)
     if page is None:
-        raise HTTPException(status_code=404, detail="Page content not saved yet")
+        raise HTTPException(status_code=404, detail="This page has not been saved yet.")
     return PageContentAdminOut.model_validate(page)
 
 
@@ -150,7 +150,7 @@ def put_page(
     db: Session = Depends(get_db),
 ) -> PageContentAdminOut:
     if page_key not in PAGE_KEYS:
-        raise HTTPException(status_code=404, detail="Unknown page")
+        raise HTTPException(status_code=404, detail="Unknown page.")
     try:
         page = site_content.upsert_page(db, page_key, payload)
     except site_content.SiteContentError as exc:

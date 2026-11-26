@@ -152,7 +152,7 @@ export default function AdminTimelinePage() {
       { value: "", label: "No linked experience" },
       ...(refs?.experience ?? []).map((record) => ({
         value: record.id,
-        label: `${record.title} — ${record.subtitle ?? "Organization"}`,
+        label: `${record.title} (${record.subtitle ?? "Organisation"})`,
       })),
     ],
     [refs],
@@ -162,7 +162,7 @@ export default function AdminTimelinePage() {
       { value: "", label: "No linked leadership entry" },
       ...(refs?.leadership ?? []).map((record) => ({
         value: record.id,
-        label: `${record.title} — ${record.subtitle ?? "Organization"}`,
+        label: `${record.title} (${record.subtitle ?? "Organisation"})`,
       })),
     ],
     [refs],
@@ -318,7 +318,7 @@ export default function AdminTimelinePage() {
                   }
                 />
               </Field>
-              <Field label="Organization" htmlFor="tl-organization">
+              <Field label="Organisation" htmlFor="tl-organization">
                 <TextInput
                   id="tl-organization"
                   value={form.organization}

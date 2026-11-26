@@ -166,7 +166,7 @@ export default function AdminLeadershipPage() {
             </button>
           </div>
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <Field label="Organization" htmlFor="organization" required>
+            <Field label="Organisation" htmlFor="organization" required>
               <TextInput
                 id="organization"
                 value={form.organization}
@@ -342,7 +342,7 @@ export default function AdminLeadershipPage() {
                 mobileLabel: "Dates",
                 render: (entry) => (
                   <span className="text-xs text-paper-dim">
-                    {entry.started_on ?? "—"} → {entry.ended_on ?? "Present"}
+                    {entry.started_on ?? "-"} → {entry.ended_on ?? "Present"}
                   </span>
                 ),
               },
@@ -362,7 +362,7 @@ export default function AdminLeadershipPage() {
                       <ExternalLink className="size-2.5" aria-hidden="true" />
                     </a>
                   ) : (
-                    <span className="text-xs text-muted">—</span>
+                    <span className="text-xs text-muted">-</span>
                   ),
               },
               {

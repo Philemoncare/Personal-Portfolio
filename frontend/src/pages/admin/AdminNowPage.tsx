@@ -138,7 +138,7 @@ export default function AdminNowPage() {
       { value: "", label: "No linked leadership entry" },
       ...(refs?.leadership ?? []).map((entry) => ({
         value: entry.id,
-        label: `${entry.title} — ${entry.subtitle ?? "Organization"}`,
+        label: `${entry.title} (${entry.subtitle ?? "Organisation"})`,
       })),
     ],
     [refs],

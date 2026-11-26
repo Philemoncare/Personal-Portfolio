@@ -147,7 +147,7 @@ function ChartBody({ visualization }: { visualization: DataVisualization }) {
                       style={{ backgroundColor: `rgba(255, 78, 31, ${intensity.toFixed(2)})` }}
                       title={`${y} / ${x}: ${displayValue(value)}`}
                     >
-                      {value === null ? "—" : formatCompactNumber(value)}
+                      {value === null ? "-" : formatCompactNumber(value)}
                     </span>
                   );
                 })}

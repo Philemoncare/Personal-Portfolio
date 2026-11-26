@@ -4,7 +4,7 @@ import { useSeo } from "@/hooks/useSeo";
 
 export default function ArcadePage() {
   useSeo({
-    title: "Arcade 🎮 — Phill",
+    title: "Arcade 🎮 | Philemon Melabah",
     description: "Take a break and test your skills with lightweight arcade games.",
   });
 

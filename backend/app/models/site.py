@@ -34,9 +34,7 @@ class PageContent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "page_contents"
 
-    page_key: Mapped[str] = mapped_column(
-        String(60), unique=True, nullable=False, index=True
-    )
+    page_key: Mapped[str] = mapped_column(String(60), unique=True, nullable=False)
     eyebrow: Mapped[str | None] = mapped_column(String(120), nullable=True)
     title: Mapped[str | None] = mapped_column(String(240), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)

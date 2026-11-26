@@ -17,9 +17,9 @@ export default function BuildLabPage() {
   );
 
   usePageSeo("build-lab", {
-    title: "Build Lab — Phill",
+    title: "Build Lab | Philemon Melabah",
     description:
-      "A working lab of technical experiments, smaller builds, automations, and open-source work.",
+      "Smaller builds, prototypes, automations and technical experiments.",
     path: "/build-lab",
   });
 
@@ -36,26 +36,26 @@ export default function BuildLabPage() {
             page.title
           ) : (
             <>
-              Where ideas get{" "}
-              <span className="display-serif text-signal">tested.</span>
+              Smaller builds{" "}
+              <span className="display-serif text-signal">and experiments.</span>
             </>
           )
         }
         description={
           page?.description ||
-          "Smaller builds, prototypes, automations, and technical experiments. This is the part of the practice where the objective is learning something concrete — and leaving a useful artefact behind."
+          "Prototypes, automations and technical experiments. The aim is to learn something useful and leave behind something that works."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
-              <span>Published experiments</span>
+              <span>Projects</span>
               <span className="text-paper">
-                {projects.loading ? "—" : String(projects.data?.total ?? 0).padStart(2, "0")}
+                {projects.loading ? "..." : String(projects.data?.total ?? 0).padStart(2, "0")}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Categories</span>
-              <span className="text-paper">06</span>
+              <span>Areas</span>
+              <span className="text-paper">{String(CATEGORIES.length).padStart(2, "0")}</span>
             </div>
           </div>
         }
@@ -72,22 +72,22 @@ export default function BuildLabPage() {
             </span>
           ))}
           <span className="px-2 py-2 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-faint">
-            Lab taxonomy
+            Areas
           </span>
         </div>
 
         <div className="mt-10">
-          {projects.loading ? <LoadingState rows={3} label="Loading experiments" /> : null}
+          {projects.loading ? <LoadingState rows={3} label="Loading projects" /> : null}
           {!projects.loading && projects.error ? (
-            <ErrorState message={projects.error.detail} onRetry={projects.reload} />
+            <ErrorState message="We couldn't load the Build Lab projects. Please try again in a moment." onRetry={projects.reload} />
           ) : null}
           {!projects.loading && !projects.error && items.length === 0 ? (
             <EmptyState
-              title="The Build Lab is currently empty"
-              description="This section is reserved for verified experiments and smaller technical projects. Add one from the admin panel and assign it to the Experiments category."
+              title="No Build Lab projects yet"
+              description="Smaller builds and experiments will appear here once they are published."
               action={
                 <Link to="/work" className={buttonStyles("secondary", "sm")}>
-                  View the main work index
+                  Browse projects
                 </Link>
               }
             />

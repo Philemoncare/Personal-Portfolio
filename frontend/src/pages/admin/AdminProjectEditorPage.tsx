@@ -1349,7 +1349,7 @@ export default function AdminProjectEditorPage() {
                   <Field label="Documentation" htmlFor="docs">
                     <TextInput id="docs" type="url" value={form.documentation_url} onChange={(event) => update("documentation_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
-                  <Field label="Demo or walkthrough" htmlFor="demo">
+                  <Field label="Walkthrough link" htmlFor="demo">
                     <TextInput id="demo" type="url" value={form.demo_url} onChange={(event) => update("demo_url", event.target.value)} placeholder="https://example.com" />
                   </Field>
                   <Field label="Video" htmlFor="video">
@@ -1614,7 +1614,7 @@ export default function AdminProjectEditorPage() {
                           {label}
                         </p>
                         <p className="mt-2 text-lg text-paper">
-                          {value === null || value === undefined ? "—" : String(value)}
+                          {value === null || value === undefined ? "-" : String(value)}
                         </p>
                       </div>
                     ))}
@@ -1827,7 +1827,7 @@ export default function AdminProjectEditorPage() {
                     id="seo-title"
                     value={form.seo_title}
                     onChange={(event) => update("seo_title", event.target.value)}
-                    placeholder={`${form.title || "Project"} — case study`}
+                    placeholder={`${form.title || "Project"} case study`}
                   />
                 </Field>
                 <Field label="Search description" htmlFor="seo-description" hint={`${form.seo_description.length} characters`}>
@@ -1856,7 +1856,7 @@ export default function AdminProjectEditorPage() {
                     Search result preview
                   </p>
                   <p className="mt-2 text-base text-signal-soft">
-                    {form.seo_title || `${form.title || "Project title"} — Philemon Melabah`}
+                    {form.seo_title || `${form.title || "Project title"} | Philemon Melabah`}
                   </p>
                   <p className="mt-1 text-xs text-success">
                     /work/{form.slug || "project-slug"}
@@ -1963,7 +1963,7 @@ export default function AdminProjectEditorPage() {
                   <dd className="text-paper-dim">
                     {project.data?.updated_at
                       ? new Date(project.data.updated_at).toLocaleString()
-                      : "—"}
+                      : "-"}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">

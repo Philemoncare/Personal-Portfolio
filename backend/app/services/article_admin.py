@@ -40,7 +40,7 @@ def _unique_slug(
 
 def _apply_publish_state(article: Article, status: str) -> None:
     if status not in {"draft", "published", "archived"}:
-        raise AdminInputError("Invalid publish status.")
+        raise AdminInputError("Choose a valid visibility setting.")
     article.status = status
     if status == "published" and article.published_at is None:
         article.published_at = datetime.now(UTC)
@@ -70,7 +70,7 @@ def _apply(db: Session, article: Article, payload: ArticleInput, *, is_new: bool
     article.title = title
     requested = payload.slug.strip() if payload.slug else slugify(title)
     if not requested:
-        raise AdminInputError("A slug is required.")
+        raise AdminInputError("A web address is required.")
     article.slug = _unique_slug(
         db, requested, exclude_id=None if is_new else article.id
     )

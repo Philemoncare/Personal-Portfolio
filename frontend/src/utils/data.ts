@@ -60,7 +60,7 @@ export const CHART_PALETTE = [
 ] as const;
 
 export function formatCompactNumber(value: number): string {
-  if (!Number.isFinite(value)) return "—";
+  if (!Number.isFinite(value)) return "-";
   return new Intl.NumberFormat("en", {
     notation: Math.abs(value) >= 10000 ? "compact" : "standard",
     maximumFractionDigits: Math.abs(value) >= 1000 ? 1 : 2,
@@ -77,7 +77,7 @@ export function numericValue(value: unknown): number | null {
 }
 
 export function displayValue(value: unknown): string {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return "-";
   if (typeof value === "number") return formatCompactNumber(value);
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return String(value);

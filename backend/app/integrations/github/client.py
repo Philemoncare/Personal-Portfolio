@@ -109,7 +109,7 @@ def friendly_error(response: httpx.Response, *, reset_at: datetime | None = None
         return GitHubError(
             "GitHub rejected the stored authorization. Reconnect your GitHub account.",
             code="unauthorized",
-            status_code=401,
+            status_code=409,
         )
     if status in {403, 429}:
         if remaining == "0" or "rate limit" in lowered:
@@ -163,7 +163,7 @@ class GitHubClient:
         self._token = token
         self._client = httpx.AsyncClient(
             base_url=settings.github_api_base_url.rstrip("/"),
-            timeout=httpx.Timeout(settings.github_timeout_seconds),
+            timeout=httpx.Timeout(settings.github_timeout_seconds, connect=5.0),
             headers={
                 "Accept": "application/vnd.github+json",
                 "Authorization": f"Bearer {token}",

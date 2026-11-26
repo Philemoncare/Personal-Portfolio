@@ -117,7 +117,7 @@ def _resolve_category(
     if payload.category_id is not None:
         category = db.get(DataProjectCategory, payload.category_id)
         if category is None:
-            raise AdminInputError("The selected category does not exist.")
+            raise AdminInputError("The selected category could not be found.")
         return category
 
     if current is not None:
@@ -133,7 +133,7 @@ def _resolve_tools(db: Session, payload: DataProjectInput) -> list[DataTool]:
             db.scalars(select(DataTool).where(DataTool.id.in_(payload.tool_ids))).all()
         )
         if len(rows) != len(set(payload.tool_ids)):
-            raise AdminInputError("One or more selected tools do not exist.")
+            raise AdminInputError("One or more selected tools could not be found.")
         tools.extend(rows)
 
     for name in payload.extra_tools:
@@ -200,7 +200,7 @@ def _apply_fields(
     project.title = payload.title.strip()
     requested_slug = payload.slug or slugify(payload.title)
     if not requested_slug:
-        raise AdminInputError("A slug is required.")
+        raise AdminInputError("A web address is required.")
     project.slug = _unique_slug(
         db, requested_slug, exclude_id=None if is_new else project.id
     )
@@ -301,7 +301,7 @@ def set_status(db: Session, project: DataProject, status: str) -> DataProject:
 def _taxonomy_slug(db: Session, model, name: str) -> str:
     slug = slugify(name, 100)
     if not slug:
-        raise AdminInputError("A valid name is required.")
+        raise AdminInputError("A name is required.")
     existing = db.scalar(select(model).where(model.slug == slug))
     if existing is not None:
         return slug

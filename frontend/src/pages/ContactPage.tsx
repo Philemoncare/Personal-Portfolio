@@ -75,16 +75,16 @@ interface ContactChannel {
 function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {};
   if (values.name.trim().length < 2) {
-    errors.name = "Enter your name (at least 2 characters).";
+    errors.name = "Please enter your name.";
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
     errors.email = "Enter a valid email address.";
   }
   if (values.subject.trim().length < 3) {
-    errors.subject = "Add a short subject (at least 3 characters).";
+    errors.subject = "Please add a subject.";
   }
   if (values.message.trim().length < 10) {
-    errors.message = "Write at least 10 characters so the message is actionable.";
+    errors.message = "Please write at least 10 characters.";
   }
   if (values.message.length > 5000) {
     errors.message = "Keep the message under 5,000 characters.";
@@ -124,9 +124,9 @@ export default function ContactPage() {
   }, [status]);
 
   usePageSeo("contact", {
-    title: "Contact | Start a conversation",
+    title: "Contact | Philemon Melabah",
     description:
-      "Start a conversation about project collaboration, technical work, data, or a general inquiry. The form stores your message reliably.",
+      "Get in touch about a project, data work or anything else. Use the form or the links on this page.",
     path: "/contact",
   });
 
@@ -186,14 +186,14 @@ export default function ContactPage() {
           );
         } else if (error.status === 0) {
           setServerError(
-            "The API could not be reached. Your message was not sent — please try again in a moment.",
+            "We couldn't reach the server. Your message was not sent. Please try again in a moment.",
           );
         } else if (error.status === 422) {
           setServerError(
             "Some details were not accepted. Check the fields and try again.",
           );
         } else {
-          setServerError(error.detail);
+          setServerError("The message could not be sent. Please try again in a moment.");
         }
       } else {
         setServerError("The message could not be sent. Please try again.");
@@ -261,29 +261,29 @@ export default function ContactPage() {
             page.title
           ) : (
             <>
-              Start with the{" "}
-              <span className="display-serif text-signal">problem.</span>
+              What are you{" "}
+              <span className="display-serif text-signal">working on?</span>
             </>
           )
         }
         description={
           page?.description ||
-          "Project collaboration, technical work, data questions, or a straightforward inquiry. The form writes to the portfolio database and is the most reliable way to get in touch."
+          "Tell me about the project, the problem and what a good result looks like. The form is the most reliable way to reach me."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
-              <span>Response channel</span>
-              <span className="text-paper">Email / inbox</span>
+              <span>Reply by</span>
+              <span className="text-paper">Email</span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Message storage</span>
-              <span className="text-paper">Private database</span>
+              <span>Messages</span>
+              <span className="text-paper">Stored privately</span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
-              <span>Email delivery</span>
+              <span>Email alerts</span>
               <span className="text-paper">
-                {emailConfigured ? "Configured" : "Not configured"}
+                {emailConfigured ? "On" : "Off"}
               </span>
             </div>
           </div>
@@ -304,22 +304,19 @@ export default function ContactPage() {
               >
                 <CheckCircle2 className="size-7 text-signal" aria-hidden="true" />
                 <h2 className="mt-5 text-2xl font-medium tracking-tight text-paper">
-                  Message received.
+                  Message sent.
                 </h2>
                 <p className="mt-3 max-w-lg text-sm leading-relaxed text-paper-dim">
                   {receipt?.stored === false
-                    ? "The message was not stored. Please try again or use a direct channel."
+                    ? "Your message was not saved. Please try again or use one of the direct links."
                     : emailConfigured
-                      ? "Your message has been stored and a notification has been sent. It will be reviewed and answered from the inbox."
-                      : "Your message has been stored in the private inbox. Email delivery is not configured on this site, so it will be reviewed directly from the admin panel — not delivered to your inbox automatically."}
+                      ? "Your message has been saved and a notification sent. I will reply by email."
+                      : "Your message has been saved. I will see it in the admin inbox and reply when I can."}
                 </p>
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   <Badge tone={emailConfigured ? "signal" : "placeholder"}>
-                    {emailConfigured ? "Email delivery configured" : "Stored only"}
+                    {emailConfigured ? "Email alerts on" : "Saved only"}
                   </Badge>
-                  <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
-                    {receipt?.status ?? "received"}
-                  </span>
                 </div>
                 <div className="mt-7 flex flex-wrap gap-2">
                   <button
@@ -330,10 +327,10 @@ export default function ContactPage() {
                     }}
                     className={buttonStyles("secondary", "sm")}
                   >
-                    Send another message
+                    Send another
                   </button>
                   <Link to="/work" className={buttonStyles("ghost", "sm")}>
-                    Back to work
+                    Back to projects
                   </Link>
                 </div>
               </div>
@@ -415,7 +412,7 @@ export default function ContactPage() {
                       htmlFor="inquiry_type"
                       className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted"
                     >
-                      Inquiry type <span className="text-faint">(optional)</span>
+                      Reason <span className="text-faint">(optional)</span>
                     </label>
                     <select
                       id="inquiry_type"
@@ -424,7 +421,7 @@ export default function ContactPage() {
                       onChange={onChange}
                       className="mt-2 h-12 w-full border border-line bg-ink-800/40 px-4 text-base text-paper outline-none transition-colors focus:border-paper"
                     >
-                      <option value="">No preference</option>
+                      <option value="">Not specified</option>
                       {INQUIRY_OPTIONS.map(([value, label]) => (
                         <option key={value} value={value}>
                           {label}
@@ -457,8 +454,8 @@ export default function ContactPage() {
                   />
                   <div className="mt-2 flex items-start justify-between gap-4">
                     <p id="message-help" className="text-xs text-muted">
-                      The form stores your name, email, subject, inquiry type, and message so it can
-                      be answered. No marketing list.
+                      Your name, email and message are stored so I can reply. Your details are not
+                      used for marketing.
                     </p>
                     <span className="shrink-0 font-mono text-[0.58rem] tabular-nums text-faint">
                       {values.message.length}/5000
@@ -507,7 +504,7 @@ export default function ContactPage() {
                     )}
                   </button>
                   <p className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-faint">
-                    No newsletter. No automated marketing.
+                    No newsletter. No marketing emails.
                   </p>
                 </div>
               </form>
@@ -515,7 +512,7 @@ export default function ContactPage() {
           </div>
 
           <aside className="h-fit border-t border-line pt-6 lg:sticky lg:top-24">
-            <Eyebrow>Direct channels</Eyebrow>
+            <Eyebrow>Other ways to reach me</Eyebrow>
             <div className="mt-5">
               {channels.map((channel) => {
                 const Icon = channel.icon;
@@ -541,20 +538,20 @@ export default function ContactPage() {
               })}
               {channels.length === 0 ? (
                 <p className="border-t border-line pt-4 text-sm leading-relaxed text-muted">
-                  Public contact links have not been configured yet. The form still stores your
-                  message privately in the portfolio database.
+                  No public contact links have been added yet. The form still works and your message
+                  is stored privately.
                 </p>
               ) : null}
             </div>
 
             <div className="mt-8 border border-line bg-ink-800/40 p-5">
               <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-                Good starting points
+                Helpful to include
               </p>
               <ul className="mt-3 space-y-2 text-sm leading-relaxed text-paper-dim">
-                <li>Project context and the problem</li>
-                <li>What a useful outcome looks like</li>
-                <li>Timing and constraints, if known</li>
+                <li>The context and the problem</li>
+                <li>What a good result looks like</li>
+                <li>Any timing or limits</li>
               </ul>
             </div>
 
@@ -564,7 +561,7 @@ export default function ContactPage() {
                 className="inline-flex items-center gap-2 text-sm text-paper-dim hover:text-paper"
               >
                 <FileText className="size-3.5" aria-hidden="true" />
-                Prefer the resume? Read it online
+                View my resume
               </Link>
             </div>
           </aside>

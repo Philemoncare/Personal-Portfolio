@@ -150,7 +150,7 @@ def get_profile(
     repo = _identity_repo(db)
     payload = profile_admin(repo.profile(), repo.current_resume())
     if payload is None:
-        raise HTTPException(status_code=404, detail="Profile is not configured yet.")
+        raise HTTPException(status_code=404, detail="The profile has not been added yet.")
     return payload
 
 
@@ -446,7 +446,7 @@ async def upload_resume(
     db: Session = Depends(get_db),
 ) -> ResumeAdminOut:
     if publish_status not in CONTENT_STATUSES:
-        raise HTTPException(status_code=400, detail="Invalid publish status.")
+        raise HTTPException(status_code=400, detail="Choose a valid visibility setting.")
 
     stored = None
     try:
@@ -520,7 +520,7 @@ def admin_download_resume(
         raise HTTPException(status_code=404, detail="Resume not found")
     path = resume_file_path(resume.storage_path)
     if path is None:
-        raise HTTPException(status_code=404, detail="Resume file is unavailable")
+        raise HTTPException(status_code=404, detail="The resume file is not available.")
     filename = resume.original_filename.replace('"', "")
     return FileResponse(
         path,
@@ -552,7 +552,7 @@ def list_messages(
     statement = select(ContactMessage)
     if status_filter:
         if status_filter not in MESSAGE_STATUSES:
-            raise HTTPException(status_code=400, detail="Invalid message status.")
+            raise HTTPException(status_code=400, detail="Choose a valid message status.")
         statement = statement.where(ContactMessage.status == status_filter)
     term = (search or "").strip()
     if term:
@@ -662,7 +662,7 @@ def _settings_payload(db: Session) -> AdminSettingsOut:
     if site is None or profile is None:
         raise HTTPException(
             status_code=404,
-            detail="Settings are not configured yet. Run the seed command.",
+            detail="Settings have not been set up yet.",
         )
     return AdminSettingsOut(
         profile=profile,

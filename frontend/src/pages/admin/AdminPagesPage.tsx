@@ -123,7 +123,7 @@ export default function AdminPagesPage() {
         <div>
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">Pages</p>
           <h1 className="mt-3 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Pages &amp; SEO
+            Pages and search
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
             Change the headings, descriptions and search information for each page. Leave a field

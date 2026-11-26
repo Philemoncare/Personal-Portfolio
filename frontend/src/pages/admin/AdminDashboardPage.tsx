@@ -12,12 +12,12 @@ import { relativeTime } from "@/utils/format";
 
 const WORKSPACES = [
   { name: "Data Lab", to: "/admin/data", note: "Data projects and analysis" },
-  { name: "Experience", to: "/admin/experience", note: "Roles and organizations" },
+  { name: "Experience", to: "/admin/experience", note: "Roles and organisations" },
   { name: "Leadership", to: "/admin/leadership", note: "Community work" },
   { name: "Articles", to: "/admin/articles", note: "Written articles" },
   { name: "Timeline", to: "/admin/timeline", note: "Key dates" },
-  { name: "Now", to: "/admin/now", note: "Current focus" },
-  { name: "Pages & SEO", to: "/admin/pages", note: "Page titles and search info" },
+  { name: "Now", to: "/admin/now", note: "What I am working on now" },
+  { name: "Pages and search", to: "/admin/pages", note: "Page titles and search info" },
   { name: "Settings", to: "/admin/settings", note: "Branding and footer" },
 ];
 
@@ -189,7 +189,7 @@ export default function AdminDashboardPage() {
                             </Link>
                           </p>
                           {project.is_placeholder ? (
-                            <Badge tone="placeholder">Placeholder</Badge>
+                            <Badge tone="placeholder">Not finished</Badge>
                           ) : null}
                         </div>
                         <p className="mt-1 truncate font-mono text-[0.55rem] uppercase tracking-[0.12em] text-muted">

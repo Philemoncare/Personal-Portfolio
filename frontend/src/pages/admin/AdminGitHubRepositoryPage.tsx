@@ -729,7 +729,7 @@ export default function AdminGitHubRepositoryPage() {
                   {data.skipped_files.slice(0, 12).map((item) => (
                     <li key={`${item.path}-${item.reason}`} className="flex gap-2">
                       <span className="font-mono text-[0.62rem] text-paper-dim">{item.path}</span>
-                      <span>— {item.reason}</span>
+                      <span>{item.reason}</span>
                     </li>
                   ))}
                 </ul>
@@ -878,7 +878,7 @@ export default function AdminGitHubRepositoryPage() {
               <ul className="mt-2 space-y-1 text-xs text-muted">
                 {data.images.ignored.slice(0, 8).map((item) => (
                   <li key={item.reference} className="break-all">
-                    <span className="text-paper-dim">{item.reference}</span> — {item.reason}
+                    <span className="text-paper-dim">{item.reference}</span>: {item.reason}
                   </li>
                 ))}
               </ul>

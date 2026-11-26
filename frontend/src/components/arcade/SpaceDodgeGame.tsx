@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ArrowRight,
+  HelpCircle,
   Pause,
   Play,
   RotateCcw,
@@ -40,13 +41,13 @@ export function SpaceDodgeGame() {
     }
   });
   const [gameState, setGameState] = useState<GameState>("IDLE");
+  const [showInstructions, setShowInstructions] = useState(false);
 
-  // Game Engine Mutable Refs for smooth 60fps rendering
   const playerRef = useRef<{ x: number; width: number; height: number; speed: number }>({
     x: 180,
     width: 28,
     height: 28,
-    speed: 6,
+    speed: 6.5,
   });
 
   const keysRef = useRef<{ left: boolean; right: boolean }>({ left: false, right: false });
@@ -56,7 +57,6 @@ export function SpaceDodgeGame() {
   const lastTimeRef = useRef<number>(0);
   const spawnTimerRef = useRef<number>(0);
 
-  // Initialize starfield
   const initStars = useCallback((width: number, height: number) => {
     const stars: Star[] = [];
     for (let i = 0; i < 45; i++) {
@@ -87,42 +87,48 @@ export function SpaceDodgeGame() {
     if (gameState === "PAUSED") setGameState("PLAYING");
   };
 
-  // Keyboard controls
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+  // Keyboard controls attached ONLY when playing
+  useEffect(() => {
+    if (gameState !== "PLAYING") {
+      keysRef.current = { left: false, right: false };
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
       const key = e.key.toLowerCase();
       if (["arrowleft", "arrowright", "a", "d", " "].includes(key)) {
-        if (gameState === "PLAYING" || gameState === "PAUSED") {
-          e.preventDefault();
-        }
+        e.preventDefault(); // Intercept page scroll only while actively playing
       }
 
       if (key === " ") {
-        if (gameState === "PLAYING") pauseGame();
-        else if (gameState === "PAUSED") resumeGame();
+        pauseGame();
         return;
       }
 
       if (key === "arrowleft" || key === "a") keysRef.current.left = true;
       if (key === "arrowright" || key === "d") keysRef.current.right = true;
-    },
-    [gameState]
-  );
+    };
 
-  const handleKeyUp = useCallback((e: KeyboardEvent) => {
-    const key = e.key.toLowerCase();
-    if (key === "arrowleft" || key === "a") keysRef.current.left = false;
-    if (key === "arrowright" || key === "d") keysRef.current.right = false;
-  }, []);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key === "arrowleft" || key === "a") keysRef.current.left = false;
+      if (key === "arrowright" || key === "d") keysRef.current.right = false;
+    };
 
-  useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [handleKeyDown, handleKeyUp]);
+  }, [gameState]);
 
   // Main Canvas Game Loop
   useEffect(() => {
@@ -143,7 +149,6 @@ export function SpaceDodgeGame() {
         const delta = (now - lastTimeRef.current) / 1000;
         lastTimeRef.current = now;
 
-        // Score increases over time
         setScore((prevScore) => {
           const next = prevScore + 1;
           if (next > bestScore) {
@@ -157,7 +162,6 @@ export function SpaceDodgeGame() {
           return next;
         });
 
-        // Update stars position
         starsRef.current.forEach((star) => {
           star.y += star.speed;
           if (star.y > height) {
@@ -166,7 +170,6 @@ export function SpaceDodgeGame() {
           }
         });
 
-        // Update player movement
         if (keysRef.current.left) {
           playerRef.current.x = Math.max(10, playerRef.current.x - playerRef.current.speed);
         }
@@ -177,9 +180,8 @@ export function SpaceDodgeGame() {
           );
         }
 
-        // Spawn asteroids with increasing difficulty
         spawnTimerRef.current += delta;
-        const spawnInterval = Math.max(0.25, 0.7 - Math.floor(score / 300) * 0.08);
+        const spawnInterval = Math.max(0.22, 0.65 - Math.floor(score / 300) * 0.07);
 
         if (spawnTimerRef.current >= spawnInterval) {
           spawnTimerRef.current = 0;
@@ -195,7 +197,6 @@ export function SpaceDodgeGame() {
           });
         }
 
-        // Update asteroids & Collision check
         const playerX = playerRef.current.x + playerRef.current.width / 2;
         const playerY = height - 40;
 
@@ -204,7 +205,6 @@ export function SpaceDodgeGame() {
           ast.y += ast.speed;
           ast.rotation += ast.rotationSpeed;
 
-          // Distance check for collision
           const dx = ast.x - playerX;
           const dy = ast.y - playerY;
           const distance = Math.sqrt(dx * dx + dy * dy);
@@ -224,13 +224,11 @@ export function SpaceDodgeGame() {
       ctx.fillStyle = "#0a0b0d";
       ctx.fillRect(0, 0, width, height);
 
-      // Render stars
-      ctx.fillStyle = "rgba(233, 229, 220, 0.5)";
+      ctx.fillStyle = "rgba(233, 229, 220, 0.4)";
       starsRef.current.forEach((star) => {
         ctx.fillRect(star.x, star.y, star.size, star.size);
       });
 
-      // Render asteroids
       asteroidsRef.current.forEach((ast) => {
         ctx.save();
         ctx.translate(ast.x, ast.y);
@@ -255,7 +253,6 @@ export function SpaceDodgeGame() {
         ctx.restore();
       });
 
-      // Render player spaceship
       const px = playerRef.current.x;
       const py = height - 50;
       const pw = playerRef.current.width;
@@ -266,16 +263,14 @@ export function SpaceDodgeGame() {
       ctx.shadowColor = "#ff4e1f";
       ctx.shadowBlur = 10;
 
-      // Triangle spaceship body
       ctx.beginPath();
-      ctx.moveTo(px + pw / 2, py); // Nose
-      ctx.lineTo(px + pw, py + ph); // Right wing
-      ctx.lineTo(px + pw / 2, py + ph - 6); // Inner tail
-      ctx.lineTo(px, py + ph); // Left wing
+      ctx.moveTo(px + pw / 2, py);
+      ctx.lineTo(px + pw, py + ph);
+      ctx.lineTo(px + pw / 2, py + ph - 6);
+      ctx.lineTo(px, py + ph);
       ctx.closePath();
       ctx.fill();
 
-      // Thruster flame when playing
       if (gameState === "PLAYING") {
         ctx.fillStyle = "#ff7a52";
         ctx.beginPath();
@@ -305,7 +300,7 @@ export function SpaceDodgeGame() {
   }, [gameState, bestScore, score, initStars]);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full">
       {/* Header Bar */}
       <div className="flex w-full max-w-md items-center justify-between border border-line bg-surface p-4 mb-4">
         <div>
@@ -351,6 +346,15 @@ export function SpaceDodgeGame() {
           >
             <RotateCcw className="size-3.5" aria-hidden="true" />
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowInstructions((prev) => !prev)}
+            className={buttonStyles("secondary", "sm")}
+            title="Instructions"
+          >
+            <HelpCircle className="size-3.5" aria-hidden="true" />
+          </button>
         </div>
 
         <div className="text-right">
@@ -362,6 +366,22 @@ export function SpaceDodgeGame() {
         </div>
       </div>
 
+      {/* Instructions Overlay */}
+      {showInstructions ? (
+        <div className="w-full max-w-md border border-line bg-surface-raised p-4 mb-4 text-xs leading-relaxed text-paper-dim animate-in fade-in duration-200">
+          <h4 className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-signal mb-2">
+            How to Play Space Dodge
+          </h4>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Use Left / Right Arrow keys or A / D to steer your spacecraft.</li>
+            <li>On mobile devices, hold down the Left / Right touch buttons.</li>
+            <li>Dodge incoming asteroids. The longer you survive, the higher your score.</li>
+            <li>Difficulty ramps up over time with faster and more frequent asteroids.</li>
+            <li>Press Spacebar or click Pause to pause flight.</li>
+          </ul>
+        </div>
+      ) : null}
+
       {/* Game Canvas Container */}
       <div className="relative w-full max-w-md aspect-[4/5] border border-line bg-background shadow-2xl overflow-hidden">
         <canvas
@@ -371,15 +391,15 @@ export function SpaceDodgeGame() {
           className="w-full h-full block"
         />
 
-        {/* Start / Idle Overlay */}
+        {/* Start Overlay */}
         {gameState === "IDLE" ? (
           <div className="absolute inset-0 bg-background/90 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-signal mb-2">
               Arcade Survival
             </p>
-            <h3 className="text-2xl font-medium tracking-tight text-paper mb-2">Space Dodge 🚀</h3>
+            <h3 className="text-3xl font-medium tracking-tight text-paper mb-2">Space Dodge 🚀</h3>
             <p className="text-xs text-muted max-w-xs mb-6 leading-relaxed">
-              Use Left & Right arrows or A/D to dodge incoming space debris. Survive as long as you can!
+              Steer your spacecraft and avoid incoming space debris. Survive as long as you can!
             </p>
             <button
               type="button"
@@ -398,7 +418,7 @@ export function SpaceDodgeGame() {
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-muted mb-2">
               Mission Paused
             </p>
-            <p className="text-sm text-paper mb-6">Press Space or Resume to continue flight</p>
+            <p className="text-sm text-paper mb-6">Press Spacebar or Resume to continue flight</p>
             <button
               type="button"
               onClick={resumeGame}
@@ -432,7 +452,7 @@ export function SpaceDodgeGame() {
         ) : null}
       </div>
 
-      {/* Mobile Touch Controls */}
+      {/* Touch Controls for Mobile */}
       <div className="mt-6 sm:hidden flex items-center justify-center gap-6">
         <button
           type="button"
@@ -440,7 +460,7 @@ export function SpaceDodgeGame() {
           onMouseUp={() => (keysRef.current.left = false)}
           onTouchStart={() => (keysRef.current.left = true)}
           onTouchEnd={() => (keysRef.current.left = false)}
-          className="size-14 border border-line bg-surface active:bg-surface-raised flex items-center justify-center text-paper rounded-sm select-none"
+          className="size-14 border border-line bg-surface active:bg-surface-raised flex items-center justify-center text-paper rounded-xs select-none"
           aria-label="Steer Left"
         >
           <ArrowLeft className="size-6" />
@@ -451,7 +471,7 @@ export function SpaceDodgeGame() {
           onMouseUp={() => (keysRef.current.right = false)}
           onTouchStart={() => (keysRef.current.right = true)}
           onTouchEnd={() => (keysRef.current.right = false)}
-          className="size-14 border border-line bg-surface active:bg-surface-raised flex items-center justify-center text-paper rounded-sm select-none"
+          className="size-14 border border-line bg-surface active:bg-surface-raised flex items-center justify-center text-paper rounded-xs select-none"
           aria-label="Steer Right"
         >
           <ArrowRight className="size-6" />

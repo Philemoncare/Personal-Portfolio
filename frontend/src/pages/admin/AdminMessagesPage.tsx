@@ -41,7 +41,7 @@ function inquiryLabel(value: string | null): string {
 }
 
 const EMAIL_STATUS_COPY: Record<ContactMessageAdmin["email_status"], string> = {
-  not_configured: "Saved only — email notifications are off",
+  not_configured: "Saved only. Email notifications are off.",
   sent: "Notification email sent",
   failed: "Notification email failed",
 };

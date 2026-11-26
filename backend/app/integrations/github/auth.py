@@ -145,9 +145,9 @@ async def exchange_code(code: str) -> dict[str, Any]:
         ) from exc
 
     if payload.get("error"):
-        description = str(payload.get("error_description") or payload["error"])
+        description = str(payload.get("error_description") or payload["error"]).strip().rstrip(".")
         raise GitHubError(
-            f"GitHub authorization failed: {description}.",
+            f"GitHub authorization failed: {description}",
             code="oauth_error",
             status_code=400,
         )

@@ -41,7 +41,7 @@ export function AboutPreview() {
             {settings?.is_placeholder ? (
               <div className="mt-5 flex flex-wrap items-start gap-x-3 gap-y-2">
                 <Badge tone="placeholder" className="shrink-0">
-                  Profile note
+                  Not finished
                 </Badge>
                 <p className="min-w-0 flex-1 text-xs leading-relaxed text-muted">
                   The longer biography is still being written, so this preview is short for now.

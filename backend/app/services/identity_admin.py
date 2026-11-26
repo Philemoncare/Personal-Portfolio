@@ -158,12 +158,12 @@ def update_site_settings(db: Session, payload: SiteSettingsInput) -> SiteSetting
 
 def _check_project(db: Session, project_id: uuid.UUID | None) -> None:
     if project_id is not None and db.get(Project, project_id) is None:
-        raise AdminInputError("The selected project does not exist.")
+        raise AdminInputError("The selected project could not be found.")
 
 
 def _check_leadership(db: Session, leadership_id: uuid.UUID | None) -> None:
     if leadership_id is not None and db.get(LeadershipEntry, leadership_id) is None:
-        raise AdminInputError("The selected leadership entry does not exist.")
+        raise AdminInputError("The selected leadership entry could not be found.")
 
 
 def _apply_now(item: NowItem, payload: NowInput) -> None:
@@ -239,7 +239,7 @@ def _apply_timeline(item: TimelineEntry, payload: TimelineInput, db: Session) ->
 
     requested = payload.slug or slugify(title)
     if not requested:
-        raise AdminInputError("A slug is required.")
+        raise AdminInputError("A web address is required.")
     item.slug = unique_slug(db, TimelineEntry, requested, exclude_id=item.id)
     item.title = title
     item.kind = payload.kind
@@ -264,17 +264,17 @@ def _apply_timeline(item: TimelineEntry, payload: TimelineInput, db: Session) ->
 
 def _check_links(db: Session, payload: TimelineInput) -> None:
     if payload.related_project_id and db.get(Project, payload.related_project_id) is None:
-        raise AdminInputError("The selected project does not exist.")
+        raise AdminInputError("The selected project could not be found.")
     if (
         payload.related_experience_id
         and db.get(ExperienceEntry, payload.related_experience_id) is None
     ):
-        raise AdminInputError("The selected experience entry does not exist.")
+        raise AdminInputError("The selected experience entry could not be found.")
     if (
         payload.related_leadership_id
         and db.get(LeadershipEntry, payload.related_leadership_id) is None
     ):
-        raise AdminInputError("The selected leadership entry does not exist.")
+        raise AdminInputError("The selected leadership entry could not be found.")
 
 
 def create_timeline(db: Session, payload: TimelineInput) -> TimelineEntry:

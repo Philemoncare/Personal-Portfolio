@@ -345,7 +345,7 @@ export default function AdminProjectsPage() {
                       ) : null}
                       {project.is_placeholder ? (
                         <span className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-warning">
-                          Placeholder
+                          Not finished
                         </span>
                       ) : null}
                     </div>

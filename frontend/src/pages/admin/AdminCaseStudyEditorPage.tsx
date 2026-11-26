@@ -607,7 +607,7 @@ export default function AdminCaseStudyEditorPage() {
                     Updated
                   </dt>
                   <dd className="text-paper-dim">
-                    {study.data?.updated_at ? relativeTime(study.data.updated_at) : "—"}
+                    {study.data?.updated_at ? relativeTime(study.data.updated_at) : "-"}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">

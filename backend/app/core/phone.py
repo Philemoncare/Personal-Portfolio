@@ -40,7 +40,7 @@ def normalize_ghana_phone(value: str | None) -> str:
     """Return the canonical ``233XXXXXXXXX`` form or raise PhoneNumberError."""
 
     if not value:
-        raise PhoneNumberError("A phone number is required")
+        raise PhoneNumberError("Enter your phone number.")
 
     raw = value.strip()
     if raw.startswith("00"):
@@ -55,13 +55,13 @@ def normalize_ghana_phone(value: str | None) -> str:
     elif len(digits) == 9 and digits[0] in {"2", "5"}:
         local = f"0{digits}"
     else:
-        raise PhoneNumberError("Enter a valid Ghana mobile number")
+        raise PhoneNumberError("Enter a valid Ghana mobile number.")
 
     if local[:3] not in _GH_PREFIXES:
-        raise PhoneNumberError("Enter a valid Ghana mobile number")
+        raise PhoneNumberError("Enter a valid Ghana mobile number.")
 
     if len(set(local[3:])) == 1:
-        raise PhoneNumberError("Enter a valid Ghana mobile number")
+        raise PhoneNumberError("Enter a valid Ghana mobile number.")
 
     return f"233{local[1:]}"
 

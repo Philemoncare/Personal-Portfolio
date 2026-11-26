@@ -35,11 +35,12 @@ function extractDetail(payload: unknown, fallback: string): string {
       const messages = detail
         .map((item) =>
           item && typeof item === "object" && "msg" in item
-            ? String((item as { msg: unknown }).msg)
+            ? String((item as { msg: unknown }).msg).replace(/^Value error,\s*/i, "")
             : null,
         )
-        .filter(Boolean);
-      if (messages.length > 0) return messages.join(" ");
+        .filter((message): message is string => Boolean(message));
+      const unique = [...new Set(messages)];
+      if (unique.length > 0) return unique.join(" ");
     }
   }
   return fallback;
@@ -86,13 +87,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
-    if (response.status === 401 && isSessionExpiry(path)) {
+    const detail = extractDetail(payload, `Request failed (${response.status}).`);
+    // A provider rejecting its own token is not an expired admin session.
+    const providerAuthFailure =
+      response.status === 401 && /GitHub/i.test(detail) && /reconnect|authorization/i.test(detail);
+    if (response.status === 401 && isSessionExpiry(path) && !providerAuthFailure) {
       window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
     }
-    throw new ApiError(
-      response.status,
-      extractDetail(payload, `Request failed (${response.status}).`),
-    );
+    throw new ApiError(response.status, detail);
   }
 
   return payload as T;

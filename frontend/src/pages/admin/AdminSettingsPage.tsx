@@ -1,5 +1,5 @@
-import { ArrowUpRight, FileText, Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowUpRight, Check, FileText, RotateCcw, Save } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { AdminPanel, Field, TextArea, TextInput } from "@/components/admin/form";
@@ -62,22 +62,62 @@ function siteToInput(form: SiteFormState): AdminSettingsInput["site"] {
   };
 }
 
+function sameSiteInput(a: AdminSettingsInput["site"], b: AdminSettingsInput["site"]): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export default function AdminSettingsPage() {
   const settings = useApiQuery((signal) => adminContentService.getSettings(signal), []);
   const media = useApiQuery((signal) => listMedia({ limit: 100 }, signal), []);
   const [siteForm, setSiteForm] = useState<SiteFormState | null>(null);
+  const [savedForm, setSavedForm] = useState<SiteFormState | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const noticeRef = useRef<HTMLParagraphElement | null>(null);
 
   useEffect(() => {
     if (!settings.data) return;
-    setSiteForm(siteToForm(settings.data.site));
+    const next = siteToForm(settings.data.site);
+    setSiteForm(next);
+    setSavedForm(next);
   }, [settings.data]);
 
+  const dirty = useMemo(() => {
+    if (!siteForm || !savedForm) return false;
+    return !sameSiteInput(siteToInput(siteForm), siteToInput(savedForm));
+  }, [siteForm, savedForm]);
+
+  useEffect(() => {
+    if (!notice) return;
+    noticeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [notice]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const editSite = (patch: Partial<SiteFormState>) => {
+    setSiteForm((current) => (current ? { ...current, ...patch } : current));
+    setNotice(null);
+  };
+
   const save = async () => {
-    if (!settings.data || !siteForm) return;
+    if (!settings.data || !siteForm || busy) return;
     if (!siteForm.site_name.trim() || !siteForm.wordmark.trim()) {
-      setNotice({ tone: "error", text: "Site name and wordmark are required." });
+      setNotice({
+        tone: "error",
+        text: "Enter a website name and a short name before saving.",
+      });
+      return;
+    }
+    if (!dirty) {
+      setNotice({ tone: "ok", text: "Everything on this page is already saved." });
       return;
     }
     setBusy(true);
@@ -88,18 +128,73 @@ export default function AdminSettingsPage() {
         profile: settings.data.profile,
         site: siteToInput(siteForm),
       });
-      setSiteForm(siteToForm(updated.site));
+      const next = siteToForm(updated.site);
+      setSiteForm(next);
+      setSavedForm(next);
       settings.reload();
-      setNotice({ tone: "ok", text: "Settings updated." });
+      setNotice({ tone: "ok", text: "Settings saved. Your website will show these details." });
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "We couldn't save your changes. Please try again.",
+        text:
+          error instanceof Error
+            ? error.message
+            : "We couldn't save your changes. Please try again.",
       });
     } finally {
       setBusy(false);
     }
   };
+
+  const discard = () => {
+    if (!savedForm) return;
+    setSiteForm(savedForm);
+    setNotice({ tone: "ok", text: "Changes discarded. The saved settings are back." });
+  };
+
+  const saveBar = (size: "sm" | "md") => (
+    <>
+      <button
+        type="button"
+        onClick={() => void save()}
+        disabled={busy || !siteForm}
+        className={buttonStyles("primary", size)}
+      >
+        <Save className="size-3.5" aria-hidden="true" />
+        {busy ? "Saving..." : "Save settings"}
+      </button>
+      {dirty ? (
+        <button
+          type="button"
+          onClick={discard}
+          disabled={busy}
+          className={buttonStyles("ghost", size)}
+        >
+          <RotateCcw className="size-3.5" aria-hidden="true" />
+          Discard changes
+        </button>
+      ) : null}
+    </>
+  );
+
+  const saveState = !siteForm ? (
+    <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
+      Loading settings...
+    </span>
+  ) : busy ? (
+    <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
+      Saving your changes...
+    </span>
+  ) : dirty ? (
+    <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-signal-soft">
+      Unsaved changes
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted">
+      <Check className="size-3" aria-hidden="true" />
+      All changes saved
+    </span>
+  );
 
   const data = settings.data;
   const mediaAssets = media.data?.items ?? [];
@@ -118,30 +213,31 @@ export default function AdminSettingsPage() {
             Manage your website name, search information, branding and footer text here.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to="/" target="_blank" rel="noreferrer" className={buttonStyles("secondary", "sm")}>
-            View website
-            <ArrowUpRight className="size-3.5" aria-hidden="true" />
-          </Link>
-          <button
-            type="button"
-            onClick={save}
-            disabled={busy || !siteForm}
-            className={buttonStyles("primary", "sm")}
-          >
-            <Save className="size-3.5" aria-hidden="true" />
-            {busy ? "Saving..." : "Save settings"}
-          </button>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/"
+              target="_blank"
+              rel="noreferrer"
+              className={buttonStyles("secondary", "sm")}
+            >
+              View website
+              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+            </Link>
+            {saveBar("sm")}
+          </div>
+          {saveState}
         </div>
       </div>
 
       {notice ? (
         <p
+          ref={noticeRef}
           role={notice.tone === "error" ? "alert" : "status"}
           className={
             notice.tone === "error"
-              ? "mt-4 border border-signal/35 bg-signal/5 px-4 py-3 text-sm text-paper-dim"
-              : "mt-4 border border-line bg-ink-800/60 px-4 py-3 text-sm text-paper-dim"
+              ? "mt-4 scroll-mt-24 border border-error/40 bg-error/10 px-4 py-3 text-sm text-error"
+              : "mt-4 scroll-mt-24 border border-line bg-ink-800/60 px-4 py-3 text-sm text-paper-dim"
           }
         >
           {notice.text}
@@ -151,7 +247,10 @@ export default function AdminSettingsPage() {
       {settings.loading && !data ? <LoadingState rows={6} label="Loading settings" /> : null}
       {!settings.loading && settings.error ? (
         <div className="mt-6">
-          <ErrorState message={settings.error.detail} onRetry={settings.reload} />
+          <ErrorState
+            message="We couldn't load your settings. Please try again."
+            onRetry={settings.reload}
+          />
         </div>
       ) : null}
 
@@ -163,154 +262,149 @@ export default function AdminSettingsPage() {
               description="These settings control how your website appears in the browser, search results and footer."
             >
               {siteForm ? (
-                <div className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Website name" htmlFor="site-name" required>
-                      <TextInput
-                        id="site-name"
-                        value={siteForm.site_name}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, site_name: event.target.value })
-                        }
-                        placeholder="Enter your website name"
-                      />
-                    </Field>
-                    <Field
-                      label="Short name"
-                      htmlFor="site-wordmark"
-                      required
-                      hint="The short name shown in the header, such as PHILL."
-                    >
-                      <TextInput
-                        id="site-wordmark"
-                        value={siteForm.wordmark}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, wordmark: event.target.value })
-                        }
-                        placeholder="Enter a short name"
-                      />
-                    </Field>
-                  </div>
+                <form
+                  className="space-y-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void save();
+                  }}
+                >
+                  <button type="submit" className="sr-only" tabIndex={-1} aria-hidden="true">
+                    Save settings
+                  </button>
+                  <fieldset disabled={busy} className="min-w-0 space-y-4 border-0 p-0">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Website name" htmlFor="site-name" required>
+                        <TextInput
+                          id="site-name"
+                          value={siteForm.site_name}
+                          onChange={(event) => editSite({ site_name: event.target.value })}
+                          placeholder="Enter your website name"
+                        />
+                      </Field>
+                      <Field
+                        label="Short name"
+                        htmlFor="site-wordmark"
+                        required
+                        hint="The short name shown in the header, such as PHILL."
+                      >
+                        <TextInput
+                          id="site-wordmark"
+                          value={siteForm.wordmark}
+                          onChange={(event) => editSite({ wordmark: event.target.value })}
+                          placeholder="Enter a short name"
+                        />
+                      </Field>
+                    </div>
 
-                  <Field
-                    label="Website description"
-                    htmlFor="site-description"
-                    hint="A short description of your website."
-                  >
-                    <TextArea
-                      id="site-description"
-                      rows={3}
-                      value={siteForm.site_description}
-                      onChange={(event) =>
-                        setSiteForm({ ...siteForm, site_description: event.target.value })
-                      }
-                      placeholder="Write a short description"
-                    />
-                  </Field>
-
-                  <Field
-                    label="Accent colour"
-                    htmlFor="site-accent"
-                    hint="The theme colour used for highlights. The default is signal."
-                  >
-                    <TextInput
-                      id="site-accent"
-                      value={siteForm.accent}
-                      onChange={(event) =>
-                        setSiteForm({ ...siteForm, accent: event.target.value })
-                      }
-                    />
-                  </Field>
-
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <Field label="Favicon" hint="The small icon shown in browser tabs.">
-                      <MediaField
-                        value={siteForm.favicon}
-                        onChange={(value) => setSiteForm({ ...siteForm, favicon: value })}
-                        assets={mediaAssets}
-                        loading={media.loading}
-                        onUploaded={() => media.reload()}
-                        folder="ui"
-                        title="Website favicon"
-                        altText="Website favicon"
-                        emptyLabel="No favicon uploaded."
-                      />
-                    </Field>
                     <Field
-                      label="Social share image"
-                      hint="The image shown when your website is shared on social media."
-                    >
-                      <MediaField
-                        value={siteForm.social_image}
-                        onChange={(value) => setSiteForm({ ...siteForm, social_image: value })}
-                        assets={mediaAssets}
-                        loading={media.loading}
-                        onUploaded={() => media.reload()}
-                        folder="social"
-                        title="Social share image"
-                        altText="Social share image"
-                        emptyLabel="No social share image uploaded."
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field
-                      label="Search title"
-                      htmlFor="site-seo-title"
-                      hint="The title that may appear in search results and browser tabs."
-                    >
-                      <TextInput
-                        id="site-seo-title"
-                        value={siteForm.seo_title}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, seo_title: event.target.value })
-                        }
-                        placeholder="Enter a search title"
-                      />
-                    </Field>
-                    <Field
-                      label="Search description"
-                      htmlFor="site-seo-description"
-                      hint="A short description that may appear in search results."
+                      label="Website description"
+                      htmlFor="site-description"
+                      hint="A short description of your website."
                     >
                       <TextArea
-                        id="site-seo-description"
-                        rows={2}
-                        value={siteForm.seo_description}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, seo_description: event.target.value })
-                        }
+                        id="site-description"
+                        rows={3}
+                        value={siteForm.site_description}
+                        onChange={(event) => editSite({ site_description: event.target.value })}
                         placeholder="Write a short description"
                       />
                     </Field>
-                  </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Footer text" htmlFor="site-footer">
-                      <TextArea
-                        id="site-footer"
-                        rows={3}
-                        value={siteForm.footer_text}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, footer_text: event.target.value })
-                        }
-                        placeholder="Text shown in the footer"
+                    <Field
+                      label="Accent colour"
+                      htmlFor="site-accent"
+                      hint="The theme colour name. The site currently uses the default, signal."
+                    >
+                      <TextInput
+                        id="site-accent"
+                        value={siteForm.accent}
+                        onChange={(event) => editSite({ accent: event.target.value })}
                       />
                     </Field>
-                    <Field label="Copyright text" htmlFor="site-copyright">
-                      <TextArea
-                        id="site-copyright"
-                        rows={3}
-                        value={siteForm.copyright_text}
-                        onChange={(event) =>
-                          setSiteForm({ ...siteForm, copyright_text: event.target.value })
-                        }
-                        placeholder="Copyright line"
-                      />
-                    </Field>
-                  </div>
-                </div>
+
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <Field label="Favicon" hint="The small icon shown in browser tabs.">
+                        <MediaField
+                          value={siteForm.favicon}
+                          onChange={(value) => editSite({ favicon: value })}
+                          assets={mediaAssets}
+                          loading={media.loading}
+                          onUploaded={() => media.reload()}
+                          folder="ui"
+                          title="Website favicon"
+                          altText="Website favicon"
+                          emptyLabel="No favicon uploaded."
+                        />
+                      </Field>
+                      <Field
+                        label="Social share image"
+                        hint="The image shown when your website is shared on social media."
+                      >
+                        <MediaField
+                          value={siteForm.social_image}
+                          onChange={(value) => editSite({ social_image: value })}
+                          assets={mediaAssets}
+                          loading={media.loading}
+                          onUploaded={() => media.reload()}
+                          folder="social"
+                          title="Social share image"
+                          altText="Social share image"
+                          emptyLabel="No social share image uploaded."
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field
+                        label="Search title"
+                        htmlFor="site-seo-title"
+                        hint="The title that may appear in search results and browser tabs."
+                      >
+                        <TextInput
+                          id="site-seo-title"
+                          value={siteForm.seo_title}
+                          onChange={(event) => editSite({ seo_title: event.target.value })}
+                          placeholder="Enter a search title"
+                        />
+                      </Field>
+                      <Field
+                        label="Search description"
+                        htmlFor="site-seo-description"
+                        hint="A short description that may appear in search results."
+                      >
+                        <TextArea
+                          id="site-seo-description"
+                          rows={2}
+                          value={siteForm.seo_description}
+                          onChange={(event) => editSite({ seo_description: event.target.value })}
+                          placeholder="Write a short description"
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Footer text" htmlFor="site-footer">
+                        <TextArea
+                          id="site-footer"
+                          rows={3}
+                          value={siteForm.footer_text}
+                          onChange={(event) => editSite({ footer_text: event.target.value })}
+                          placeholder="Text shown in the footer"
+                        />
+                      </Field>
+                      <Field label="Copyright text" htmlFor="site-copyright">
+                        <TextArea
+                          id="site-copyright"
+                          rows={3}
+                          value={siteForm.copyright_text}
+                          onChange={(event) => editSite({ copyright_text: event.target.value })}
+                          placeholder="Copyright line"
+                        />
+                      </Field>
+                    </div>
+                  </fieldset>
+                </form>
               ) : null}
             </AdminPanel>
 
@@ -356,19 +450,14 @@ export default function AdminSettingsPage() {
               </dl>
             </AdminPanel>
 
-            <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
-              <button
-                type="button"
-                onClick={save}
-                disabled={busy}
-                className={buttonStyles("primary", "md")}
-              >
-                <Save className="size-4" aria-hidden="true" />
-                {busy ? "Saving..." : "Save settings"}
-              </button>
-              <Link to="/admin/profile" className={buttonStyles("ghost", "md")}>
-                Edit profile
-              </Link>
+            <div className="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                {saveBar("md")}
+                <Link to="/admin/profile" className={buttonStyles("ghost", "md")}>
+                  Edit profile
+                </Link>
+              </div>
+              {saveState}
             </div>
           </div>
 

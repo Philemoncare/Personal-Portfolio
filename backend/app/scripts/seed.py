@@ -38,17 +38,16 @@ logger = logging.getLogger("portfolio.seed")
 
 ROLE_TITLE = "Full-Stack Developer"
 HERO_INTRO = (
-    "I build software products, work with data, and turn ideas into working systems."
+    "I build software, work with data and help teams ship technical projects."
 )
 LOCATION = "Ghana"
 AVAILABILITY = "Open to collaboration"
 PLACEHOLDER_SUMMARY = (
-    "Project details are still being written. This entry is a publishing "
-    "placeholder and is labelled as placeholder content throughout the site."
+    "Some project details are still being written."
 )
 PLACEHOLDER_BIO = (
-    "Profile bio pending. Replace this text from the admin panel with a short, "
-    "factual introduction."
+    "This profile is still being written. Add a short introduction from the "
+    "admin panel."
 )
 BIO = (
     "A developer who enjoys building systems and working with data. I work across "
@@ -122,7 +121,7 @@ PROJECTS = [
 
 CASE_STUDIES = [
     {
-        "title": "SchooMA — building a multi-tenant school platform",
+        "title": "SchooMA - building a multi-tenant school platform",
         "slug": "schooma",
         "project_slug": "schooma",
         "summary": "A case study on the making of a multi-tenant school management platform.",
@@ -171,7 +170,7 @@ NOW_ITEMS = [
     {
         "label": "Current goals",
         "title": "Add your current goals",
-        "description": "Placeholder. Add this update from the admin panel.",
+        "description": "Add this update from the admin panel.",
         "category": "other",
         "priority": 0,
         "order": 40,
@@ -215,8 +214,8 @@ TIMELINE_ITEMS = [
     },
 ]
 
-# Synthetic values used only to exercise the Data Lab interface. Every public
-# surface labels this project as demo data; it is not a claim about the owner's
+# Synthetic values used only to demonstrate the Data Lab interface. Every public
+# surface labels this project as sample data; it is not a claim about the owner's
 # past work, clients, or business results.
 DEMO_MONTHLY = [
     {"month": "Jan", "electronics": 42000, "groceries": 31000, "home": 18000},
@@ -412,7 +411,7 @@ def seed_data_lab(db: Session) -> None:
     }
 
     project = DataProject(
-        title="Retail Sales Patterns — Demo Analysis",
+        title="Retail Sales Patterns - Demo Analysis",
         slug="retail-sales-demo",
         short_description=(
             "A clearly labelled synthetic retail dataset used to demonstrate the "
@@ -420,12 +419,11 @@ def seed_data_lab(db: Session) -> None:
             "about real clients, revenue, or personal results."
         ),
         description=(
-            "This is a demonstration project. The dataset was generated for "
-            "interface testing, not collected from a real business. It exists so "
-            "the Data Lab's analysis pages, visualization components, and "
-            "accessibility fallbacks can be reviewed end to end."
+            "This is a sample project. The dataset was generated to show how a "
+            "Data Lab analysis is structured, not collected from a real business. "
+            "It demonstrates the charts, tables and analysis sections on this page."
         ),
-        keywords="demo, synthetic data, exploratory analysis, retail, charts",
+        keywords="sample, synthetic data, exploratory analysis, retail, charts",
         category_id=category.id,
         project_type="eda",
         status="published",
@@ -444,30 +442,30 @@ def seed_data_lab(db: Session) -> None:
             "team should focus attention. Here it demonstrates how the analysis "
             "would be framed without inventing a real business outcome."
         ),
-        dataset_name="Synthetic retail transactions (demo)",
-        dataset_source="Generated for Data Lab interface testing",
+        dataset_name="Synthetic retail transactions (sample)",
+        dataset_source="Generated for this sample analysis",
         dataset_description=(
             "Twelve months of categorised sales rows with synthetic revenue "
             "values. No real customer, client, or company data is present."
         ),
         dataset_rows=240,
         dataset_columns=8,
-        dataset_time_period="January – December (synthetic)",
+        dataset_time_period="January - December (synthetic)",
         dataset_type="CSV",
-        dataset_license="Generated demo data; not distributed",
+        dataset_license="Sample data; not distributed",
         dataset_is_public=True,
         dataset_note=(
-            "The row and column counts describe the generated test extract. They "
-            "are demo metadata, not a real dataset inventory."
+            "The row and column counts describe the generated sample extract. They "
+            "are sample metadata, not a real dataset inventory."
         ),
         data_preparation=(
-            "For the demo, the generated rows were checked for consistent month "
+            "For this sample, the generated rows were checked for consistent month "
             "labels, numeric revenue values, and a single category per row. No "
             "real cleaning claims are being made; the preparation steps are "
             "documented to show where that work belongs in a project."
         ),
         methodology=(
-            "The demo groups synthetic revenue by month and category, compares "
+            "The sample groups synthetic revenue by month and category, compares "
             "category totals, and reviews the monthly trend. In a real project "
             "this section would state the SQL, Python, Excel, or statistical "
             "method actually used, with assumptions and validation."
@@ -540,10 +538,10 @@ def seed_data_lab(db: Session) -> None:
             "public page. Real analysis content must replace it before it is "
             "read as portfolio evidence."
         ),
-        seo_title="Retail Sales Patterns — Demo Data | Data Lab",
+        seo_title="Retail sales patterns | Sample data | Data Lab",
         seo_description=(
             "A clearly labelled synthetic retail dataset demonstrating the Data "
-            "Lab's analysis structure. Demo data only."
+            "Lab's analysis structure. Sample data only."
         ),
         sort_order=10,
     )
@@ -631,14 +629,14 @@ def seed_data_lab(db: Session) -> None:
     ]
     project.insights = [
         DataInsight(
-            title="Electronics leads the demo mix",
+            title="Electronics leads the sample",
             key_insight=(
                 f"Electronics accounts for {share['Electronics']} of synthetic "
-                "demo revenue."
+                "sample revenue."
             ),
             possible_explanation=(
                 "The values were generated for testing, so the pattern reflects "
-                "the construction of the demo dataset rather than a market "
+                "the construction of the sample dataset rather than a market "
                 "explanation."
             ),
             recommendation=(

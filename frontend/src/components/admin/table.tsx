@@ -28,7 +28,7 @@ interface AdminTableProps<T> {
 
 /**
  * One shared table surface for every admin index. Desktop renders a grid;
- * below `lg` each row becomes a stacked card so 390–1024px stay readable.
+ * below `lg` each row becomes a stacked card so 390-1024px stay readable.
  */
 export function AdminTable<T>({
   columns,

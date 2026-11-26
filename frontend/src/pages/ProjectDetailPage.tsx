@@ -24,7 +24,7 @@ export default function ProjectDetailPage() {
   useSeo({
     title: data
       ? data.seo_title || `${data.title} | ${data.category.name} | Philemon Melabah`
-      : "Project — Philemon Melabah",
+      : "Project | Philemon Melabah",
     description:
       data?.seo_description ??
       data?.summary ??

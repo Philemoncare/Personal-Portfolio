@@ -23,8 +23,8 @@ function RelatedLink({ link }: { link: ContentLink }) {
 export function Timeline({
   entries,
   showFilters = true,
-  emptyTitle = "No milestones published yet",
-  emptyDescription = "Timeline entries appear here once they are added and published from the admin panel.",
+  emptyTitle = "No milestones yet",
+  emptyDescription = "Milestones will appear here once they are added.",
 }: {
   entries: TimelineEntry[];
   showFilters?: boolean;
@@ -130,7 +130,7 @@ export function Timeline({
                             {entry.title}
                           </h3>
                           {entry.is_placeholder ? (
-                            <Badge tone="placeholder">Placeholder</Badge>
+                            <Badge tone="placeholder">Not finished</Badge>
                           ) : null}
                         </div>
                         {entry.organization ? (
@@ -158,7 +158,7 @@ export function Timeline({
                               rel="noreferrer noopener"
                               className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-paper-dim underline decoration-line underline-offset-4 hover:text-paper"
                             >
-                              External reference
+                              External link
                               <span aria-hidden="true">↗</span>
                             </a>
                           ) : null}

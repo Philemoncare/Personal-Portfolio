@@ -106,7 +106,7 @@ export default function AdminArticlesPage() {
                       ) : null}
                       {article.is_placeholder ? (
                         <span className="font-mono text-[0.5rem] uppercase tracking-[0.14em] text-warning">
-                          Placeholder
+                          Not finished
                         </span>
                       ) : null}
                     </div>

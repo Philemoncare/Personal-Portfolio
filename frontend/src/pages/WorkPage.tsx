@@ -190,7 +190,7 @@ export default function WorkPage() {
   );
 
   usePageSeo("work", {
-    title: "Work — Philemon Melabah",
+    title: "Projects | Philemon Melabah",
     description:
       "Projects and case studies by Philemon Melabah. Filter by category, technology or status, then open a project to read more.",
     path: "/work",
@@ -317,7 +317,7 @@ export default function WorkPage() {
                   type="search"
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Name, description, technology, keyword…"
+                  placeholder="Name, description, technology, keyword..."
                   autoComplete="off"
                   className="h-11 w-full border border-line bg-ink-900 pl-9 pr-9 font-sans text-sm text-paper placeholder:text-faint focus:border-line-strong focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
                 />
@@ -448,7 +448,7 @@ export default function WorkPage() {
             {status ? (
               <FilterTag label={PROJECT_STAGE_LABELS[status] ?? status} onRemove={() => updateParam("status", "")} />
             ) : null}
-            {query ? <FilterTag label={`“${query}”`} onRemove={() => { setSearchInput(""); updateParam("q", ""); }} /> : null}
+            {query ? <FilterTag label={`"${query}"`} onRemove={() => { setSearchInput(""); updateParam("q", ""); }} /> : null}
             {!filtersActive ? (
               <span className="type-meta text-faint">
                 {String(totalPublished).padStart(2, "0")} published project

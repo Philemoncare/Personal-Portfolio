@@ -15,7 +15,7 @@ interface PolledState<T> {
  * Fetch on mount, on demand, and on an interval.
  *
  * Polling is deliberate: the security dashboard must reflect new events
- * without a page reload, and a 10–15 second cadence is sufficient without
+ * without a page reload, and a 10-15 second cadence is sufficient without
  * adding WebSocket infrastructure.
  */
 export function usePollingResource<T>(

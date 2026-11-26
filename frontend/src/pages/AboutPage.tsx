@@ -76,8 +76,8 @@ export default function AboutPage() {
 
   usePageSeo("about", {
     title: person
-      ? `About ${person.display_name} | ${person.professional_title ?? "Portfolio"}`
-      : "About | Portfolio",
+      ? `About ${person.display_name} | ${person.professional_title ?? "Full-Stack Developer"}`
+      : "About | Philemon Melabah",
     description:
       person?.short_bio ||
       "About Philemon Melabah: what I build, how I work and what I am working towards.",
@@ -324,7 +324,7 @@ export default function AboutPage() {
                 More pages
               </p>
               {[
-                { label: "Work index", to: "/work" },
+                { label: "All projects", to: "/work" },
                 { label: "Data Lab", to: "/data-lab" },
                 { label: "Build Lab", to: "/build-lab" },
                 { label: "Leadership", to: "/leadership" },

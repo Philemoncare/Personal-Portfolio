@@ -250,7 +250,7 @@ def list_sms(
         if normalized not in SMS_STATUSES:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Unknown SMS status filter.",
+                detail="Unknown text message status filter.",
             )
         conditions.append(SmsLog.status == normalized)
     if purpose:
@@ -285,7 +285,7 @@ def get_sms(
 ) -> SmsLogOut:
     row = db.get(SmsLog, sms_id)
     if row is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SMS record not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Text message not found.")
     if admin.role != "SUPER_ADMIN" and row.user_id != admin.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SMS record not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Text message not found.")
     return SmsLogOut.from_model(row)

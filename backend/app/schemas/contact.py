@@ -29,14 +29,14 @@ class ContactCreate(BaseModel):
     @classmethod
     def honeypot_must_be_empty(cls, value: str | None) -> str | None:
         if value:
-            raise ValueError("Invalid submission")
+            raise ValueError("We couldn't accept this message. Please try again.")
         return value
 
     @field_validator("name", "subject", "message")
     @classmethod
     def reject_control_characters(cls, value: str) -> str:
         if any(ord(char) < 32 and char not in "\n\t" for char in value):
-            raise ValueError("Invalid characters in submission")
+            raise ValueError("Please remove any unusual characters and try again.")
         return value
 
 

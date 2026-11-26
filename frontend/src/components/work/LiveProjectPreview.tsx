@@ -27,7 +27,7 @@ function hostOf(url: string): string {
 /**
  * Honest live preview.
  *
- * `embed_enabled` is the owner's permission to *attempt* an embed — it is not
+ * `embed_enabled` is the owner's permission to *attempt* an embed - it is not
  * proof that the host allows framing. The browser decides. We show a loading
  * state, a timeout/failure state, and always keep an external fallback. No
  * screenshot or mock UI is generated when embedding is blocked.
@@ -197,7 +197,7 @@ export function LiveProjectPreview({
         {expanded ? (
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <p className="truncate text-sm text-paper">
-              {title} — live preview
+              Live preview: {title}
             </p>
             <button
               type="button"
@@ -241,7 +241,7 @@ export function LiveProjectPreview({
               </p>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted">
                 The site may block embedding with a security header, may be offline, or may
-                be slow to respond. Nothing is simulated here — open the project directly
+                be slow to respond. Nothing is simulated here. Open the project directly
                 instead.
               </p>
             </div>

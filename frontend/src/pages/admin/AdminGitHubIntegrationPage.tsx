@@ -144,7 +144,7 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
             Connected
           </dt>
           <dd className="mt-1 text-sm text-paper">
-            {connection.connected_at ? relativeTime(connection.connected_at) : "—"}
+            {connection.connected_at ? relativeTime(connection.connected_at) : "-"}
           </dd>
         </div>
         <div>
@@ -195,6 +195,23 @@ function AccountPanel({ status }: { status: GitHubStatus }) {
           </dd>
         </div>
       </dl>
+    </div>
+  );
+}
+
+function CallbackUrlNote({ value }: { value: string }) {
+  return (
+    <div className="border border-line bg-ink-950/60 p-4">
+      <p className="font-mono text-[0.54rem] uppercase tracking-[0.14em] text-muted">
+        Callback URL
+      </p>
+      <p className="mt-1.5 text-sm leading-relaxed text-paper-dim">
+        This exact address must be set as the callback URL in the GitHub OAuth app. If it is
+        different, GitHub stops before returning to this site and the connection cannot finish.
+      </p>
+      <code className="mt-2 block break-all border border-line bg-ink-950 px-3 py-2 font-mono text-[0.7rem] text-paper">
+        {value}
+      </code>
     </div>
   );
 }
@@ -480,6 +497,9 @@ export default function AdminGitHubIntegrationPage() {
           {!status.loading && status.data ? (
             <div className="space-y-5">
               <AccountPanel status={status.data} />
+              {status.data.configured && status.data.redirect_uri ? (
+                <CallbackUrlNote value={status.data.redirect_uri} />
+              ) : null}
               {status.data.message ? (
                 <p className="text-xs leading-relaxed text-muted">{status.data.message}</p>
               ) : null}

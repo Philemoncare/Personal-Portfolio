@@ -259,7 +259,7 @@ export default function AdminSecuritySessionsPage() {
                     </p>
                   </td>
                   <td className="py-3 pr-4 font-mono text-[0.6rem] text-paper-dim">
-                    {session.ip_address || "—"}
+                    {session.ip_address || "-"}
                   </td>
                   <td className="py-3 pr-4">
                     <span

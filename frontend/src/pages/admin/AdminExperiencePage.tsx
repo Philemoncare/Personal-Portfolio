@@ -160,7 +160,7 @@ export default function AdminExperiencePage() {
             </button>
           </div>
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <Field label="Organization" htmlFor="organization" required>
+            <Field label="Organisation" htmlFor="organization" required>
               <TextInput
                 id="organization"
                 value={form.organization}
@@ -217,7 +217,7 @@ export default function AdminExperiencePage() {
                 placeholder="What you did in this role and what you achieved."
               />
             </Field>
-            <Field label="Organization logo" className="sm:col-span-2">
+            <Field label="Organisation logo" className="sm:col-span-2">
               <MediaField
                 value={form.logo_url ?? ""}
                 onChange={(value) => setForm({ ...form, logo_url: value || null })}
@@ -226,7 +226,7 @@ export default function AdminExperiencePage() {
                 onUploaded={() => media.reload()}
                 folder="experience"
                 title={`${form.organization || "Experience"} logo`}
-                altText={form.organization ? `${form.organization} logo` : "Organization logo"}
+                altText={form.organization ? `${form.organization} logo` : "Organisation logo"}
                 emptyLabel="No logo uploaded."
               />
             </Field>
@@ -319,7 +319,7 @@ export default function AdminExperiencePage() {
                 mobileLabel: "Dates",
                 render: (entry) => (
                   <span className="text-xs text-paper-dim">
-                    {entry.started_on ?? "—"} → {entry.is_current ? "Present" : entry.ended_on ?? "—"}
+                    {entry.started_on ?? "-"} → {entry.is_current ? "Present" : entry.ended_on ?? "-"}
                   </span>
                 ),
               },
@@ -327,7 +327,7 @@ export default function AdminExperiencePage() {
                 key: "location",
                 header: "Location",
                 mobileLabel: "Location",
-                render: (entry) => <span className="text-xs text-muted">{entry.location ?? "—"}</span>,
+                render: (entry) => <span className="text-xs text-muted">{entry.location ?? "-"}</span>,
               },
               {
                 key: "status",

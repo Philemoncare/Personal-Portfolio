@@ -248,6 +248,8 @@ function RepositoryBrowser() {
   const [sort, setSort] = useState<SortKey>("updated");
   const [limit, setLimit] = useState(30);
   const [nonce, setNonce] = useState(0);
+  const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
     setLimit(30);
@@ -287,6 +289,22 @@ function RepositoryBrowser() {
     return sortRepositories(filtered, sort);
   }, [repositories, language, sort]);
   const shown = visible.slice(0, limit);
+
+  const reconnect = async () => {
+    setConnecting(true);
+    setConnectError(null);
+    try {
+      const result = await githubService.connect();
+      window.location.assign(result.authorize_url);
+    } catch (caught) {
+      setConnectError(
+        caught instanceof Error
+          ? caught.message
+          : "We couldn't start the GitHub connection. Please try again.",
+      );
+      setConnecting(false);
+    }
+  };
 
   return (
     <>
@@ -368,11 +386,33 @@ function RepositoryBrowser() {
 
       {query.loading ? <LoadingState rows={4} label="Loading GitHub repositories" className="mt-6" /> : null}
       {!query.loading && query.error ? (
-        <div className="mt-6">
+        <div className="mt-6 space-y-3">
           <ErrorState
-            message="We couldn't load your repositories. Please try again."
+            message={query.error.detail || "We couldn't load your repositories. Please try again."}
             onRetry={query.reload}
           />
+          {query.error.status === 409 ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void reconnect()}
+                disabled={connecting}
+                className={buttonStyles("primary", "sm")}
+              >
+                <GitBranch className="size-3.5" aria-hidden="true" />
+                {connecting ? "Opening GitHub..." : "Reconnect GitHub"}
+              </button>
+              <Link
+                to="/admin/integrations/github"
+                className="text-xs text-muted underline underline-offset-4 hover:text-paper"
+              >
+                GitHub settings
+              </Link>
+              {connectError ? (
+                <p className="text-xs leading-relaxed text-error">{connectError}</p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
       {!query.loading && !query.error && repositories.length === 0 ? (

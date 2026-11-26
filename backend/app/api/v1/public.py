@@ -266,7 +266,7 @@ def get_profile(db: Session = Depends(get_db)) -> ProfilePublic:
     if profile is None:
         raise HTTPException(
             status_code=404,
-            detail="Profile is not configured yet.",
+            detail="The profile has not been added yet.",
         )
     return profile
 
@@ -317,7 +317,7 @@ def list_resumes(db: Session = Depends(get_db)) -> list[ResumePublic]:
 def get_current_resume(db: Session = Depends(get_db)) -> ResumePublic:
     resume = IdentityRepository(db).current_resume()
     if resume is None:
-        raise HTTPException(status_code=404, detail="No resume is published yet.")
+        raise HTTPException(status_code=404, detail="No resume has been published yet.")
     return resume_public(resume)
 
 
@@ -328,7 +328,7 @@ def download_resume(resume_id: UUID, db: Session = Depends(get_db)) -> FileRespo
         raise HTTPException(status_code=404, detail="Resume not found")
     path = resume_file_path(resume.storage_path)
     if path is None:
-        raise HTTPException(status_code=404, detail="Resume file is unavailable")
+        raise HTTPException(status_code=404, detail="The resume file is not available.")
 
     resume.download_count = resume.download_count + 1
     db.commit()
@@ -361,7 +361,7 @@ def get_public_settings(db: Session = Depends(get_db)) -> SiteSettingsPublic:
     if payload is None:
         raise HTTPException(
             status_code=404,
-            detail="Site settings are not configured. Run the seed command.",
+            detail="Site settings have not been set up yet.",
         )
     return payload
 
@@ -385,7 +385,7 @@ def get_pages(db: Session = Depends(get_db)) -> list[PageContentOut]:
 def get_page(page_key: str, db: Session = Depends(get_db)) -> PageContentOut:
     page = get_public_page(db, page_key)
     if page is None:
-        raise HTTPException(status_code=404, detail="Page content not found")
+        raise HTTPException(status_code=404, detail="Page not found.")
     return PageContentOut.model_validate(page)
 
 

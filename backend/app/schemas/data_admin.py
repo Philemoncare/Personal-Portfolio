@@ -82,7 +82,7 @@ def _validate_url(value: str | None) -> str | None:
 
 def _validate_chart_data(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if len(data) > ROW_LIMIT:
-        raise ValueError(f"Visualization data is limited to {ROW_LIMIT} rows.")
+        raise ValueError(f"Charts are limited to {ROW_LIMIT} rows.")
     cleaned: list[dict[str, Any]] = []
     for index, row in enumerate(data, start=1):
         if not isinstance(row, dict):
@@ -119,7 +119,7 @@ class DataVisualizationInput(BaseModel):
         if value is None:
             return []
         if not isinstance(value, list):
-            raise ValueError("Visualization data must be a list of objects.")
+            raise ValueError("Chart data must be a list of rows.")
         return _validate_chart_data(value)
 
     @field_validator("series", mode="before")
@@ -134,7 +134,7 @@ class DataVisualizationInput(BaseModel):
     @model_validator(mode="after")
     def _validate_configuration(self) -> "DataVisualizationInput":
         if self.chart_type in CHART_TYPES_REQUIRING_DATA and not self.data:
-            raise ValueError("Add at least one data row before saving a visualization.")
+            raise ValueError("Add at least one data row before saving a chart.")
 
         rows = self.data
         if not rows:
@@ -145,32 +145,32 @@ class DataVisualizationInput(BaseModel):
 
         if self.chart_type in {"bar", "line", "area", "pie", "donut", "histogram"}:
             if not self.x_axis:
-                raise ValueError("Choose the category / x-axis column.")
+                raise ValueError("Choose the category column.")
             if not has_key(self.x_axis):
-                raise ValueError(f"Column '{self.x_axis}' is not present in the data.")
+                raise ValueError(f"Column '{self.x_axis}' is not in the data.")
             if not self.series and not self.y_axis:
-                raise ValueError("Choose a value column or define a series.")
+                raise ValueError("Choose a value column or add a series.")
             for key in self.series:
                 if not has_key(key):
-                    raise ValueError(f"Series column '{key}' is not present in the data.")
+                    raise ValueError(f"Series column '{key}' is not in the data.")
             if self.y_axis and not has_key(self.y_axis):
-                raise ValueError(f"Column '{self.y_axis}' is not present in the data.")
+                raise ValueError(f"Column '{self.y_axis}' is not in the data.")
 
         if self.chart_type == "scatter":
             if not self.x_axis or not self.y_axis:
-                raise ValueError("Scatter plots need an x-axis and a y-axis column.")
+                raise ValueError("Scatter charts need both an x-axis and a y-axis column.")
             if not has_key(self.x_axis) or not has_key(self.y_axis):
-                raise ValueError("Scatter columns must be present in the data.")
+                raise ValueError("The scatter columns must exist in the data.")
 
         if self.chart_type == "heatmap":
             if not self.x_axis or not self.y_axis:
-                raise ValueError("Heatmaps need an x-axis and a y-axis column.")
+                raise ValueError("Heatmaps need both an x-axis and a y-axis column.")
             if len(self.series) != 1:
-                raise ValueError("Heatmaps need exactly one numeric value column in series.")
+                raise ValueError("Heatmaps need exactly one numeric value column.")
             if not has_key(self.x_axis) or not has_key(self.y_axis):
-                raise ValueError("Heatmap axis columns must be present in the data.")
+                raise ValueError("The heatmap axis columns must exist in the data.")
             if not has_key(self.series[0]):
-                raise ValueError(f"Value column '{self.series[0]}' is not present in the data.")
+                raise ValueError(f"Value column '{self.series[0]}' is not in the data.")
 
         return self
 

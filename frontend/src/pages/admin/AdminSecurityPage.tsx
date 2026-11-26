@@ -1,4 +1,4 @@
-﻿import {
+import {
   Activity,
   AlertTriangle,
   ArrowUpDown,
@@ -197,7 +197,7 @@ function Pager({
       <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-faint">
         {total === 0
           ? "No records"
-          : `${offset + 1}–${Math.min(offset + limit, total)} of ${total}`}
+          : `${offset + 1}-${Math.min(offset + limit, total)} of ${total}`}
       </span>
       <div className="flex items-center gap-2">
         <button
@@ -409,7 +409,7 @@ export default function AdminSecurityPage() {
           />
           <Stat
             label="Code success rate"
-            value={data.otp_success_rate === null ? "—" : `${data.otp_success_rate}%`}
+            value={data.otp_success_rate === null ? "-" : `${data.otp_success_rate}%`}
             note={
               data.otp_success_rate === null
                 ? "No codes checked yet"
@@ -418,7 +418,7 @@ export default function AdminSecurityPage() {
           />
           <Stat
             label="Text delivery rate"
-            value={data.sms_success_rate === null ? "—" : `${data.sms_success_rate}%`}
+            value={data.sms_success_rate === null ? "-" : `${data.sms_success_rate}%`}
             note={
               data.sms_success_rate === null
                 ? "No delivery confirmations yet"
@@ -561,7 +561,7 @@ export default function AdminSecurityPage() {
                         ) : null}
                       </td>
                       <td className="max-w-[10rem] truncate py-3 pr-4 font-mono text-[0.6rem] text-faint">
-                        {item.provider_message_id ?? "—"}
+                        {item.provider_message_id ?? "-"}
                       </td>
                       <td className="whitespace-nowrap py-3 font-mono text-[0.56rem] uppercase tracking-[0.1em] text-faint">
                         {relativeTime(item.created_at)}
@@ -794,10 +794,10 @@ export default function AdminSecurityPage() {
                       {entry.identifier || "Not recorded"}
                     </td>
                     <td className="max-w-[16rem] py-3 pr-4 text-xs leading-relaxed text-muted">
-                      {entry.detail || "—"}
+                      {entry.detail || "-"}
                     </td>
                     <td className="py-3 pr-4 font-mono text-[0.56rem] text-faint">
-                      {entry.ip_address || "—"}
+                      {entry.ip_address || "-"}
                     </td>
                     <td
                       className="whitespace-nowrap py-3 font-mono text-[0.56rem] uppercase tracking-[0.1em] text-faint"

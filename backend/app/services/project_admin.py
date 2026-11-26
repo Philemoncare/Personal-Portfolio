@@ -59,7 +59,7 @@ def _resolve_categories(db: Session, ids: list[uuid.UUID]) -> list[ProjectCatego
         db.scalars(select(ProjectCategory).where(ProjectCategory.id.in_(ids))).all()
     )
     if len(items) != len(set(ids)):
-        raise AdminInputError("One or more secondary categories do not exist.")
+        raise AdminInputError("One or more secondary categories could not be found.")
     return items
 
 
@@ -68,14 +68,14 @@ def _resolve_technologies(db: Session, ids: list[uuid.UUID]) -> list[Technology]
         return []
     items = list(db.scalars(select(Technology).where(Technology.id.in_(ids))).all())
     if len(items) != len(set(ids)):
-        raise AdminInputError("One or more technologies do not exist.")
+        raise AdminInputError("One or more technologies could not be found.")
     return items
 
 
 def _resolve_category(db: Session, category_id: uuid.UUID) -> ProjectCategory:
     category = db.get(ProjectCategory, category_id)
     if category is None:
-        raise AdminInputError("The selected primary category does not exist.")
+        raise AdminInputError("The selected primary category could not be found.")
     return category
 
 
@@ -90,7 +90,7 @@ def _apply_project_fields(
     project.title = payload.title.strip()
     requested_slug = payload.slug or slugify(payload.title)
     if not requested_slug:
-        raise AdminInputError("A slug is required.")
+        raise AdminInputError("A web address is required.")
     project.slug = _unique_slug(
         db, Project, requested_slug, exclude_id=None if is_new else project.id
     )
@@ -275,7 +275,7 @@ def _apply_case_study_fields(
     is_new: bool,
 ) -> None:
     if payload.project_id is not None and db.get(Project, payload.project_id) is None:
-        raise AdminInputError("The selected project does not exist.")
+        raise AdminInputError("The selected project could not be found.")
 
     unknown_sections = set(payload.hidden_sections) - set(CASE_STUDY_SECTIONS)
     if unknown_sections:
@@ -287,7 +287,7 @@ def _apply_case_study_fields(
     study.title = payload.title.strip()
     requested_slug = payload.slug or slugify(payload.title, 200)
     if not requested_slug:
-        raise AdminInputError("A slug is required.")
+        raise AdminInputError("A web address is required.")
     study.slug = _unique_slug(
         db, CaseStudy, requested_slug, exclude_id=None if is_new else study.id
     )

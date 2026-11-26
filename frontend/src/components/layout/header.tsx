@@ -196,7 +196,7 @@ export function Header() {
 
               <div className="mt-10 flex flex-col gap-3">
                 <Link to="/contact" className={buttonStyles("primary", "lg", "w-full")}>
-                  Start a conversation
+                  Get in touch
                   <ArrowUpRight className="size-4" aria-hidden="true" />
                 </Link>
                 <Link to="/resume" className={buttonStyles("secondary", "lg", "w-full")}>
@@ -204,7 +204,7 @@ export function Header() {
                   <ArrowUpRight className="size-4" aria-hidden="true" />
                 </Link>
                 <p className="mt-2 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
-                  Full-stack development / data / systems
+                  Software, data and technical leadership
                 </p>
               </div>
             </nav>

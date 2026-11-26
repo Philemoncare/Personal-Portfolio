@@ -151,6 +151,109 @@ def test_oauth_state_round_trip_and_tampering():
     assert auth.verify_oauth_state(None) is None
 
 
+def _configure_github(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "github_client_id", "test-client-id")
+    monkeypatch.setattr(settings, "github_client_secret", "test-client-secret")
+    monkeypatch.setattr(
+        settings,
+        "github_redirect_uri",
+        "http://testserver/api/v1/integrations/github/callback",
+    )
+
+
+def _admin(db_session) -> AdminUser:
+    admin = db_session.scalar(select(AdminUser).where(AdminUser.email == "admin@test.dev"))
+    assert admin is not None
+    return admin
+
+
+def test_callback_stores_connection_and_returns_to_the_admin_page(
+    admin_client, db_session, monkeypatch
+):
+    _configure_github(monkeypatch)
+    admin = _admin(db_session)
+
+    async def fake_exchange(code: str) -> dict:
+        assert code == "valid-code"
+        return {
+            "access_token": "gho_test_token",
+            "token_type": "bearer",
+            "scope": "read:user public_repo",
+        }
+
+    async def fake_account(token: str) -> dict:
+        assert token == "gho_test_token"
+        return {
+            "id": 42,
+            "login": "octocat",
+            "name": "Mona Lisa",
+            "avatar_url": None,
+            "html_url": "https://github.com/octocat",
+        }
+
+    monkeypatch.setattr(auth, "exchange_code", fake_exchange)
+    monkeypatch.setattr(auth, "fetch_account", fake_account)
+
+    state = auth.create_oauth_state(admin.id, origin="http://localhost:5173")
+    response = admin_client.get(
+        "/api/v1/integrations/github/callback",
+        params={"code": "valid-code", "state": state},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["location"] == (
+        "http://localhost:5173/admin/integrations/github?github=connected"
+    )
+
+    connection = auth.get_connection(db_session, admin.id)
+    assert connection is not None
+    assert connection.username == "octocat"
+    assert connection.display_name == "Mona Lisa"
+    assert connection.revoked_at is None
+    assert auth.connection_token(connection) == "gho_test_token"
+
+
+def test_callback_reports_a_failed_exchange(admin_client, db_session, monkeypatch):
+    _configure_github(monkeypatch)
+    admin = _admin(db_session)
+
+    async def failing_exchange(code: str) -> dict:
+        raise auth.GitHubError(
+            "GitHub rejected the authorization. Try connecting again.",
+            code="oauth_exchange_failed",
+            status_code=400,
+        )
+
+    monkeypatch.setattr(auth, "exchange_code", failing_exchange)
+
+    state = auth.create_oauth_state(admin.id, origin="http://localhost:5173")
+    response = admin_client.get(
+        "/api/v1/integrations/github/callback",
+        params={"code": "expired-code", "state": state},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    location = response.headers["location"]
+    assert location.startswith("http://localhost:5173/admin/integrations/github?")
+    assert "github=error" in location
+    assert auth.get_connection(db_session, admin.id) is None
+
+
+def test_callback_rejects_an_invalid_state(admin_client, monkeypatch):
+    _configure_github(monkeypatch)
+
+    response = admin_client.get(
+        "/api/v1/integrations/github/callback",
+        params={"code": "some-code", "state": "tampered.state"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert "github=error" in response.headers["location"]
+
+
 def test_readme_groups_and_live_url_detection():
     groups = readme_groups(README)
     assert "features" in groups

@@ -105,7 +105,7 @@ export default function ChangePasswordPage() {
             <dt className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-faint">
               Role
             </dt>
-            <dd className="text-xs text-paper-dim">{admin?.role ?? "—"}</dd>
+            <dd className="text-xs text-paper-dim">{admin?.role ?? "-"}</dd>
           </div>
         </dl>
       }

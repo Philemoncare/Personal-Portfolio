@@ -167,13 +167,13 @@ export default function AdminAnalyticsPage() {
       <div className="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-signal">
-            Control Center
+            Admin
           </p>
           <h1 className="mt-2 text-3xl font-medium tracking-tight text-paper sm:text-4xl">
-            Visitor Analytics & Traffic
+            Visitor analytics
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-            Real privacy-first traffic analysis collected anonymously across your public portfolio.
+            Anonymous traffic statistics for the public site.
           </p>
         </div>
 
@@ -224,7 +224,7 @@ export default function AdminAnalyticsPage() {
       ) : overview.data ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard
-            title="Unique Visitors"
+            title="Visitors"
             value={overview.data.unique_visitors}
             subtitle={`Individual visitors (${period})`}
             icon={Users}
@@ -233,27 +233,27 @@ export default function AdminAnalyticsPage() {
           <StatCard
             title="Visits"
             value={overview.data.total_visits}
-            subtitle={`Browsing sessions (${period})`}
+            subtitle={`Visits (${period})`}
             icon={Activity}
           />
           <StatCard
-            title="Page Views"
+            title="Page views"
             value={overview.data.page_views}
-            subtitle={`Pages requested (${period})`}
+            subtitle={`Pages opened (${period})`}
             icon={Eye}
             tone="accent"
           />
           <StatCard
-            title="Active Now"
+            title="On the site now"
             value={overview.data.active_now}
-            subtitle="Active in last 5 mins"
+            subtitle="Active in the last 5 minutes"
             icon={TrendingUp}
             tone={overview.data.active_now > 0 ? "signal" : "default"}
           />
           <StatCard
-            title="Total Visitors"
+            title="All-time visitors"
             value={overview.data.total_visitors}
-            subtitle="All time unique visitors"
+            subtitle="Unique visitors since launch"
             icon={Globe}
           />
         </div>
@@ -263,15 +263,15 @@ export default function AdminAnalyticsPage() {
         <div className="border border-line bg-ink-800/40 p-6 text-center">
           <p className="text-base font-medium text-paper">No visitor data yet.</p>
           <p className="mt-1 text-sm text-muted">
-            The analytics system is active. Visit any public page (e.g. Home, Work, About) to record real visitor metrics.
+            Statistics appear here after someone visits a public page.
           </p>
         </div>
       ) : null}
 
       {/* Trend Graph */}
       <AdminPanel
-        title="Traffic Trend"
-        description="Visitor page views and session activity over time."
+        title="Traffic over time"
+        description="Page views and visits over the selected period."
       >
         {trends.loading ? (
           <LoadingState rows={2} label="Loading traffic chart" />
@@ -286,8 +286,8 @@ export default function AdminAnalyticsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Most Viewed Pages */}
         <AdminPanel
-          title="Most Viewed Pages"
-          description="Public pages with the highest traffic."
+          title="Most viewed pages"
+          description="Public pages with the most views."
         >
           {pages.loading ? (
             <LoadingState rows={3} label="Loading page statistics" />
@@ -296,9 +296,9 @@ export default function AdminAnalyticsPage() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-line text-muted">
-                    <th className="pb-2 font-mono uppercase tracking-[0.14em]">Page Path</th>
+                    <th className="pb-2 font-mono uppercase tracking-[0.14em]">Page</th>
                     <th className="pb-2 text-right font-mono uppercase tracking-[0.14em]">Views</th>
-                    <th className="pb-2 text-right font-mono uppercase tracking-[0.14em]">Uniques</th>
+                    <th className="pb-2 text-right font-mono uppercase tracking-[0.14em]">Visitors</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line/60">
@@ -322,14 +322,14 @@ export default function AdminAnalyticsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-xs text-muted">No page view records for this period.</p>
+            <p className="text-xs text-muted">No page views for this period.</p>
           )}
         </AdminPanel>
 
         {/* Traffic Sources */}
         <AdminPanel
-          title="Traffic Sources"
-          description="Referral origins for public visitors."
+          title="Where visitors come from"
+          description="Sites and links that sent visitors here."
         >
           {sources.loading ? (
             <LoadingState rows={3} label="Loading traffic sources" />
@@ -353,14 +353,14 @@ export default function AdminAnalyticsPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted">No referrer data available yet.</p>
+            <p className="text-xs text-muted">No referrer data yet.</p>
           )}
         </AdminPanel>
 
         {/* Devices & OS */}
         <AdminPanel
-          title="Device & Operating System"
-          description="Aggregated client environment metrics."
+          title="Devices and browsers"
+          description="What visitors used to browse the site."
         >
           {devices.loading ? (
             <LoadingState rows={3} label="Loading device metrics" />
@@ -368,7 +368,7 @@ export default function AdminAnalyticsPage() {
             <div className="space-y-5 text-xs">
               <div>
                 <p className="mb-2 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted">
-                  Device Types
+                  Device types
                 </p>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {devices.data.device_types.map((dev) => (
@@ -408,7 +408,7 @@ export default function AdminAnalyticsPage() {
 
               <div>
                 <p className="mb-2 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted">
-                  Operating Systems
+                  Operating systems
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {devices.data.os_list.map((o) => (
@@ -423,14 +423,14 @@ export default function AdminAnalyticsPage() {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-muted">No device metrics recorded.</p>
+            <p className="text-xs text-muted">No device data yet.</p>
           )}
         </AdminPanel>
 
         {/* Geographic Analytics */}
         <AdminPanel
-          title="Geographic Analytics"
-          description="Coarse regional distribution of website traffic."
+          title="Locations"
+          description="Approximate countries where visitors are located."
         >
           {locations.loading ? (
             <LoadingState rows={3} label="Loading location data" />
@@ -449,15 +449,15 @@ export default function AdminAnalyticsPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted">Location data unavailable.</p>
+            <p className="text-xs text-muted">No location data yet.</p>
           )}
         </AdminPanel>
       </div>
 
       {/* Recent Visits Activity Log */}
       <AdminPanel
-        title="Recent Visitor Stream"
-        description="Anonymous real-time log of recent page visits."
+        title="Recent visits"
+        description="The latest page visits, without personal details."
       >
         {recent.loading ? (
           <LoadingState rows={3} label="Loading recent activity" />
@@ -487,7 +487,7 @@ export default function AdminAnalyticsPage() {
             ))}
           </div>
         ) : (
-          <p className="text-xs text-muted">No recent visitor activity logged yet.</p>
+          <p className="text-xs text-muted">No recent visits yet.</p>
         )}
       </AdminPanel>
     </div>

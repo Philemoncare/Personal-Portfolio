@@ -29,7 +29,7 @@ function hostOf(url: string | null): string | null {
  * The verified homepage screenshot captured by the backend browser runner.
  *
  * When no genuine capture exists this renders an honest unavailable state and
- * links to the verified live site — it never falls back to a repository image.
+ * links to the verified live site - it never falls back to a repository image.
  */
 export function HomepagePreview({
   project,

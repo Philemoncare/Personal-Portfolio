@@ -59,10 +59,10 @@ export default function ResumePage() {
   const page = usePageContent("resume");
 
   usePageSeo("resume", {
-    title: person ? `Resume | ${person.display_name}` : "Resume",
+    title: person ? `Resume | ${person.display_name}` : "Resume | Philemon Melabah",
     description:
       person?.short_bio ||
-      "An online resume covering experience, selected projects, leadership, skills, and certificates, with a managed PDF download.",
+      "Experience, selected projects, leadership, skills and certificates, plus a PDF version when available.",
     path: "/resume",
   });
 
@@ -74,7 +74,7 @@ export default function ResumePage() {
     return (
       <Container className="py-20">
         <ErrorState
-          message="The resume profile could not be loaded. The API may be unavailable — try again in a moment."
+          message="We couldn't load the resume. Please try again in a moment."
           onRetry={profile.reload}
         />
       </Container>
@@ -90,37 +90,37 @@ export default function ResumePage() {
   return (
     <>
       <PageIntro
-        eyebrow={page?.eyebrow || "Resume / Online record"}
+        eyebrow={page?.eyebrow || "Resume"}
         title={
           page?.title ? (
             page.title
           ) : (
             <>
-              The record, kept{" "}
-              <span className="display-serif text-signal">current.</span>
+              Experience, projects{" "}
+              <span className="display-serif text-signal">and skills.</span>
             </>
           )
         }
         description={
           page?.description ||
-          "An online resume assembled from the same records used across the portfolio. The PDF is a managed version, uploaded and published from the admin panel rather than linked from an unknown host."
+          "An online resume built from the same information used across this site. A PDF version is available when it has been uploaded."
         }
         aside={
           <div className="border-t border-line pt-4 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
             <div className="flex items-center justify-between gap-6">
               <span>Name</span>
-              <span className="text-right text-paper">{person?.display_name ?? "—"}</span>
+              <span className="text-right text-paper">{person?.display_name ?? "Not listed"}</span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
               <span>Role</span>
               <span className="text-right text-paper">
-                {person?.professional_title ?? "—"}
+                {person?.professional_title ?? "Not listed"}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-6">
               <span>PDF</span>
               <span className="text-right text-paper">
-                {profile.loading && !person ? "—" : resume ? "Published" : "Not published"}
+                {profile.loading && !person ? "..." : resume ? "Available" : "Not uploaded"}
               </span>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function ResumePage() {
         <div className="flex flex-col gap-4 border border-line bg-ink-800/40 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted">
-              Managed PDF
+              PDF resume
             </p>
             {resume ? (
               <>
@@ -143,8 +143,7 @@ export default function ResumePage() {
               </>
             ) : (
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-paper-dim">
-                No PDF has been published yet. The online record below is still available and will
-                stay in sync with the portfolio.
+                No PDF has been uploaded yet. The online resume below is still available.
               </p>
             )}
           </div>
@@ -169,7 +168,7 @@ export default function ResumePage() {
         {profile.error ? (
           <div className="mt-8">
             <ErrorState
-              message="The profile record could not be refreshed. Showing the last loaded values."
+              message="We couldn't refresh the profile. The last loaded details are still shown."
               onRetry={profile.reload}
             />
           </div>
@@ -230,20 +229,19 @@ export default function ResumePage() {
           ) : null}
           {!person ? (
             <p className="mt-4 text-sm text-muted">
-              The profile is not configured yet, so the header is limited to the published resume.
+              The profile has not been added yet, so this header is limited to the resume.
             </p>
           ) : null}
         </div>
 
-        <Section id="resume-experience" eyebrow="Experience" title="Professional record">
-          {experience.loading ? <p className="text-sm text-muted">Loading experience…</p> : null}
+        <Section id="resume-experience" eyebrow="Experience" title="Where I have worked">
+          {experience.loading ? <p className="text-sm text-muted">Loading experience...</p> : null}
           {!experience.loading && experience.error ? (
-            <ErrorState message="Experience could not be loaded." onRetry={experience.reload} />
+            <ErrorState message="We couldn't load the experience." onRetry={experience.reload} />
           ) : null}
           {!experience.loading && !experience.error && experienceEntries.length === 0 ? (
             <EmptyLine>
-              No experience entries have been published. Roles are added only when the
-              organization, title, and dates are confirmed.
+              No experience has been added yet.
             </EmptyLine>
           ) : null}
           {experienceEntries.length > 0 ? (
@@ -275,7 +273,7 @@ export default function ResumePage() {
                           to={`/experience/${entry.slug}`}
                           className="mt-3 inline-flex items-center gap-1.5 font-mono text-[0.54rem] uppercase tracking-[0.13em] text-paper-dim hover:text-paper"
                         >
-                          Role detail
+                          Read more
                           <ArrowUpRight className="size-3" aria-hidden="true" />
                         </Link>
                       ) : null}
@@ -287,13 +285,13 @@ export default function ResumePage() {
           ) : null}
         </Section>
 
-        <Section id="resume-projects" eyebrow="Selected projects" title="Work that can be examined">
-          {projects.loading ? <p className="text-sm text-muted">Loading projects…</p> : null}
+        <Section id="resume-projects" eyebrow="Projects" title="Selected projects">
+          {projects.loading ? <p className="text-sm text-muted">Loading projects...</p> : null}
           {!projects.loading && projects.error ? (
-            <ErrorState message="Projects could not be loaded." onRetry={projects.reload} />
+            <ErrorState message="We couldn't load the projects." onRetry={projects.reload} />
           ) : null}
           {!projects.loading && !projects.error && projectEntries.length === 0 ? (
-            <EmptyLine>No featured projects are published yet.</EmptyLine>
+            <EmptyLine>No featured projects yet.</EmptyLine>
           ) : null}
           {projectEntries.length > 0 ? (
             <ul className="border-t border-line">
@@ -324,13 +322,13 @@ export default function ResumePage() {
           ) : null}
         </Section>
 
-        <Section id="resume-leadership" eyebrow="Leadership" title="Beyond the editor">
-          {leadership.loading ? <p className="text-sm text-muted">Loading leadership…</p> : null}
+        <Section id="resume-leadership" eyebrow="Leadership" title="Roles and community work">
+          {leadership.loading ? <p className="text-sm text-muted">Loading leadership...</p> : null}
           {!leadership.loading && leadership.error ? (
-            <ErrorState message="Leadership could not be loaded." onRetry={leadership.reload} />
+            <ErrorState message="We couldn't load the leadership entries." onRetry={leadership.reload} />
           ) : null}
           {!leadership.loading && !leadership.error && leadershipEntries.length === 0 ? (
-            <EmptyLine>No leadership entries have been published yet.</EmptyLine>
+            <EmptyLine>No leadership entries yet.</EmptyLine>
           ) : null}
           {leadershipEntries.length > 0 ? (
             <ol>
@@ -366,13 +364,13 @@ export default function ResumePage() {
           ) : null}
         </Section>
 
-        <Section id="resume-skills" eyebrow="Skills" title="The working toolkit">
-          {skills.loading ? <p className="text-sm text-muted">Loading skills…</p> : null}
+        <Section id="resume-skills" eyebrow="Skills" title="Tools and skills">
+          {skills.loading ? <p className="text-sm text-muted">Loading skills...</p> : null}
           {!skills.loading && skills.error ? (
-            <ErrorState message="Skills could not be loaded." onRetry={skills.reload} />
+            <ErrorState message="We couldn't load the skills." onRetry={skills.reload} />
           ) : null}
           {!skills.loading && !skills.error && skillGroups.length === 0 ? (
-            <EmptyLine>No skill groups have been published yet.</EmptyLine>
+            <EmptyLine>No skills have been added yet.</EmptyLine>
           ) : null}
           {skillGroups.length > 0 ? (
             <dl className="grid gap-px border border-line bg-line sm:grid-cols-2">
@@ -402,13 +400,13 @@ export default function ResumePage() {
           ) : null}
         </Section>
 
-        <Section id="resume-certificates" eyebrow="Certificates" title="Verified credentials">
-          {certificates.loading ? <p className="text-sm text-muted">Loading certificates…</p> : null}
+        <Section id="resume-certificates" eyebrow="Certificates" title="Certificates">
+          {certificates.loading ? <p className="text-sm text-muted">Loading certificates...</p> : null}
           {!certificates.loading && certificates.error ? (
-            <ErrorState message="Certificates could not be loaded." onRetry={certificates.reload} />
+            <ErrorState message="We couldn't load the certificates." onRetry={certificates.reload} />
           ) : null}
           {!certificates.loading && !certificates.error && certificateEntries.length === 0 ? (
-            <EmptyLine>No certificates have been published yet.</EmptyLine>
+            <EmptyLine>No certificates yet.</EmptyLine>
           ) : null}
           {certificateEntries.length > 0 ? (
             <ul className="grid gap-px border border-line bg-line sm:grid-cols-2">
@@ -428,7 +426,7 @@ export default function ResumePage() {
                       rel="noreferrer noopener"
                       className="mt-3 inline-flex items-center gap-1.5 font-mono text-[0.54rem] uppercase tracking-[0.13em] text-paper-dim hover:text-paper"
                     >
-                      Verify credential
+                      View credential
                       <ArrowUpRight className="size-3" aria-hidden="true" />
                     </a>
                   ) : null}
@@ -440,7 +438,7 @@ export default function ResumePage() {
 
         <div className="mt-16 flex flex-col gap-5 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-relaxed text-muted">
-            Prefer a conversation? The contact form reaches the private inbox directly.
+            Want to talk? Use the contact form to get in touch.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link to="/contact" className={buttonStyles("primary", "sm")}>
@@ -449,7 +447,7 @@ export default function ResumePage() {
             </Link>
             <Link to="/experience" className={buttonStyles("secondary", "sm")}>
               <FileText className="size-3.5" aria-hidden="true" />
-              Experience index
+              Experience
             </Link>
           </div>
         </div>

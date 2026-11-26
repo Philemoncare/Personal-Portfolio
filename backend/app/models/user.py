@@ -34,7 +34,9 @@ class AdminUser(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    phone: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
+    phone: Mapped[str | None] = mapped_column(
+        String(20), unique=True, index=True, nullable=True
+    )
     full_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
     role: Mapped[str] = mapped_column(
         String(20), default="SUPER_ADMIN", server_default="SUPER_ADMIN", nullable=False
@@ -240,7 +242,11 @@ class ActivityLog(UUIDPrimaryKeyMixin, Base):
     )
     event: Mapped[str] = mapped_column(String(60), nullable=False)
     status: Mapped[str] = mapped_column(
-        String(20), default="success", server_default="success", nullable=False
+        String(20),
+        default="success",
+        server_default="success",
+        nullable=False,
+        index=True,
     )
     identifier: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)

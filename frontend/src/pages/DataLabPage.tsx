@@ -465,7 +465,7 @@ export default function DataLabPage() {
               ) : null}
               {query ? (
                 <FilterTag
-                  label={`“${query}”`}
+                  label={`"${query}"`}
                   onRemove={() => {
                     setSearchInput("");
                     updateParam("q", "");

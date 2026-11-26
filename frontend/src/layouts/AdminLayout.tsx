@@ -67,7 +67,7 @@ const ADMIN_NAV = [
       { label: "Timeline", to: "/admin/timeline", end: false, icon: CalendarClock },
       { label: "Now", to: "/admin/now", end: false, icon: Sparkles },
       { label: "Articles", to: "/admin/articles", end: false, icon: FileText },
-      { label: "Pages & SEO", to: "/admin/pages", end: false, icon: BookOpen },
+      { label: "Pages and search", to: "/admin/pages", end: false, icon: BookOpen },
     ],
   },
   {
@@ -120,7 +120,7 @@ export function AdminLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useSeo({
-    title: "Admin — Phill",
+    title: "Admin | Philemon Melabah",
     description: "Manage your website content.",
     noIndex: true,
   });

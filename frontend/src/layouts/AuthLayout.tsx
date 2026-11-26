@@ -30,7 +30,7 @@ export function AuthLayout({
   className?: string;
 }) {
   useSeo({
-    title: `${title} — Phill admin`,
+    title: `${title} | Admin`,
     description: "Private administrator access.",
     noIndex: true,
   });

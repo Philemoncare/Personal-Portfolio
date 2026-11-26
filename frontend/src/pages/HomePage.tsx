@@ -14,10 +14,10 @@ export default function HomePage() {
   const { settings } = useSiteSettings();
 
   usePageSeo("home", {
-    title: settings?.seo_title || "Phill — Full-Stack Developer",
+    title: settings?.seo_title || "Philemon Melabah | Full-Stack Developer",
     description:
       settings?.seo_description ||
-      "Full-stack developer working across software products, data, and technology leadership.",
+      "Full-stack developer working on software, data and technical projects.",
     path: "/",
   });
 

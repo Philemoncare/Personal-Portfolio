@@ -42,9 +42,9 @@ export function formatRange(
 ): string {
   if (!start && !end) return "Dates not added";
   const startLabel = start ? formatDate(start) : "Undated";
-  if (isCurrent) return `${startLabel} — Present`;
+  if (isCurrent) return `${startLabel} - Present`;
   const endLabel = end ? formatDate(end) : "Present";
-  return `${startLabel} — ${endLabel}`;
+  return `${startLabel} - ${endLabel}`;
 }
 
 export function relativeTime(value: string): string {
