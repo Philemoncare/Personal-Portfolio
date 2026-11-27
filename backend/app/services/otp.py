@@ -43,7 +43,7 @@ class OtpDeliveryError(OtpError):
 def message_for(code: str, purpose: str = PURPOSE_LOGIN) -> str:
     """The SMS body. Short, branded and explicit about what the code is for."""
 
-    action = "password reset" if purpose == PURPOSE_PASSWORD_RESET else "sign-in"
+    action = "reset verification" if purpose == PURPOSE_PASSWORD_RESET else "sign-in"
     return (
         f"{settings.sms_brand_name}: {code} is your {action} code. "
         f"It expires in {settings.otp_ttl_minutes} minutes. Never share it."

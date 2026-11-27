@@ -89,7 +89,7 @@ def test_otp_message_is_short_branded_and_purpose_specific() -> None:
 
     assert login.startswith(f"{settings.sms_brand_name}: 123456")
     assert "sign-in code" in login
-    assert "password reset code" in reset
+    assert "reset verification code" in reset
     assert "Never share it." in login
     assert len(login) <= 160
 
